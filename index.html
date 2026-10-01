@@ -119,6 +119,19 @@ button,input,select{font:inherit}
   box-shadow:0 4px 12px rgba(154,79,49,.20);
 }
 .suggest-btn:hover{background:var(--brand-dark)}
+.roulette-btn{
+  height:42px;
+  border:1px solid #d9c8bd;
+  border-radius:12px;
+  padding:0 16px;
+  background:#fff8f3;
+  color:var(--brand-dark);
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 3px 10px rgba(105,68,48,.10);
+}
+.roulette-btn:hover{background:#f6e9e1;border-color:#c9ad9d}
 .header-count{
   margin-right:0;
   padding:9px 13px;
@@ -552,6 +565,157 @@ button,input,select{font:inherit}
 }
 .toast.show{opacity:1;transform:translateY(0)}
 
+
+/* LUNCH ROULETTE */
+.roulette-modal{
+  width:min(520px,100%);
+  max-height:90dvh;
+  overflow:auto;
+  background:#fff;
+  border-radius:22px;
+  box-shadow:0 24px 70px rgba(0,0,0,.28);
+}
+.roulette-body{
+  padding:22px 24px 24px;
+  text-align:center;
+}
+.roulette-context{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-bottom:14px;
+  padding:7px 11px;
+  border-radius:999px;
+  background:#f7eee9;
+  color:var(--brand-dark);
+  font-size:13px;
+  font-weight:900;
+}
+.roulette-stage{
+  position:relative;
+  width:240px;
+  height:240px;
+  margin:4px auto 18px;
+}
+.roulette-pointer{
+  position:absolute;
+  left:50%;
+  top:-8px;
+  z-index:4;
+  width:0;
+  height:0;
+  transform:translateX(-50%);
+  border-left:13px solid transparent;
+  border-right:13px solid transparent;
+  border-top:24px solid #2d2825;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.22));
+}
+.roulette-wheel{
+  position:absolute;
+  inset:0;
+  border:8px solid #fff;
+  border-radius:50%;
+  background:
+    conic-gradient(
+      #9a4f31 0deg 45deg,
+      #d97706 45deg 90deg,
+      #2563eb 90deg 135deg,
+      #7c3aed 135deg 180deg,
+      #059669 180deg 225deg,
+      #db2777 225deg 270deg,
+      #92400e 270deg 315deg,
+      #475569 315deg 360deg
+    );
+  box-shadow:0 10px 30px rgba(38,29,24,.22), inset 0 0 0 2px rgba(255,255,255,.65);
+  transition:transform 1.8s cubic-bezier(.16,.82,.18,1);
+}
+.roulette-wheel::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:76px;
+  height:76px;
+  transform:translate(-50%,-50%);
+  border:7px solid rgba(255,255,255,.95);
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 4px 14px rgba(0,0,0,.18);
+}
+.roulette-center{
+  position:absolute;
+  left:50%;
+  top:50%;
+  z-index:3;
+  width:72px;
+  transform:translate(-50%,-50%);
+  color:var(--brand-dark);
+  font-size:13px;
+  font-weight:950;
+  line-height:1.15;
+  pointer-events:none;
+}
+.roulette-live{
+  min-height:30px;
+  margin-top:4px;
+  color:#716862;
+  font-size:14px;
+  font-weight:750;
+}
+.roulette-result{
+  display:none;
+  margin:12px 0 4px;
+  padding:17px 18px;
+  border:1px solid #eadbd2;
+  border-radius:16px;
+  background:#fff9f5;
+}
+.roulette-result.show{display:block}
+.roulette-result-label{
+  color:#8a776d;
+  font-size:12px;
+  font-weight:800;
+}
+.roulette-result-name{
+  margin-top:5px;
+  color:#2d2825;
+  font-size:25px;
+  font-weight:950;
+  letter-spacing:-.6px;
+}
+.roulette-result-meta{
+  margin-top:7px;
+  color:#6c635d;
+  font-size:13px;
+  font-weight:650;
+  line-height:1.5;
+}
+.roulette-actions{
+  display:flex;
+  justify-content:center;
+  gap:9px;
+  margin-top:18px;
+}
+.roulette-action{
+  min-width:126px;
+  height:45px;
+  border-radius:12px;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+}
+.roulette-action.secondary{
+  border:1px solid #d9d1cb;
+  background:#fff;
+  color:#4e4742;
+}
+.roulette-action.primary{
+  border:0;
+  background:var(--brand);
+  color:#fff;
+}
+.roulette-action:disabled{opacity:.5;cursor:not-allowed}
+
 /* MOBILE */
 @media(max-width:800px){
   :root{--sidebar:100%;--header:106px}
@@ -594,10 +758,11 @@ button,input,select{font:inherit}
     margin-right:10px;
     gap:6px;
   }
-  .suggest-btn{
+  .suggest-btn,
+  .roulette-btn{
     height:38px;
-    padding:0 12px;
-    font-size:13px;
+    padding:0 11px;
+    font-size:12.5px;
   }
   .header-count{
     margin-right:0;
@@ -792,6 +957,16 @@ button,input,select{font:inherit}
   .place-results{top:54px;max-height:240px}
   .modal-actions{position:sticky;bottom:0;background:#fff;padding-top:10px}
   .modal-btn{height:46px;flex:1}
+
+  .roulette-modal{
+    width:100%;
+    border-radius:20px 20px 12px 12px;
+  }
+  .roulette-body{padding:18px 16px 20px}
+  .roulette-stage{width:210px;height:210px}
+  .roulette-result-name{font-size:23px}
+  .roulette-actions{position:sticky;bottom:0;background:#fff;padding-top:10px}
+  .roulette-action{flex:1;min-width:0}
 }
 
 </style>
@@ -804,6 +979,7 @@ button,input,select{font:inherit}
     </div>
     <div id="filters" class="top-filters"></div>
     <div class="header-actions">
+      <button id="rouletteOpen" class="roulette-btn" type="button">🎲 점심 룰렛</button>
       <button id="suggestOpen" class="suggest-btn" type="button">＋ 제안하기</button>
       <div id="count" class="header-count">불러오는 중…</div>
     </div>
@@ -830,6 +1006,37 @@ button,input,select{font:inherit}
       <div class="map-hint">마커 또는 식당을 클릭하면 상세 정보가 열립니다.</div>
     </section>
   </main>
+</div>
+
+
+<div id="rouletteModal" class="modal-backdrop" aria-hidden="true">
+  <section class="roulette-modal" role="dialog" aria-modal="true" aria-labelledby="rouletteTitle">
+    <div class="modal-head">
+      <div>
+        <div id="rouletteTitle" class="modal-title">점심 룰렛 🎲</div>
+        <div id="rouletteSub" class="modal-sub">현재 선택한 분류에서 오늘의 점심을 골라드립니다.</div>
+      </div>
+      <button id="rouletteClose" class="modal-close" type="button" aria-label="닫기">×</button>
+    </div>
+    <div class="roulette-body">
+      <div id="rouletteContext" class="roulette-context">전체 · 0곳</div>
+      <div class="roulette-stage">
+        <div class="roulette-pointer"></div>
+        <div id="rouletteWheel" class="roulette-wheel"></div>
+        <div id="rouletteCenter" class="roulette-center">오늘<br>뭐먹지?</div>
+      </div>
+      <div id="rouletteLive" class="roulette-live">룰렛을 준비하는 중입니다.</div>
+      <div id="rouletteResult" class="roulette-result">
+        <div class="roulette-result-label">오늘의 점심</div>
+        <div id="rouletteResultName" class="roulette-result-name"></div>
+        <div id="rouletteResultMeta" class="roulette-result-meta"></div>
+      </div>
+      <div class="roulette-actions">
+        <button id="rouletteAgain" class="roulette-action primary" type="button">다시 돌리기</button>
+        <button id="rouletteGo" class="roulette-action secondary" type="button" disabled>지도에서 보기</button>
+      </div>
+    </div>
+  </section>
 </div>
 
 <div id="suggestModal" class="modal-backdrop" aria-hidden="true">
@@ -925,6 +1132,7 @@ const SUGGEST_URL='https://script.google.com/macros/s/AKfycbxzB7nF3k4q03xvQ96pXl
 let allData=[],activeCategory='전체',searchKeyword='',sortMode='default';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,searchTimer=null;
 let placesService=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,suggestTimeout=null;
+let rouletteCandidates=[],rouletteWinner=null,rouletteSpinning=false,rouletteRotation=0,rouletteTicker=null;
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
 const colorFor=c=>COLORS[c]||'#64748b';
 const ratingScore=x=>(String(x.rating||'').match(/★/g)||[]).length;
@@ -1031,6 +1239,100 @@ function locateMe(){
   },()=>alert('현재 위치 권한을 허용하면 사용할 수 있습니다.'),{enableHighAccuracy:false,timeout:5000,maximumAge:300000});
 }
 
+
+
+const rouletteModal=document.getElementById('rouletteModal');
+const rouletteWheel=document.getElementById('rouletteWheel');
+const rouletteContext=document.getElementById('rouletteContext');
+const rouletteLive=document.getElementById('rouletteLive');
+const rouletteResult=document.getElementById('rouletteResult');
+const rouletteResultName=document.getElementById('rouletteResultName');
+const rouletteResultMeta=document.getElementById('rouletteResultMeta');
+const rouletteAgain=document.getElementById('rouletteAgain');
+const rouletteGo=document.getElementById('rouletteGo');
+
+function getRouletteCandidates(){
+  return allData.filter(x=>activeCategory==='전체'||x.category===activeCategory);
+}
+function openRoulette(){
+  rouletteCandidates=getRouletteCandidates();
+  rouletteWinner=null;
+  rouletteResult.classList.remove('show');
+  rouletteGo.disabled=true;
+  rouletteContext.textContent=activeCategory+' · '+rouletteCandidates.length+'곳';
+  rouletteLive.textContent=rouletteCandidates.length?'룰렛을 돌립니다…':'선택한 분류에 식당이 없습니다.';
+  rouletteModal.classList.add('open');
+  rouletteModal.setAttribute('aria-hidden','false');
+  if(rouletteCandidates.length) setTimeout(spinRoulette,180);
+}
+function closeRoulette(){
+  if(rouletteSpinning)return;
+  rouletteModal.classList.remove('open');
+  rouletteModal.setAttribute('aria-hidden','true');
+}
+function spinRoulette(){
+  if(rouletteSpinning||!rouletteCandidates.length)return;
+  rouletteSpinning=true;
+  rouletteAgain.disabled=true;
+  rouletteGo.disabled=true;
+  rouletteWinner=null;
+  rouletteResult.classList.remove('show');
+
+  const winnerIndex=Math.floor(Math.random()*rouletteCandidates.length);
+  const winner=rouletteCandidates[winnerIndex];
+  const turns=5+Math.floor(Math.random()*3);
+  const extra=Math.floor(Math.random()*330)+15;
+  rouletteRotation += turns*360+extra;
+  rouletteWheel.style.transform='rotate('+rouletteRotation+'deg)';
+
+  let tick=0;
+  clearInterval(rouletteTicker);
+  rouletteTicker=setInterval(()=>{
+    const item=rouletteCandidates[tick%rouletteCandidates.length];
+    rouletteLive.textContent=item.name;
+    tick++;
+  },75);
+
+  setTimeout(()=>{
+    clearInterval(rouletteTicker);
+    rouletteTicker=null;
+    rouletteSpinning=false;
+    rouletteWinner=winner;
+    rouletteAgain.disabled=false;
+    rouletteGo.disabled=false;
+    rouletteLive.textContent='결정!';
+    rouletteResultName.textContent=winner.name;
+    rouletteResultMeta.textContent=
+      (winner.rating?winner.rating+' · ':'')+
+      (winner.feature?winner.feature+' · ':'')+
+      winner.address;
+    rouletteResult.classList.add('show');
+  },1850);
+}
+function goRouletteWinner(){
+  if(!rouletteWinner)return;
+  const row=rouletteWinner.row;
+  closeRoulette();
+
+  // 현재 필터가 결과와 맞지 않는 경우 결과 카테고리로 전환
+  if(activeCategory!=='전체'&&activeCategory!==rouletteWinner.category){
+    activeCategory=rouletteWinner.category;
+    buildFilters();
+    render(true);
+  }
+
+  setTimeout(()=>{
+    selectRow(row,true);
+    const card=document.querySelector('.card[data-row="'+row+'"]');
+    if(card) card.scrollIntoView({behavior:'smooth',block:'center'});
+  },120);
+}
+
+document.getElementById('rouletteOpen').addEventListener('click',openRoulette);
+document.getElementById('rouletteClose').addEventListener('click',closeRoulette);
+rouletteAgain.addEventListener('click',spinRoulette);
+rouletteGo.addEventListener('click',goRouletteWinner);
+rouletteModal.addEventListener('click',e=>{if(e.target===rouletteModal)closeRoulette();});
 
 const suggestModal=document.getElementById('suggestModal');
 const suggestForm=document.getElementById('suggestForm');
@@ -1169,7 +1471,11 @@ document.getElementById('suggestOpen').addEventListener('click',openSuggestModal
 document.getElementById('suggestClose').addEventListener('click',closeSuggestModal);
 document.getElementById('suggestCancel').addEventListener('click',closeSuggestModal);
 suggestModal.addEventListener('click',e=>{if(e.target===suggestModal)closeSuggestModal();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&suggestModal.classList.contains('open'))closeSuggestModal();});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  if(suggestModal.classList.contains('open'))closeSuggestModal();
+  if(rouletteModal.classList.contains('open'))closeRoulette();
+});
 
 suggestSearch.addEventListener('input',()=>{
   clearSelectedSuggestPlace();
