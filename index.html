@@ -100,8 +100,27 @@ button,input,select{font:inherit}
   border-color:var(--brand);
   color:#fff;
 }
-.header-count{
+.header-actions{
+  display:flex;
+  align-items:center;
+  gap:9px;
   margin-right:18px;
+}
+.suggest-btn{
+  height:42px;
+  border:0;
+  border-radius:12px;
+  padding:0 16px;
+  background:var(--brand);
+  color:#fff;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 4px 12px rgba(154,79,49,.20);
+}
+.suggest-btn:hover{background:var(--brand-dark)}
+.header-count{
+  margin-right:0;
   padding:9px 13px;
   border-radius:999px;
   background:#f4e8e2;
@@ -422,6 +441,117 @@ button,input,select{font:inherit}
   line-height:1.55;
 }
 
+
+/* SUGGEST MODAL */
+.modal-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(31,25,21,.48);
+  backdrop-filter:blur(3px);
+}
+.modal-backdrop.open{display:flex}
+.suggest-modal{
+  width:min(620px,100%);
+  max-height:min(820px,92dvh);
+  overflow:auto;
+  background:#fff;
+  border-radius:20px;
+  box-shadow:0 24px 70px rgba(0,0,0,.28);
+}
+.modal-head{
+  position:sticky;
+  top:0;
+  z-index:3;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  padding:20px 22px 16px;
+  background:#fff;
+  border-bottom:1px solid var(--line);
+}
+.modal-title{font-size:22px;font-weight:900;letter-spacing:-.4px}
+.modal-sub{margin-top:5px;color:var(--muted);font-size:13px;font-weight:600}
+.modal-close{
+  width:38px;height:38px;border:0;border-radius:10px;background:#f4f0ed;
+  color:#5d554f;font-size:22px;line-height:1;cursor:pointer
+}
+.suggest-form{padding:18px 22px 22px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.form-field{min-width:0}
+.form-field.full{grid-column:1/-1}
+.form-label{
+  display:flex;align-items:center;gap:5px;margin-bottom:7px;
+  font-size:14px;font-weight:850;color:#3c3632
+}
+.required{color:#c2410c}
+.form-input,.form-select,.form-textarea{
+  width:100%;
+  border:1px solid #d9d1cb;
+  border-radius:12px;
+  background:#fff;
+  color:var(--text);
+  font-size:15px;
+  outline:none;
+}
+.form-input,.form-select{height:46px;padding:0 13px}
+.form-textarea{min-height:92px;padding:12px 13px;resize:vertical;line-height:1.5}
+.form-input:focus,.form-select:focus,.form-textarea:focus{
+  border-color:#bd8c77;box-shadow:0 0 0 3px rgba(154,79,49,.08)
+}
+.form-input[readonly]{background:#f7f4f1;color:#625b55}
+.place-search-wrap{position:relative}
+.place-results{
+  position:absolute;left:0;right:0;top:52px;z-index:20;
+  max-height:280px;overflow:auto;display:none;
+  border:1px solid #d9d1cb;border-radius:13px;background:#fff;
+  box-shadow:0 12px 28px rgba(0,0,0,.16)
+}
+.place-results.open{display:block}
+.place-item{
+  padding:12px 13px;border-bottom:1px solid #eee8e3;cursor:pointer
+}
+.place-item:last-child{border-bottom:0}
+.place-item:hover{background:#faf6f3}
+.place-name{font-size:15px;font-weight:900}
+.place-address{margin-top:4px;color:#6e665f;font-size:12.5px;line-height:1.4}
+.place-category{margin-top:3px;color:#9a4f31;font-size:11.5px;font-weight:700}
+.place-empty{padding:18px;text-align:center;color:var(--muted);font-size:13px}
+.selected-place{
+  display:none;margin-top:8px;padding:10px 12px;border-radius:11px;
+  background:#f8eee9;color:#70422f;font-size:12.5px;font-weight:700
+}
+.selected-place.show{display:block}
+.form-help{margin-top:5px;color:#8a817a;font-size:11.5px;line-height:1.4}
+.honeypot{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;opacity:0!important}
+.form-status{
+  min-height:22px;margin-top:14px;font-size:13px;font-weight:750;color:#6e665f
+}
+.form-status.error{color:#b42318}
+.form-status.success{color:#087443}
+.modal-actions{
+  display:flex;justify-content:flex-end;gap:9px;margin-top:16px
+}
+.modal-btn{
+  min-width:100px;height:44px;border-radius:12px;font-size:14px;font-weight:900;cursor:pointer
+}
+.modal-btn.secondary{border:1px solid #d9d1cb;background:#fff;color:#4e4742}
+.modal-btn.primary{border:0;background:var(--brand);color:#fff}
+.modal-btn.primary:disabled{opacity:.55;cursor:not-allowed}
+.toast{
+  position:fixed;right:20px;bottom:20px;z-index:1200;
+  max-width:min(380px,calc(100vw - 40px));padding:13px 16px;
+  border-radius:12px;background:#2e2925;color:#fff;font-size:14px;font-weight:750;
+  box-shadow:0 10px 28px rgba(0,0,0,.25);opacity:0;transform:translateY(12px);
+  pointer-events:none;transition:.2s
+}
+.toast.show{opacity:1;transform:translateY(0)}
+
 /* MOBILE */
 @media(max-width:800px){
   :root{--sidebar:100%;--header:106px}
@@ -458,12 +588,21 @@ button,input,select{font:inherit}
     padding:9px 13px;
     font-size:13px;
   }
-  .header-count{
+  .header-actions{
     grid-column:2;
     grid-row:1;
-    margin-right:12px;
-    padding:7px 10px;
+    margin-right:10px;
+    gap:6px;
+  }
+  .suggest-btn{
+    height:38px;
+    padding:0 12px;
     font-size:13px;
+  }
+  .header-count{
+    margin-right:0;
+    padding:7px 9px;
+    font-size:12px;
   }
 
   .main{
@@ -634,7 +773,27 @@ button,input,select{font:inherit}
   .popup-name{font-size:16px}
   .popup-rating{font-size:14px}
   .popup-line{font-size:13px}
+
+  .modal-backdrop{padding:8px;align-items:flex-end}
+  .suggest-modal{
+    width:100%;
+    max-height:92dvh;
+    border-radius:20px 20px 12px 12px;
+  }
+  .modal-head{padding:17px 16px 13px}
+  .modal-title{font-size:20px}
+  .modal-sub{font-size:12px}
+  .suggest-form{padding:15px 16px 18px}
+  .form-grid{grid-template-columns:1fr;gap:13px}
+  .form-field.full{grid-column:auto}
+  .form-label{font-size:14px}
+  .form-input,.form-select{height:48px;font-size:16px}
+  .form-textarea{font-size:16px}
+  .place-results{top:54px;max-height:240px}
+  .modal-actions{position:sticky;bottom:0;background:#fff;padding-top:10px}
+  .modal-btn{height:46px;flex:1}
 }
+
 </style>
 </head>
 <body>
@@ -644,7 +803,10 @@ button,input,select{font:inherit}
       <div><div class="brand-title">막냉이 합정 점심 뭐먹지 🍴</div><div class="brand-sub">합정·망원 점심 식당 지도</div></div>
     </div>
     <div id="filters" class="top-filters"></div>
-    <div id="count" class="header-count">불러오는 중…</div>
+    <div class="header-actions">
+      <button id="suggestOpen" class="suggest-btn" type="button">＋ 제안하기</button>
+      <div id="count" class="header-count">불러오는 중…</div>
+    </div>
   </header>
 
   <main class="main">
@@ -670,24 +832,111 @@ button,input,select{font:inherit}
   </main>
 </div>
 
+<div id="suggestModal" class="modal-backdrop" aria-hidden="true">
+  <section class="suggest-modal" role="dialog" aria-modal="true" aria-labelledby="suggestTitle">
+    <div class="modal-head">
+      <div>
+        <div id="suggestTitle" class="modal-title">식당 제안하기</div>
+        <div class="modal-sub">카카오맵에서 식당을 선택하면 주소가 자동으로 입력됩니다. 제안은 검토 후 목록에 반영됩니다.</div>
+      </div>
+      <button id="suggestClose" class="modal-close" type="button" aria-label="닫기">×</button>
+    </div>
+
+    <form id="suggestForm" class="suggest-form" method="POST"
+      action="https://script.google.com/macros/s/AKfycbxzB7nF3k4q03xvQ96pXlYXeEB5ZBZnjY2vTpPN2QV7xCsadmOw5NY2jWYOylYvY5xMkA/exec"
+      target="suggestSink" autocomplete="off">
+      <div class="form-grid">
+        <div class="form-field full">
+          <label class="form-label" for="suggestSearch">식당명 <span class="required">*</span></label>
+          <div class="place-search-wrap">
+            <input id="suggestSearch" class="form-input" type="search" placeholder="카카오맵에서 식당명 검색" required>
+            <div id="placeResults" class="place-results"></div>
+          </div>
+          <div id="selectedPlace" class="selected-place"></div>
+          <div class="form-help">검색 결과에서 식당을 선택해야 제출할 수 있습니다.</div>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="suggestCategory">구분 <span class="required">*</span></label>
+          <select id="suggestCategory" class="form-select" name="category" required>
+            <option value="">선택</option>
+            <option>한식</option><option>일식</option><option>중식</option><option>양식</option>
+            <option>아시아</option><option>분식</option><option>카페</option><option>회식</option><option>기타</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="suggestRating">평점</label>
+          <select id="suggestRating" class="form-select" name="rating">
+            <option value="">선택 안 함</option>
+            <option value="★">★</option>
+            <option value="★★">★★</option>
+            <option value="★★★">★★★</option>
+            <option value="★★★★">★★★★</option>
+            <option value="★★★★★">★★★★★</option>
+          </select>
+        </div>
+
+        <div class="form-field full">
+          <label class="form-label" for="suggestAddress">주소 <span class="required">*</span></label>
+          <input id="suggestAddress" class="form-input" name="address" type="text" readonly required>
+        </div>
+
+        <div class="form-field full">
+          <label class="form-label" for="suggestFeature">특징</label>
+          <input id="suggestFeature" class="form-input" name="feature" type="text" maxlength="300" placeholder="예: 냉우동, 파스타 맛집, 점심특선 등">
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="suggestCapacity">수용가능인원</label>
+          <input id="suggestCapacity" class="form-input" name="capacity" type="text" maxlength="120" placeholder="예: 4명, 단체 가능">
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="suggestNote">비고</label>
+          <input id="suggestNote" class="form-input" name="note" type="text" maxlength="500" placeholder="웨이팅, 예약 등">
+        </div>
+      </div>
+
+      <input id="suggestNameHidden" type="hidden" name="name">
+      <input id="suggestLat" type="hidden" name="lat">
+      <input id="suggestLng" type="hidden" name="lng">
+      <input id="suggestPlaceId" type="hidden" name="placeId">
+      <input id="suggestPlaceUrl" type="hidden" name="placeUrl">
+      <input class="honeypot" type="text" name="website" tabindex="-1" autocomplete="off">
+
+      <div id="suggestStatus" class="form-status"></div>
+      <div class="modal-actions">
+        <button id="suggestCancel" class="modal-btn secondary" type="button">취소</button>
+        <button id="suggestSubmit" class="modal-btn primary" type="submit">제안 접수</button>
+      </div>
+    </form>
+    <iframe name="suggestSink" id="suggestSink" title="제안 전송" style="display:none"></iframe>
+  </section>
+</div>
+<div id="toast" class="toast"></div>
+
 <script>
 const KAKAO_KEY='c6656c45b7640edcf233a408bf0afa9a';
 const COLORS={'한식':'#d97706','일식':'#2563eb','중식':'#dc2626','양식':'#7c3aed','아시아':'#059669','분식':'#db2777','카페':'#92400e','회식':'#475569'};
 const ORDER=['전체','한식','일식','중식','양식','아시아','분식','카페','회식'];
 const HOME_LAT=37.5515,HOME_LNG=126.9125;
+const SUGGEST_URL='https://script.google.com/macros/s/AKfycbxzB7nF3k4q03xvQ96pXlYXeEB5ZBZnjY2vTpPN2QV7xCsadmOw5NY2jWYOylYvY5xMkA/exec';
 let allData=[],activeCategory='전체',searchKeyword='',sortMode='default';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,searchTimer=null;
+let placesService=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,suggestTimeout=null;
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
 const colorFor=c=>COLORS[c]||'#64748b';
 const ratingScore=x=>(String(x.rating||'').match(/★/g)||[]).length;
 
-function loadKakao(){return new Promise((resolve,reject)=>{if(window.kakao&&kakao.maps)return resolve();const s=document.createElement('script');s.src='https://dapi.kakao.com/v2/maps/sdk.js?appkey='+KAKAO_KEY+'&autoload=false';s.async=true;s.onload=()=>window.kakao&&kakao.maps?resolve():reject(new Error('SDK init failed'));s.onerror=()=>reject(new Error('SDK load failed'));document.head.appendChild(s);});}
+function loadKakao(){return new Promise((resolve,reject)=>{if(window.kakao&&kakao.maps)return resolve();const s=document.createElement('script');s.src='https://dapi.kakao.com/v2/maps/sdk.js?appkey='+KAKAO_KEY+'&autoload=false&libraries=services';s.async=true;s.onload=()=>window.kakao&&kakao.maps?resolve():reject(new Error('SDK init failed'));s.onerror=()=>reject(new Error('SDK load failed'));document.head.appendChild(s);});}
 function initMap(){
   loadKakao().then(()=>kakao.maps.load(()=>{
     const mapEl=document.getElementById('map');
     map=new kakao.maps.Map(mapEl,{center:new kakao.maps.LatLng(HOME_LAT,HOME_LNG),level:5});
     map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
     infoOverlay=new kakao.maps.CustomOverlay({zIndex:30,yAnchor:1.12});
+    placesService=new kakao.maps.services.Places();
     mapReady=true;
     document.getElementById('mapStatus').classList.add('hidden');
 
@@ -781,6 +1030,211 @@ function locateMe(){
     if(!mapReady)return;const p=new kakao.maps.LatLng(pos.coords.latitude,pos.coords.longitude);map.setCenter(p);map.setLevel(4);
   },()=>alert('현재 위치 권한을 허용하면 사용할 수 있습니다.'),{enableHighAccuracy:false,timeout:5000,maximumAge:300000});
 }
+
+
+const suggestModal=document.getElementById('suggestModal');
+const suggestForm=document.getElementById('suggestForm');
+const suggestSearch=document.getElementById('suggestSearch');
+const placeResults=document.getElementById('placeResults');
+const selectedPlaceEl=document.getElementById('selectedPlace');
+const suggestStatus=document.getElementById('suggestStatus');
+const suggestSubmit=document.getElementById('suggestSubmit');
+const suggestSink=document.getElementById('suggestSink');
+
+function showToast(message){
+  const el=document.getElementById('toast');
+  el.textContent=message;
+  el.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t=setTimeout(()=>el.classList.remove('show'),2400);
+}
+
+function openSuggestModal(){
+  resetSuggestForm();
+  suggestModal.classList.add('open');
+  suggestModal.setAttribute('aria-hidden','false');
+  setTimeout(()=>suggestSearch.focus(),80);
+}
+function closeSuggestModal(){
+  if(suggestPending)return;
+  suggestModal.classList.remove('open');
+  suggestModal.setAttribute('aria-hidden','true');
+  placeResults.classList.remove('open');
+}
+function resetSuggestForm(){
+  suggestForm.reset();
+  selectedSuggestPlace=null;
+  placeResults.innerHTML='';
+  placeResults.classList.remove('open');
+  selectedPlaceEl.textContent='';
+  selectedPlaceEl.classList.remove('show');
+  suggestStatus.textContent='';
+  suggestStatus.className='form-status';
+  ['suggestNameHidden','suggestLat','suggestLng','suggestPlaceId','suggestPlaceUrl','suggestAddress']
+    .forEach(id=>{document.getElementById(id).value='';});
+  suggestPending=false;
+  suggestSubmit.disabled=false;
+  suggestSubmit.textContent='제안 접수';
+}
+
+function inferCategory(place){
+  const text=(place.category_name||'')+' '+(place.category_group_name||'');
+  if(/카페|커피|베이커리|디저트/.test(text)) return '카페';
+  if(/한식/.test(text)) return '한식';
+  if(/일식|돈까스|초밥|라멘/.test(text)) return '일식';
+  if(/중식|중국/.test(text)) return '중식';
+  if(/양식|이탈리안|프랑스/.test(text)) return '양식';
+  if(/아시아|인도|태국|베트남/.test(text)) return '아시아';
+  if(/분식/.test(text)) return '분식';
+  return '';
+}
+
+function clearSelectedSuggestPlace(){
+  selectedSuggestPlace=null;
+  selectedPlaceEl.textContent='';
+  selectedPlaceEl.classList.remove('show');
+  document.getElementById('suggestNameHidden').value='';
+  document.getElementById('suggestAddress').value='';
+  document.getElementById('suggestLat').value='';
+  document.getElementById('suggestLng').value='';
+  document.getElementById('suggestPlaceId').value='';
+  document.getElementById('suggestPlaceUrl').value='';
+}
+
+function searchSuggestPlaces(keyword){
+  if(!placesService){
+    suggestStatus.textContent='카카오 검색을 준비하는 중입니다.';
+    return;
+  }
+  const q=String(keyword||'').trim();
+  if(q.length<2){
+    placeResults.classList.remove('open');
+    placeResults.innerHTML='';
+    return;
+  }
+  const opts={
+    location:new kakao.maps.LatLng(HOME_LAT,HOME_LNG),
+    radius:20000,
+    size:10,
+    sort:kakao.maps.services.SortBy.DISTANCE
+  };
+  placesService.keywordSearch(q,(data,status)=>{
+    if(status!==kakao.maps.services.Status.OK){
+      placeResults.innerHTML='<div class="place-empty">검색 결과가 없습니다.</div>';
+      placeResults.classList.add('open');
+      return;
+    }
+    let rows=data.filter(x=>x.category_group_code==='FD6'||x.category_group_code==='CE7');
+    if(!rows.length) rows=data;
+    placeResults.innerHTML=rows.slice(0,10).map((p,i)=>{
+      const addr=p.road_address_name||p.address_name||'주소 정보 없음';
+      return '<div class="place-item" data-index="'+i+'">'+
+        '<div class="place-name">'+esc(p.place_name)+'</div>'+
+        '<div class="place-address">📍 '+esc(addr)+'</div>'+
+        (p.category_name?'<div class="place-category">'+esc(p.category_name)+'</div>':'')+
+      '</div>';
+    }).join('');
+    placeResults.classList.add('open');
+    placeResults.querySelectorAll('.place-item').forEach(el=>{
+      el.addEventListener('click',()=>selectSuggestPlace(rows[Number(el.dataset.index)]));
+    });
+  },opts);
+}
+
+function selectSuggestPlace(place){
+  const address=place.road_address_name||place.address_name||'';
+  if(!address){
+    suggestStatus.textContent='주소가 없는 장소는 선택할 수 없습니다.';
+    suggestStatus.className='form-status error';
+    return;
+  }
+  selectedSuggestPlace=place;
+  suggestSearch.value=place.place_name;
+  document.getElementById('suggestNameHidden').value=place.place_name;
+  document.getElementById('suggestAddress').value=address;
+  document.getElementById('suggestLat').value=place.y;
+  document.getElementById('suggestLng').value=place.x;
+  document.getElementById('suggestPlaceId').value=place.id||'';
+  document.getElementById('suggestPlaceUrl').value=place.place_url||'';
+  const inferred=inferCategory(place);
+  if(inferred) document.getElementById('suggestCategory').value=inferred;
+  selectedPlaceEl.innerHTML='<b>'+esc(place.place_name)+'</b><br>'+esc(address);
+  selectedPlaceEl.classList.add('show');
+  placeResults.classList.remove('open');
+  suggestStatus.textContent='';
+  suggestStatus.className='form-status';
+}
+
+document.getElementById('suggestOpen').addEventListener('click',openSuggestModal);
+document.getElementById('suggestClose').addEventListener('click',closeSuggestModal);
+document.getElementById('suggestCancel').addEventListener('click',closeSuggestModal);
+suggestModal.addEventListener('click',e=>{if(e.target===suggestModal)closeSuggestModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&suggestModal.classList.contains('open'))closeSuggestModal();});
+
+suggestSearch.addEventListener('input',()=>{
+  clearSelectedSuggestPlace();
+  clearTimeout(placeSearchTimer);
+  placeSearchTimer=setTimeout(()=>searchSuggestPlaces(suggestSearch.value),260);
+});
+suggestSearch.addEventListener('focus',()=>{
+  if(suggestSearch.value.trim().length>=2&&!selectedSuggestPlace) searchSuggestPlaces(suggestSearch.value);
+});
+
+suggestForm.addEventListener('submit',e=>{
+  e.preventDefault();
+  if(suggestPending)return;
+  const category=document.getElementById('suggestCategory').value;
+  if(!selectedSuggestPlace||!document.getElementById('suggestPlaceId').value){
+    suggestStatus.textContent='카카오 검색 결과에서 식당을 먼저 선택해 주세요.';
+    suggestStatus.className='form-status error';
+    suggestSearch.focus();
+    return;
+  }
+  if(!category){
+    suggestStatus.textContent='구분을 선택해 주세요.';
+    suggestStatus.className='form-status error';
+    document.getElementById('suggestCategory').focus();
+    return;
+  }
+  suggestPending=true;
+  suggestSubmit.disabled=true;
+  suggestSubmit.textContent='접수 중…';
+  suggestStatus.textContent='제안을 접수하고 있습니다.';
+  suggestStatus.className='form-status';
+  clearTimeout(suggestTimeout);
+  suggestTimeout=setTimeout(()=>{
+    if(!suggestPending)return;
+    suggestPending=false;
+    suggestSubmit.disabled=false;
+    suggestSubmit.textContent='제안 접수';
+    suggestStatus.textContent='응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.';
+    suggestStatus.className='form-status error';
+  },12000);
+  HTMLFormElement.prototype.submit.call(suggestForm);
+});
+
+window.addEventListener('message',e=>{
+  const d=e.data||{};
+  if(d.source!=='lunch-map-suggest')return;
+  if(e.source!==suggestSink.contentWindow)return;
+  clearTimeout(suggestTimeout);
+  suggestPending=false;
+  suggestSubmit.disabled=false;
+  suggestSubmit.textContent='제안 접수';
+  if(d.ok){
+    suggestStatus.textContent=d.message||'식당 제안이 접수되었습니다.';
+    suggestStatus.className='form-status success';
+    showToast(d.message||'식당 제안이 접수되었습니다.');
+    setTimeout(()=>{
+      suggestModal.classList.remove('open');
+      suggestModal.setAttribute('aria-hidden','true');
+      resetSuggestForm();
+    },650);
+  }else{
+    suggestStatus.textContent=d.message||'제안 접수에 실패했습니다.';
+    suggestStatus.className='form-status error';
+  }
+});
 
 const sidebar=document.getElementById('sidebar');
 const sheetHandle=document.getElementById('sheetHandle');
