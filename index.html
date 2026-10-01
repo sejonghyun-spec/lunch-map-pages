@@ -6,100 +6,184 @@
 <title>막냉이 합정 점심 뭐먹지</title>
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
-:root{--bg:#f5f3ef;--panel:#fff;--text:#241f1b;--muted:#776f68;--line:#e8e2dc;--brand:#8e4c33;--brand-soft:#f3e9e4;--shadow:0 12px 30px rgba(46,35,28,.10);--radius:18px}
-*{box-sizing:border-box}html,body{height:100%;margin:0;font-family:Pretendard,"Noto Sans KR",Arial,sans-serif;color:var(--text);background:var(--bg)}body{overflow:hidden}
-.app{height:100vh;display:grid;grid-template-rows:auto 1fr}.topbar{background:#fff;border-bottom:1px solid var(--line);padding:14px 18px 12px;z-index:30}
-.title-row{display:flex;align-items:end;justify-content:space-between;gap:14px;margin-bottom:12px}.title{font-size:22px;font-weight:800}.subtitle{margin-top:3px;color:var(--muted);font-size:12px}
-.count{color:var(--brand);background:var(--brand-soft);border-radius:999px;padding:7px 11px;font-size:12px;font-weight:800;white-space:nowrap}
-.filters{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none}.filters::-webkit-scrollbar{display:none}
-.filter-btn{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:#514943;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer}
-.filter-btn.active{background:var(--brand);border-color:var(--brand);color:#fff}
-.content{min-height:0;display:grid;grid-template-columns:minmax(300px,36%) 1fr;gap:14px;padding:14px}
-.sidebar{min-height:0;display:grid;grid-template-rows:auto 1fr;background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
-.search-wrap{padding:12px;border-bottom:1px solid var(--line)}.search{width:100%;border:1px solid var(--line);background:#faf8f6;border-radius:12px;padding:11px 12px;font-size:13px;outline:none}
-.list{overflow-y:auto;padding:9px}.card{border:1px solid transparent;border-bottom-color:#eee9e5;border-radius:13px;padding:12px;cursor:pointer;background:#fff}
-.card:hover{background:#faf6f3;border-color:#eadbd2}.card-head{display:flex;justify-content:space-between;gap:8px}.name{font-size:15px;font-weight:800}.badge{border-radius:999px;padding:4px 8px;color:#fff;font-size:10px;font-weight:800}
-.rating{margin-top:5px;color:#b06a2d;font-size:12px;min-height:16px}.desc{margin-top:6px;color:#5f5751;font-size:12px;line-height:1.5}.meta{display:grid;gap:3px;margin-top:8px;color:#857c75;font-size:11px;line-height:1.4}
-.map-panel{position:relative;min-height:0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);background:#e9e7e4}#map{width:100%;height:100%}
-.map-status{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:#eeeae6;color:#776f68;font-size:12px;pointer-events:none}.map-status.hidden{display:none}
-.legend{position:absolute;right:12px;bottom:12px;z-index:10;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:10px;color:#665e58;box-shadow:0 5px 16px rgba(0,0,0,.10);pointer-events:none}
-.legend-row{display:flex;align-items:center;gap:6px;margin:3px 0}.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
-.kakao-info{position:relative;min-width:220px;max-width:310px;margin-bottom:14px;padding:12px 13px;border:1px solid #e5ddd7;border-radius:13px;background:#fff;box-shadow:0 8px 22px rgba(28,21,17,.18)}
-.popup-name{font-weight:800;font-size:14px;margin-bottom:4px}.popup-rating{color:#b06a2d;font-size:12px;margin-bottom:6px}.popup-line{color:#605852;font-size:11px;line-height:1.5;margin-top:3px}
-.empty{padding:24px;color:var(--muted);font-size:13px;text-align:center}
-@media(max-width:760px){body{overflow:auto}.app{height:auto;min-height:100vh}.content{grid-template-columns:1fr;grid-template-rows:58vh auto}.map-panel{grid-row:1}.sidebar{grid-row:2;min-height:420px}.title{font-size:19px}}
+:root{
+  --brand:#9a4f31;--brand-dark:#74361f;--text:#211d1a;--muted:#77706b;
+  --line:#e8e2dc;--soft:#f7f4f1;--panel:#fff;--shadow:0 8px 24px rgba(34,27,22,.12);
+  --sidebar:370px;--header:68px;
+}
+*{box-sizing:border-box}html,body{height:100%;margin:0;font-family:Pretendard,"Noto Sans KR",Arial,sans-serif;color:var(--text);background:#fff}
+body{overflow:hidden}.app{height:100vh;display:grid;grid-template-rows:var(--header) 1fr}
+
+/* header */
+.topbar{display:grid;grid-template-columns:var(--sidebar) 1fr auto;align-items:center;background:#fff;border-bottom:1px solid var(--line);z-index:40}
+.brand{height:100%;display:flex;align-items:center;padding:0 18px;border-right:1px solid var(--line)}
+.brand-title{font-size:20px;font-weight:900;letter-spacing:-.5px}.brand-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.top-filters{display:flex;align-items:center;gap:7px;padding:0 14px;overflow-x:auto;scrollbar-width:none}.top-filters::-webkit-scrollbar{display:none}
+.filter-btn{flex:0 0 auto;border:1px solid #ded7d1;background:#fff;color:#4b4540;border-radius:999px;padding:8px 13px;font-size:12px;font-weight:800;cursor:pointer;transition:.14s}
+.filter-btn:hover{transform:translateY(-1px);border-color:#cbb9ae}.filter-btn.active{background:var(--brand);border-color:var(--brand);color:#fff}
+.header-count{margin-right:16px;padding:7px 11px;border-radius:999px;background:#f4e8e2;color:var(--brand-dark);font-size:12px;font-weight:900;white-space:nowrap}
+
+/* main */
+.main{min-height:0;display:grid;grid-template-columns:var(--sidebar) 1fr}
+.sidebar{min-height:0;background:#fff;border-right:1px solid var(--line);display:grid;grid-template-rows:auto auto auto 1fr;z-index:20;box-shadow:5px 0 18px rgba(36,30,25,.06)}
+.search-wrap{padding:12px 14px 10px}.search{width:100%;height:42px;border:1px solid #ddd6d0;border-radius:12px;padding:0 13px;font-size:13px;background:#fff;outline:none}
+.search:focus{border-color:#bd8c77;box-shadow:0 0 0 3px rgba(154,79,49,.08)}
+.quick-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 14px 10px}
+.quick-btn{height:38px;border:1px solid #dfd9d4;border-radius:11px;background:#fff;font-size:12px;font-weight:800;color:#4d4742;cursor:pointer}
+.quick-btn:hover{background:#faf7f5}.list-head{display:flex;justify-content:space-between;align-items:end;padding:10px 14px 8px;border-top:1px solid #f0ebe7;border-bottom:1px solid #f0ebe7}
+.list-title{font-size:14px;font-weight:900}.list-sub{font-size:10px;color:var(--muted);margin-top:2px}.sort{border:0;background:transparent;color:#6f6761;font-size:11px;font-weight:700}
+.list{overflow-y:auto;padding:0 10px 12px}
+.card{padding:13px 8px;border-bottom:1px solid #eee9e5;cursor:pointer;transition:.12s}
+.card:hover{background:#faf7f5}.card.active{background:#f9eee8}
+.card-head{display:flex;gap:8px;align-items:center}.name{font-size:14px;font-weight:900;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{margin-left:auto;border-radius:999px;padding:4px 7px;color:#fff;font-size:9px;font-weight:900}
+.rating{margin-top:5px;color:#ae641f;font-size:12px;min-height:15px}.desc{margin-top:5px;color:#514b46;font-size:11px;line-height:1.45}
+.meta{display:grid;gap:3px;margin-top:7px;color:#817871;font-size:10px;line-height:1.4}.empty{padding:28px 12px;text-align:center;color:var(--muted);font-size:12px}
+
+/* map */
+.map-wrap{position:relative;min-width:0;min-height:0;background:#eee}#map{width:100%;height:100%}
+.map-status{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;background:#f1efed;color:#776f68;font-size:12px;pointer-events:none}.map-status.hidden{display:none}
+.map-hint{position:absolute;left:14px;bottom:14px;z-index:8;background:rgba(255,255,255,.93);border:1px solid #e4ddd7;border-radius:11px;padding:8px 10px;font-size:10px;color:#716963;box-shadow:0 4px 14px rgba(0,0,0,.08);pointer-events:none}
+
+/* label markers */
+.marker-label{display:flex;align-items:center;gap:6px;max-width:150px;height:30px;padding:0 9px 0 7px;background:#fff;border:2px solid var(--marker-color);border-radius:16px;box-shadow:0 3px 9px rgba(0,0,0,.28);white-space:nowrap;cursor:pointer;transform:translateY(-4px);transition:.12s}
+.marker-label:hover{transform:translateY(-5px) scale(1.04);z-index:10}
+.marker-label.selected{height:34px;padding:0 11px 0 8px;background:var(--marker-color);color:#fff;border-color:#fff;box-shadow:0 5px 14px rgba(0,0,0,.34);transform:translateY(-6px) scale(1.06)}
+.marker-dot{width:9px;height:9px;border-radius:50%;background:var(--marker-color);box-shadow:0 0 0 2px #fff;flex:0 0 auto}.marker-label.selected .marker-dot{background:#fff;box-shadow:none}
+.marker-name{font-size:10px;font-weight:900;overflow:hidden;text-overflow:ellipsis}.marker-rating{font-size:9px;font-weight:900;color:#a96020;flex:0 0 auto}.marker-label.selected .marker-rating{color:#fff}
+.kakao-info{position:relative;min-width:235px;max-width:310px;margin-bottom:18px;padding:13px 14px;border:1px solid #e2dad4;border-radius:14px;background:#fff;box-shadow:0 10px 26px rgba(28,21,17,.20)}
+.popup-name{font-weight:900;font-size:14px;margin-bottom:4px}.popup-rating{color:#b06a2d;font-size:12px;margin-bottom:6px}.popup-line{color:#605852;font-size:11px;line-height:1.5;margin-top:3px}
+
+@media(max-width:800px){
+  :root{--sidebar:100%;--header:112px}
+  .topbar{grid-template-columns:1fr auto;grid-template-rows:56px 56px}
+  .brand{border-right:0}.top-filters{grid-column:1/3;grid-row:2;border-top:1px solid var(--line)}
+  .header-count{grid-column:2;grid-row:1}.main{grid-template-columns:1fr;grid-template-rows:52vh 1fr}
+  .map-wrap{grid-row:1}.sidebar{grid-row:2;min-height:48vh;border-right:0;border-top:1px solid var(--line)}
+}
 </style>
 </head>
 <body>
 <div class="app">
-<header class="topbar">
-  <div class="title-row"><div><div class="title">막냉이 합정 점심 뭐먹지 🍴</div><div class="subtitle">구분을 누르면 해당 식당만 지도에 표시됩니다.</div></div><div class="count" id="count">불러오는 중…</div></div>
-  <div class="filters" id="filters"></div>
-</header>
-<main class="content">
-  <section class="sidebar">
-    <div class="search-wrap"><input id="search" class="search" type="search" placeholder="식당명 · 특징 · 주소 검색"></div>
-    <div id="list" class="list"><div class="empty">식당 정보를 불러오는 중입니다.</div></div>
-  </section>
-  <section class="map-panel"><div id="map"></div><div id="mapStatus" class="map-status">카카오 지도를 준비하는 중입니다.</div><div id="legend" class="legend"></div></section>
-</main>
+  <header class="topbar">
+    <div class="brand">
+      <div><div class="brand-title">막냉이 합정 점심 뭐먹지 🍴</div><div class="brand-sub">합정·망원 점심 식당 지도</div></div>
+    </div>
+    <div id="filters" class="top-filters"></div>
+    <div id="count" class="header-count">불러오는 중…</div>
+  </header>
+
+  <main class="main">
+    <aside class="sidebar">
+      <div class="search-wrap"><input id="search" class="search" type="search" placeholder="식당 이름 · 특징 · 주소 검색"></div>
+      <div class="quick-row">
+        <button id="myLocation" class="quick-btn">◎ 내 위치</button>
+        <button id="showAll" class="quick-btn">⌂ 전체 보기</button>
+      </div>
+      <div class="list-head">
+        <div><div class="list-title">식당 목록</div><div id="listSub" class="list-sub">지도에 표시된 식당</div></div>
+        <select id="sort" class="sort"><option value="default">기본순</option><option value="rating">별점순</option><option value="name">이름순</option></select>
+      </div>
+      <div id="list" class="list"><div class="empty">식당 정보를 불러오는 중입니다.</div></div>
+    </aside>
+
+    <section class="map-wrap">
+      <div id="map"></div>
+      <div id="mapStatus" class="map-status">카카오 지도를 준비하는 중입니다.</div>
+      <div class="map-hint">마커 또는 식당을 클릭하면 상세 정보가 열립니다.</div>
+    </section>
+  </main>
 </div>
+
 <script>
 const KAKAO_KEY='c6656c45b7640edcf233a408bf0afa9a';
 const COLORS={'한식':'#d97706','일식':'#2563eb','중식':'#dc2626','양식':'#7c3aed','아시아':'#059669','분식':'#db2777','카페':'#92400e','회식':'#475569'};
-const FALLBACK='#6b7280',HOME_LAT=37.5515,HOME_LNG=126.9125;
-let allData=[],activeCategory='전체',searchKeyword='',map=null,mapReady=false,markers=[],markerByRow=new Map(),infoOverlay=null,searchTimer=null,pendingRows=null;
+const ORDER=['전체','한식','일식','중식','양식','아시아','분식','카페','회식'];
+const HOME_LAT=37.5515,HOME_LNG=126.9125;
+let allData=[],activeCategory='전체',searchKeyword='',sortMode='default';
+let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,searchTimer=null;
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
-const colorFor=c=>COLORS[c]||FALLBACK;
+const colorFor=c=>COLORS[c]||'#64748b';
+const ratingScore=x=>(String(x.rating||'').match(/★/g)||[]).length;
 
-function loadKakao(){return new Promise((resolve,reject)=>{if(window.kakao&&kakao.maps)return resolve();const s=document.createElement('script');s.src='https://dapi.kakao.com/v2/maps/sdk.js?appkey='+KAKAO_KEY+'&autoload=false';s.async=true;s.onload=()=>window.kakao&&kakao.maps?resolve():reject(new Error('Kakao SDK init failed'));s.onerror=()=>reject(new Error('Kakao SDK load failed'));document.head.appendChild(s);});}
-function initMap(){loadKakao().then(()=>kakao.maps.load(()=>{map=new kakao.maps.Map(document.getElementById('map'),{center:new kakao.maps.LatLng(HOME_LAT,HOME_LNG),level:5});map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);infoOverlay=new kakao.maps.CustomOverlay({zIndex:20,yAnchor:1.15});mapReady=true;document.getElementById('mapStatus').classList.add('hidden');if(pendingRows){const r=pendingRows;pendingRows=null;renderMap(r);}})).catch(e=>{document.getElementById('mapStatus').textContent='카카오 지도 로딩 실패: '+e.message;});}
-function markerImage(category,selected=false){
-  const color=colorFor(category);
-  const w=selected?38:32,h=selected?46:40;
-  const cx=w/2, headR=selected?11:9.5;
-  const tipY=h-3;
-  const svg=
-    '<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">'+
-      '<defs><filter id="s" x="-60%" y="-40%" width="220%" height="220%">'+
-        '<feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="#000" flood-opacity=".42"/>'+
-      '</filter></defs>'+
-      '<g filter="url(#s)">'+
-        '<path d="M '+cx+' '+tipY+
-          ' C '+(cx-2)+' '+(h-10)+', '+(cx-headR-5)+' '+(headR+15)+', '+(cx-headR-5)+' '+(headR+5)+
-          ' A '+(headR+5)+' '+(headR+5)+' 0 1 1 '+(cx+headR+5)+' '+(headR+5)+
-          ' C '+(cx+headR+5)+' '+(headR+15)+', '+(cx+2)+' '+(h-10)+', '+cx+' '+tipY+' Z"'+
-          ' fill="'+color+'" stroke="#fff" stroke-width="'+(selected?3.5:3)+'"/>'+
-        '<circle cx="'+cx+'" cy="'+(headR+5)+'" r="'+(selected?4.8:4.2)+'" fill="#fff"/>'+
-        '<circle cx="'+cx+'" cy="'+(headR+5)+'" r="'+(selected?2.1:1.8)+'" fill="'+color+'"/>'+
-      '</g>'+
-    '</svg>';
-  return new kakao.maps.MarkerImage(
-    'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),
-    new kakao.maps.Size(w,h),
-    {offset:new kakao.maps.Point(cx,h-3)}
-  );
+function loadKakao(){return new Promise((resolve,reject)=>{if(window.kakao&&kakao.maps)return resolve();const s=document.createElement('script');s.src='https://dapi.kakao.com/v2/maps/sdk.js?appkey='+KAKAO_KEY+'&autoload=false';s.async=true;s.onload=()=>window.kakao&&kakao.maps?resolve():reject(new Error('SDK init failed'));s.onerror=()=>reject(new Error('SDK load failed'));document.head.appendChild(s);});}
+function initMap(){loadKakao().then(()=>kakao.maps.load(()=>{map=new kakao.maps.Map(document.getElementById('map'),{center:new kakao.maps.LatLng(HOME_LAT,HOME_LNG),level:5});map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);infoOverlay=new kakao.maps.CustomOverlay({zIndex:30,yAnchor:1.12});mapReady=true;document.getElementById('mapStatus').classList.add('hidden');if(pendingRows){const r=pendingRows;pendingRows=null;renderMap(r,true);}})).catch(e=>{document.getElementById('mapStatus').textContent='카카오 지도 로딩 실패: '+e.message;});}
+
+function markerHtml(x){
+  const rating=ratingScore(x);
+  return '<div class="marker-label" data-row="'+x.row+'" style="--marker-color:'+colorFor(x.category)+'">'+
+    '<span class="marker-dot"></span>'+
+    '<span class="marker-name">'+esc(x.name)+'</span>'+
+    (rating?'<span class="marker-rating">★'+rating+'</span>':'')+
+  '</div>';
 }
-function clearMarkers(){markers.forEach(m=>m.marker.setMap(null));markers=[];markerByRow.clear();if(infoOverlay)infoOverlay.setMap(null);}
-function popupHtml(x){return '<div class="kakao-info"><div class="popup-name">'+esc(x.name)+'</div><div class="popup-rating">'+esc(x.rating||'')+'</div>'+(x.feature?'<div class="popup-line"><b>특징</b> · '+esc(x.feature)+'</div>':'')+(x.capacity?'<div class="popup-line"><b>인원</b> · '+esc(x.capacity)+'</div>':'')+'<div class="popup-line"><b>주소</b> · '+esc(x.address)+'</div>'+(x.note?'<div class="popup-line"><b>비고</b> · '+esc(x.note)+'</div>':'')+'</div>';}
-function openInfo(item){if(!mapReady||!infoOverlay)return;infoOverlay.setContent(popupHtml(item.data));infoOverlay.setPosition(item.position);infoOverlay.setMap(map);}
-function renderMap(rows){if(!mapReady){pendingRows=rows;return;}clearMarkers();if(!rows.length)return;const bounds=new kakao.maps.LatLngBounds();rows.forEach(x=>{const p=new kakao.maps.LatLng(Number(x.lat),Number(x.lng));const marker=new kakao.maps.Marker({map,position:p,image:markerImage(x.category),title:x.name,clickable:true});const item={marker,position:p,data:x};kakao.maps.event.addListener(marker,'click',()=>{markers.forEach(m=>m.marker.setImage(markerImage(m.data.category,false)));marker.setImage(markerImage(x.category,true));openInfo(item);});markers.push(item);markerByRow.set(x.row,item);bounds.extend(p);});if(rows.length===1){map.setCenter(markers[0].position);map.setLevel(3);}else map.setBounds(bounds,35,35,35,35);}
-function buildFilters(){const order=['전체','한식','일식','중식','양식','아시아','분식','카페','회식'];const cats=[...new Set(allData.map(x=>x.category).filter(Boolean))];const items=['전체',...cats].sort((a,b)=>(order.indexOf(a)<0?99:order.indexOf(a))-(order.indexOf(b)<0?99:order.indexOf(b)));const el=document.getElementById('filters');el.innerHTML=items.map(c=>'<button class="filter-btn '+(c===activeCategory?'active':'')+'" data-category="'+esc(c)+'">'+esc(c)+'</button>').join('');el.querySelectorAll('button').forEach(b=>b.onclick=()=>{activeCategory=b.dataset.category;buildFilters();render();});}
-function filtered(){const q=searchKeyword.trim().toLowerCase();return allData.filter(x=>(activeCategory==='전체'||x.category===activeCategory)&&(!q||[x.name,x.feature,x.address,x.note,x.locationHint,x.capacity].join(' ').toLowerCase().includes(q)));}
-function renderList(rows){const el=document.getElementById('list');if(!rows.length){el.innerHTML='<div class="empty">조건에 맞는 식당이 없습니다.</div>';return;}el.innerHTML=rows.map(x=>'<div class="card" data-row="'+x.row+'"><div class="card-head"><div class="name">'+esc(x.name)+'</div><div class="badge" style="background:'+colorFor(x.category)+'">'+esc(x.category)+'</div></div><div class="rating">'+esc(x.rating||'')+'</div>'+(x.feature?'<div class="desc">'+esc(x.feature)+'</div>':'')+'<div class="meta">'+(x.capacity?'<div>👥 '+esc(x.capacity)+'</div>':'')+'<div>📍 '+esc(x.address)+'</div></div></div>').join('');el.querySelectorAll('.card').forEach(card=>card.onclick=()=>{const item=markerByRow.get(Number(card.dataset.row));if(!item||!mapReady)return;markers.forEach(m=>m.marker.setImage(markerImage(m.data.category,false)));item.marker.setImage(markerImage(item.data.category,true));map.setLevel(3);map.panTo(item.position);openInfo(item);});}
-function renderLegend(){const used=[...new Set(allData.map(x=>x.category).filter(Boolean))];document.getElementById('legend').innerHTML=used.map(c=>'<div class="legend-row"><span class="dot" style="background:'+colorFor(c)+'"></span><span>'+esc(c)+'</span></div>').join('');}
-function render(){const rows=filtered();document.getElementById('count').textContent=rows.length+'곳';renderList(rows);renderMap(rows);}
-document.getElementById('search').addEventListener('input',e=>{searchKeyword=e.target.value||'';clearTimeout(searchTimer);searchTimer=setTimeout(render,120);});
-fetch('./restaurants.json',{cache:'no-store'})
-  .then(r=>{ if(!r.ok) throw new Error('restaurants.json '+r.status); return r.json(); })
-  .then(p=>{
-    allData=Array.isArray(p)?p:(Array.isArray(p.rows)?p.rows:[]);
-    buildFilters(); renderLegend(); render();
-  })
-  .catch(e=>{
-    document.getElementById('list').innerHTML='<div class="empty">식당 데이터를 불러오지 못했습니다.</div>';
-    document.getElementById('count').textContent='오류';
+function clearMarkers(){overlays.forEach(o=>o.overlay.setMap(null));overlays=[];markerByRow.clear();if(infoOverlay)infoOverlay.setMap(null);}
+function popupHtml(x){return '<div class="kakao-info"><div class="popup-name">'+esc(x.name)+'</div><div class="popup-rating">'+esc(x.rating||'')+'</div>'+(x.feature?'<div class="popup-line"><b>특징</b> · '+esc(x.feature)+'</div>':'')+(x.capacity?'<div class="popup-line"><b>인원</b> · '+esc(x.capacity)+'</div>':'')+'<div class="popup-line"><b>주소</b> · '+esc(x.address)+'</div></div>';}
+function selectRow(row,pan=true){
+  selectedRow=row;
+  document.querySelectorAll('.marker-label').forEach(el=>el.classList.toggle('selected',Number(el.dataset.row)===row));
+  document.querySelectorAll('.card').forEach(el=>el.classList.toggle('active',Number(el.dataset.row)===row));
+  const item=markerByRow.get(row);if(!item||!mapReady)return;
+  if(pan){map.setLevel(3);map.panTo(item.position);}
+  infoOverlay.setContent(popupHtml(item.data));infoOverlay.setPosition(item.position);infoOverlay.setMap(map);
+}
+function renderMap(rows,fit=true){
+  if(!mapReady){pendingRows=rows;return;}
+  clearMarkers();selectedRow=null;if(!rows.length)return;
+  const bounds=new kakao.maps.LatLngBounds();
+  rows.forEach(x=>{
+    const position=new kakao.maps.LatLng(Number(x.lat),Number(x.lng));
+    const wrap=document.createElement('div');wrap.innerHTML=markerHtml(x);const content=wrap.firstElementChild;
+    const overlay=new kakao.maps.CustomOverlay({map,position,content,xAnchor:.5,yAnchor:1,zIndex:5});
+    const item={overlay,position,data:x,content};content.addEventListener('click',()=>selectRow(x.row,false));
+    overlays.push(item);markerByRow.set(x.row,item);bounds.extend(position);
   });
+  if(rows.length===1){map.setCenter(overlays[0].position);map.setLevel(3);}
+  else if(fit)map.setBounds(bounds,46,46,46,46);
+}
+function buildFilters(){
+  const cats=[...new Set(allData.map(x=>x.category).filter(Boolean))];
+  const items=['전체',...cats].sort((a,b)=>(ORDER.indexOf(a)<0?99:ORDER.indexOf(a))-(ORDER.indexOf(b)<0?99:ORDER.indexOf(b)));
+  const el=document.getElementById('filters');
+  el.innerHTML=items.map(c=>'<button class="filter-btn '+(c===activeCategory?'active':'')+'" data-category="'+esc(c)+'">'+esc(c)+'</button>').join('');
+  el.querySelectorAll('button').forEach(b=>b.onclick=()=>{activeCategory=b.dataset.category;buildFilters();render(true);});
+}
+function getRows(){
+  const q=searchKeyword.trim().toLowerCase();
+  let rows=allData.filter(x=>(activeCategory==='전체'||x.category===activeCategory)&&(!q||[x.name,x.feature,x.address,x.capacity].join(' ').toLowerCase().includes(q)));
+  if(sortMode==='rating')rows=[...rows].sort((a,b)=>ratingScore(b)-ratingScore(a)||a.name.localeCompare(b.name,'ko'));
+  else if(sortMode==='name')rows=[...rows].sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+  return rows;
+}
+function renderList(rows){
+  const el=document.getElementById('list');
+  document.getElementById('listSub').textContent='현재 '+rows.length+'곳';
+  if(!rows.length){el.innerHTML='<div class="empty">조건에 맞는 식당이 없습니다.</div>';return;}
+  el.innerHTML=rows.map(x=>'<div class="card" data-row="'+x.row+'">'+
+    '<div class="card-head"><div class="name">'+esc(x.name)+'</div><div class="badge" style="background:'+colorFor(x.category)+'">'+esc(x.category)+'</div></div>'+
+    '<div class="rating">'+esc(x.rating||'')+'</div>'+
+    (x.feature?'<div class="desc">'+esc(x.feature)+'</div>':'')+
+    '<div class="meta">'+(x.capacity?'<div>👥 '+esc(x.capacity)+'</div>':'')+'<div>📍 '+esc(x.address)+'</div></div></div>').join('');
+  el.querySelectorAll('.card').forEach(card=>card.onclick=()=>selectRow(Number(card.dataset.row),true));
+}
+function render(fit=true){const rows=getRows();document.getElementById('count').textContent=rows.length+'곳';renderList(rows);renderMap(rows,fit);}
+function showAll(){activeCategory='전체';searchKeyword='';sortMode='default';document.getElementById('search').value='';document.getElementById('sort').value='default';buildFilters();render(true);}
+function locateMe(){
+  if(!navigator.geolocation){alert('현재 위치 기능을 사용할 수 없습니다.');return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    if(!mapReady)return;const p=new kakao.maps.LatLng(pos.coords.latitude,pos.coords.longitude);map.setCenter(p);map.setLevel(4);
+  },()=>alert('현재 위치 권한을 허용하면 사용할 수 있습니다.'),{enableHighAccuracy:false,timeout:5000,maximumAge:300000});
+}
+
+document.getElementById('search').addEventListener('input',e=>{searchKeyword=e.target.value||'';clearTimeout(searchTimer);searchTimer=setTimeout(()=>render(true),120);});
+document.getElementById('sort').addEventListener('change',e=>{sortMode=e.target.value;render(false);});
+document.getElementById('showAll').onclick=showAll;
+document.getElementById('myLocation').onclick=locateMe;
+
+fetch('./restaurants.json',{cache:'no-store'})
+  .then(r=>{if(!r.ok)throw new Error('restaurants.json '+r.status);return r.json();})
+  .then(p=>{allData=Array.isArray(p)?p:(Array.isArray(p.rows)?p.rows:[]);buildFilters();renderList(getRows());document.getElementById('count').textContent=allData.length+'곳';if(mapReady)renderMap(getRows(),true);})
+  .catch(()=>{document.getElementById('list').innerHTML='<div class="empty">식당 데이터를 불러오지 못했습니다.</div>';document.getElementById('count').textContent='오류';});
 setTimeout(initMap,0);
 </script>
 </body>
