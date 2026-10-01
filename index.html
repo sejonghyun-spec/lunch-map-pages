@@ -1106,7 +1106,7 @@ button,input,select{font:inherit}
     </div>
 
     <form id="suggestForm" class="suggest-form" method="POST"
-      action="https://script.google.com/macros/s/AKfycbxzB7nF3k4q03xvQ96pXlYXeEB5ZBZnjY2vTpPN2QV7xCsadmOw5NY2jWYOylYvY5xMkA/exec"
+      action="https://script.google.com/macros/s/AKfycbzaXgqqwAPZHa6jdpNUGkLbucz2PZQn8I3KcLkd21V2VggRpXid2MwOACzMiuMOQn5sRQ/exec"
       target="suggestSink" autocomplete="off">
       <div class="form-grid">
         <div class="form-field full">
@@ -1175,6 +1175,7 @@ button,input,select{font:inherit}
       </div>
     </form>
     <iframe name="suggestSink" id="suggestSink" title="제안 전송" style="display:none"></iframe>
+    <iframe name="enrichSink" id="enrichSink" title="DB 자동보완" style="display:none"></iframe>
   </section>
 </div>
 <div id="toast" class="toast"></div>
@@ -1184,10 +1185,11 @@ const KAKAO_KEY='c6656c45b7640edcf233a408bf0afa9a';
 const COLORS={'한식':'#d97706','일식':'#2563eb','중식':'#dc2626','양식':'#7c3aed','아시아':'#059669','분식':'#db2777','카페':'#92400e','회식':'#475569'};
 const ORDER=['전체','한식','일식','중식','양식','아시아','분식','카페','회식'];
 const HOME_LAT=37.5515,HOME_LNG=126.9125;
-const SUGGEST_URL='https://script.google.com/macros/s/AKfycbxzB7nF3k4q03xvQ96pXlYXeEB5ZBZnjY2vTpPN2QV7xCsadmOw5NY2jWYOylYvY5xMkA/exec';
+const SUGGEST_URL='https://script.google.com/macros/s/AKfycbzaXgqqwAPZHa6jdpNUGkLbucz2PZQn8I3KcLkd21V2VggRpXid2MwOACzMiuMOQn5sRQ/exec';
 let allData=[],activeCategory='전체',searchKeyword='',sortMode='default';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,searchTimer=null;
-let placesService=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,suggestTimeout=null;
+let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,suggestTimeout=null;
+let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false;
 let rouletteCandidates=[],rouletteWinner=null,rouletteSpinning=false,rouletteRotation=0,rouletteTicker=null,rouletteCategory='전체';
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
 const colorFor=c=>COLORS[c]||'#64748b';
@@ -1201,6 +1203,7 @@ function initMap(){
     map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
     infoOverlay=new kakao.maps.CustomOverlay({zIndex:30,yAnchor:1.12});
     placesService=new kakao.maps.services.Places();
+    geocoder=new kakao.maps.services.Geocoder();
     mapReady=true;
     document.getElementById('mapStatus').classList.add('hidden');
 
@@ -1219,6 +1222,7 @@ function initMap(){
       pendingRows=null;
       setTimeout(()=>renderMap(r,true),0);
     }
+    setTimeout(hydrateMissingRows,120);
   })).catch(e=>{
     const status=document.getElementById('mapStatus');
     status.classList.remove('hidden');
@@ -1286,7 +1290,16 @@ function renderList(rows){
     '<div class="meta">'+(x.capacity?'<div>👥 '+esc(x.capacity)+'</div>':'')+'<div>📍 '+esc(x.address)+'</div></div></div>').join('');
   el.querySelectorAll('.card').forEach(card=>card.onclick=()=>selectRow(Number(card.dataset.row),true));
 }
-function render(fit=true){const rows=getRows();document.getElementById('count').textContent=rows.length+'곳';renderList(rows);renderMap(rows,fit);}
+function hasValidCoords(x){
+  const lat=Number(x&&x.lat),lng=Number(x&&x.lng);
+  return Number.isFinite(lat)&&lat!==0&&Number.isFinite(lng)&&lng!==0;
+}
+function render(fit=true){
+  const rows=getRows();
+  document.getElementById('count').textContent=rows.length+'곳';
+  renderList(rows);
+  renderMap(rows.filter(hasValidCoords),fit);
+}
 function showAll(){activeCategory='전체';searchKeyword='';sortMode='default';document.getElementById('search').value='';document.getElementById('sort').value='default';buildFilters();render(true);if(isMobile())setSheetState('mid');}
 function locateMe(){
   if(!navigator.geolocation){alert('현재 위치 기능을 사용할 수 없습니다.');return;}
@@ -1296,6 +1309,203 @@ function locateMe(){
 }
 
 
+
+function normalizePlaceName(value){
+  return String(value||'').toLowerCase().replace(/\s+/g,'').replace(/[()\[\]{}·ㆍ.,'"]/g,'');
+}
+
+function inferCategoryFromKakao(place){
+  return inferCategory(place);
+}
+
+function chooseBestKakaoPlace(row,data){
+  if(!Array.isArray(data)||!data.length)return null;
+  let candidates=data.filter(x=>x.category_group_code==='FD6'||x.category_group_code==='CE7');
+  if(!candidates.length)candidates=data;
+
+  const target=normalizePlaceName(row.name);
+  const exact=candidates.find(x=>normalizePlaceName(x.place_name)===target);
+  if(exact)return exact;
+
+  const includes=candidates.find(x=>{
+    const n=normalizePlaceName(x.place_name);
+    return n.includes(target)||target.includes(n);
+  });
+  return includes||candidates[0]||null;
+}
+
+function persistEnrichment(row,place){
+  if(!row||!row.row||!row.name||!row.address||!hasValidCoords(row))return;
+  const form=document.createElement('form');
+  form.method='POST';
+  form.action=SUGGEST_URL;
+  form.target='enrichSink';
+  form.style.display='none';
+
+  const fields={
+    mode:'enrich',
+    row:String(row.row),
+    name:row.name,
+    category:row.category||'',
+    address:row.address,
+    lat:String(row.lat),
+    lng:String(row.lng),
+    placeId:(place&&place.id)||row._placeId||''
+  };
+  Object.entries(fields).forEach(([name,value])=>{
+    const input=document.createElement('input');
+    input.type='hidden';
+    input.name=name;
+    input.value=value;
+    form.appendChild(input);
+  });
+  document.body.appendChild(form);
+  HTMLFormElement.prototype.submit.call(form);
+  setTimeout(()=>form.remove(),1200);
+}
+
+function searchPlaceForRow(row){
+  return new Promise(resolve=>{
+    if(!placesService||!row||!row.name)return resolve(null);
+    const opts={
+      location:new kakao.maps.LatLng(HOME_LAT,HOME_LNG),
+      radius:20000,
+      size:15,
+      sort:kakao.maps.services.SortBy.DISTANCE
+    };
+    placesService.keywordSearch(row.name,(data,status)=>{
+      if(status!==kakao.maps.services.Status.OK)return resolve(null);
+      resolve(chooseBestKakaoPlace(row,data));
+    },opts);
+  });
+}
+
+async function enrichOneRow(row){
+  if(!row||!row.name)return false;
+  const needsAddress=!String(row.address||'').trim();
+  const needsCoords=!hasValidCoords(row);
+  const needsCategory=!String(row.category||'').trim();
+  if(!needsAddress&&!needsCoords&&!needsCategory)return false;
+
+  const place=await searchPlaceForRow(row);
+  if(!place)return false;
+
+  const address=place.road_address_name||place.address_name||'';
+  if(needsAddress&&address)row.address=address;
+  if(needsCoords){
+    const lat=Number(place.y),lng=Number(place.x);
+    if(Number.isFinite(lat)&&Number.isFinite(lng)){
+      row.lat=lat;
+      row.lng=lng;
+    }
+  }
+  if(needsCategory){
+    row.category=inferCategoryFromKakao(place)||'기타';
+  }
+  row._placeId=place.id||'';
+
+  if(row.address&&hasValidCoords(row)){
+    persistEnrichment(row,place);
+    return true;
+  }
+  return false;
+}
+
+async function hydrateMissingRows(){
+  if(enrichQueueRunning||!placesService||!allData.length)return;
+  enrichQueueRunning=true;
+  try{
+    const targets=allData.filter(x=>
+      x&&x.name&&(
+        !String(x.address||'').trim()||
+        !hasValidCoords(x)||
+        !String(x.category||'').trim()
+      )
+    );
+
+    for(const row of targets){
+      const changed=await enrichOneRow(row);
+      if(changed){
+        buildFilters();
+        render(false);
+      }
+      await new Promise(r=>setTimeout(r,160));
+    }
+  }finally{
+    enrichQueueRunning=false;
+  }
+}
+
+function applyDbRows(rows){
+  if(!Array.isArray(rows)||!rows.length)return false;
+  allData=rows.map(x=>({
+    ...x,
+    lat:x.lat==null?null:Number(x.lat),
+    lng:x.lng==null?null:Number(x.lng)
+  }));
+  buildFilters();
+  renderList(getRows());
+  document.getElementById('count').textContent=allData.length+'곳';
+  if(mapReady)render(true);
+  hydrateMissingRows();
+  return true;
+}
+
+function loadStaticFallback(){
+  return fetch('./restaurants.json',{cache:'no-store'})
+    .then(r=>{if(!r.ok)throw new Error('restaurants.json '+r.status);return r.json();})
+    .then(p=>{
+      if(dbLoadDone)return;
+      const rows=Array.isArray(p)?p:(Array.isArray(p.rows)?p.rows:[]);
+      applyDbRows(rows);
+    })
+    .catch(()=>{
+      if(dbLoadDone)return;
+      document.getElementById('list').innerHTML='<div class="empty">식당 데이터를 불러오지 못했습니다.</div>';
+      document.getElementById('count').textContent='오류';
+    });
+}
+
+function loadLiveDb(){
+  return new Promise(resolve=>{
+    const callback='__lunchMapDbCallback';
+    let script=null;
+    let finished=false;
+
+    function done(ok){
+      if(finished)return;
+      finished=true;
+      clearTimeout(dbLoadTimer);
+      try{delete window[callback];}catch(e){window[callback]=undefined;}
+      if(script)script.remove();
+      resolve(ok);
+    }
+
+    window[callback]=payload=>{
+      const rows=payload&&Array.isArray(payload.rows)?payload.rows:[];
+      if(rows.length){
+        dbLoadDone=true;
+        applyDbRows(rows);
+        done(true);
+      }else{
+        done(false);
+      }
+    };
+
+    script=document.createElement('script');
+    script.src=SUGGEST_URL+'?mode=data&callback='+callback+'&t='+Date.now();
+    script.async=true;
+    script.onerror=()=>done(false);
+    document.head.appendChild(script);
+
+    dbLoadTimer=setTimeout(()=>done(false),3500);
+  });
+}
+
+async function loadDashboardData(){
+  const live=await loadLiveDb();
+  if(!live)await loadStaticFallback();
+}
 
 const rouletteModal=document.getElementById('rouletteModal');
 const rouletteWheel=document.getElementById('rouletteWheel');
@@ -1674,10 +1884,7 @@ document.getElementById('sort').addEventListener('change',e=>{sortMode=e.target.
 document.getElementById('showAll').onclick=showAll;
 document.getElementById('myLocation').onclick=locateMe;
 
-fetch('./restaurants.json',{cache:'no-store'})
-  .then(r=>{if(!r.ok)throw new Error('restaurants.json '+r.status);return r.json();})
-  .then(p=>{allData=Array.isArray(p)?p:(Array.isArray(p.rows)?p.rows:[]);buildFilters();renderList(getRows());document.getElementById('count').textContent=allData.length+'곳';if(mapReady)renderMap(getRows(),true);})
-  .catch(()=>{document.getElementById('list').innerHTML='<div class="empty">식당 데이터를 불러오지 못했습니다.</div>';document.getElementById('count').textContent='오류';});
+loadDashboardData();
 setTimeout(initMap,0);
 </script>
 </body>
