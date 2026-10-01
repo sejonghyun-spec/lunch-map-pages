@@ -583,7 +583,7 @@ button,input,select{font:inherit}
   display:inline-flex;
   align-items:center;
   gap:7px;
-  margin-bottom:14px;
+  margin-bottom:12px;
   padding:7px 11px;
   border-radius:999px;
   background:#f7eee9;
@@ -591,11 +591,51 @@ button,input,select{font:inherit}
   font-size:13px;
   font-weight:900;
 }
+.roulette-category-title{
+  margin:2px 0 8px;
+  color:#4c4540;
+  font-size:14px;
+  font-weight:900;
+  text-align:left;
+}
+.roulette-categories{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:7px;
+  margin:0 auto 16px;
+}
+.roulette-category{
+  min-height:38px;
+  border:1px solid #ddd4ce;
+  border-radius:999px;
+  padding:7px 12px;
+  background:#fff;
+  color:#4f4843;
+  font-size:13px;
+  font-weight:850;
+  cursor:pointer;
+  transition:.12s;
+}
+.roulette-category:hover{
+  background:#faf5f2;
+  border-color:#cbb7aa;
+}
+.roulette-category.active{
+  background:var(--brand);
+  border-color:var(--brand);
+  color:#fff;
+  box-shadow:0 3px 9px rgba(154,79,49,.18);
+}
+.roulette-category:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
 .roulette-stage{
   position:relative;
   width:240px;
   height:240px;
-  margin:4px auto 18px;
+  margin:2px auto 16px;
 }
 .roulette-pointer{
   position:absolute;
@@ -963,6 +1003,20 @@ button,input,select{font:inherit}
     border-radius:20px 20px 12px 12px;
   }
   .roulette-body{padding:18px 16px 20px}
+  .roulette-category-title{text-align:left;font-size:13px}
+  .roulette-categories{
+    flex-wrap:nowrap;
+    justify-content:flex-start;
+    overflow-x:auto;
+    padding-bottom:3px;
+    scrollbar-width:none;
+  }
+  .roulette-categories::-webkit-scrollbar{display:none}
+  .roulette-category{
+    flex:0 0 auto;
+    min-height:38px;
+    font-size:13px;
+  }
   .roulette-stage{width:210px;height:210px}
   .roulette-result-name{font-size:23px}
   .roulette-actions{position:sticky;bottom:0;background:#fff;padding-top:10px}
@@ -1019,6 +1073,8 @@ button,input,select{font:inherit}
       <button id="rouletteClose" class="modal-close" type="button" aria-label="닫기">×</button>
     </div>
     <div class="roulette-body">
+      <div class="roulette-category-title">분류 선택</div>
+      <div id="rouletteCategories" class="roulette-categories"></div>
       <div id="rouletteContext" class="roulette-context">전체 · 0곳</div>
       <div class="roulette-stage">
         <div class="roulette-pointer"></div>
@@ -1032,7 +1088,7 @@ button,input,select{font:inherit}
         <div id="rouletteResultMeta" class="roulette-result-meta"></div>
       </div>
       <div class="roulette-actions">
-        <button id="rouletteAgain" class="roulette-action primary" type="button">다시 돌리기</button>
+        <button id="rouletteAgain" class="roulette-action primary" type="button">룰렛 돌리기</button>
         <button id="rouletteGo" class="roulette-action secondary" type="button" disabled>지도에서 보기</button>
       </div>
     </div>
@@ -1132,7 +1188,7 @@ const SUGGEST_URL='https://script.google.com/macros/s/AKfycbxzB7nF3k4q03xvQ96pXl
 let allData=[],activeCategory='전체',searchKeyword='',sortMode='default';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,searchTimer=null;
 let placesService=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,suggestTimeout=null;
-let rouletteCandidates=[],rouletteWinner=null,rouletteSpinning=false,rouletteRotation=0,rouletteTicker=null;
+let rouletteCandidates=[],rouletteWinner=null,rouletteSpinning=false,rouletteRotation=0,rouletteTicker=null,rouletteCategory='전체';
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
 const colorFor=c=>COLORS[c]||'#64748b';
 const ratingScore=x=>(String(x.rating||'').match(/★/g)||[]).length;
@@ -1244,6 +1300,7 @@ function locateMe(){
 const rouletteModal=document.getElementById('rouletteModal');
 const rouletteWheel=document.getElementById('rouletteWheel');
 const rouletteContext=document.getElementById('rouletteContext');
+const rouletteCategories=document.getElementById('rouletteCategories');
 const rouletteLive=document.getElementById('rouletteLive');
 const rouletteResult=document.getElementById('rouletteResult');
 const rouletteResultName=document.getElementById('rouletteResultName');
@@ -1252,18 +1309,46 @@ const rouletteAgain=document.getElementById('rouletteAgain');
 const rouletteGo=document.getElementById('rouletteGo');
 
 function getRouletteCandidates(){
-  return allData.filter(x=>activeCategory==='전체'||x.category===activeCategory);
+  return allData.filter(x=>rouletteCategory==='전체'||x.category===rouletteCategory);
+}
+function buildRouletteCategories(){
+  const available=new Set(allData.map(x=>x.category).filter(Boolean));
+  const items=ORDER.filter(c=>c==='전체'||available.has(c));
+  rouletteCategories.innerHTML=items.map(c=>{
+    const count=c==='전체'?allData.length:allData.filter(x=>x.category===c).length;
+    return '<button type="button" class="roulette-category '+(c===rouletteCategory?'active':'')+'" data-category="'+esc(c)+'">'+esc(c)+' <span>'+count+'</span></button>';
+  }).join('');
+  rouletteCategories.querySelectorAll('.roulette-category').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      if(rouletteSpinning)return;
+      rouletteCategory=btn.dataset.category;
+      rouletteWinner=null;
+      rouletteResult.classList.remove('show');
+      rouletteGo.disabled=true;
+      rouletteAgain.textContent='룰렛 돌리기';
+      updateRouletteCandidates();
+      buildRouletteCategories();
+    });
+  });
+}
+function updateRouletteCandidates(){
+  rouletteCandidates=getRouletteCandidates();
+  rouletteContext.textContent=rouletteCategory+' · '+rouletteCandidates.length+'곳';
+  rouletteLive.textContent=rouletteCandidates.length
+    ? '분류를 확인한 뒤 룰렛을 돌려주세요.'
+    : '선택한 분류에 식당이 없습니다.';
+  rouletteAgain.disabled=!rouletteCandidates.length;
 }
 function openRoulette(){
-  rouletteCandidates=getRouletteCandidates();
+  rouletteCategory='전체';
   rouletteWinner=null;
   rouletteResult.classList.remove('show');
   rouletteGo.disabled=true;
-  rouletteContext.textContent=activeCategory+' · '+rouletteCandidates.length+'곳';
-  rouletteLive.textContent=rouletteCandidates.length?'룰렛을 돌립니다…':'선택한 분류에 식당이 없습니다.';
+  rouletteAgain.textContent='룰렛 돌리기';
   rouletteModal.classList.add('open');
   rouletteModal.setAttribute('aria-hidden','false');
-  if(rouletteCandidates.length) setTimeout(spinRoulette,180);
+  buildRouletteCategories();
+  updateRouletteCandidates();
 }
 function closeRoulette(){
   if(rouletteSpinning)return;
@@ -1271,12 +1356,14 @@ function closeRoulette(){
   rouletteModal.setAttribute('aria-hidden','true');
 }
 function spinRoulette(){
+  rouletteCandidates=getRouletteCandidates();
   if(rouletteSpinning||!rouletteCandidates.length)return;
   rouletteSpinning=true;
   rouletteAgain.disabled=true;
   rouletteGo.disabled=true;
   rouletteWinner=null;
   rouletteResult.classList.remove('show');
+  rouletteCategories.querySelectorAll('.roulette-category').forEach(btn=>btn.disabled=true);
 
   const winnerIndex=Math.floor(Math.random()*rouletteCandidates.length);
   const winner=rouletteCandidates[winnerIndex];
@@ -1298,7 +1385,9 @@ function spinRoulette(){
     rouletteTicker=null;
     rouletteSpinning=false;
     rouletteWinner=winner;
+    rouletteCategories.querySelectorAll('.roulette-category').forEach(btn=>btn.disabled=false);
     rouletteAgain.disabled=false;
+    rouletteAgain.textContent='다시 돌리기';
     rouletteGo.disabled=false;
     rouletteLive.textContent='결정!';
     rouletteResultName.textContent=winner.name;
