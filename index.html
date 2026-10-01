@@ -1106,7 +1106,7 @@ button,input,select{font:inherit}
     </div>
 
     <form id="suggestForm" class="suggest-form" method="POST"
-      action="https://script.google.com/macros/s/AKfycbzaXgqqwAPZHa6jdpNUGkLbucz2PZQn8I3KcLkd21V2VggRpXid2MwOACzMiuMOQn5sRQ/exec"
+      action="https://script.google.com/macros/s/AKfycbzx5owEbquS7EmAQy_tZDxXR5QU1lJA4ZoqN6fPvg0bJA6qwLHbnO4ACv1_pej7NI0yjg/exec"
       target="suggestSink" autocomplete="off">
       <div class="form-grid">
         <div class="form-field full">
@@ -1185,7 +1185,7 @@ const KAKAO_KEY='c6656c45b7640edcf233a408bf0afa9a';
 const COLORS={'한식':'#d97706','일식':'#2563eb','중식':'#dc2626','양식':'#7c3aed','아시아':'#059669','분식':'#db2777','카페':'#92400e','회식':'#475569'};
 const ORDER=['전체','한식','일식','중식','양식','아시아','분식','카페','회식'];
 const HOME_LAT=37.5515,HOME_LNG=126.9125;
-const SUGGEST_URL='https://script.google.com/macros/s/AKfycbzaXgqqwAPZHa6jdpNUGkLbucz2PZQn8I3KcLkd21V2VggRpXid2MwOACzMiuMOQn5sRQ/exec';
+const SUGGEST_URL='https://script.google.com/macros/s/AKfycbzx5owEbquS7EmAQy_tZDxXR5QU1lJA4ZoqN6fPvg0bJA6qwLHbnO4ACv1_pej7NI0yjg/exec';
 let allData=[],activeCategory='전체',searchKeyword='',sortMode='default';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,searchTimer=null;
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,suggestTimeout=null;
@@ -1380,35 +1380,68 @@ function searchPlaceForRow(row){
   });
 }
 
+function geocodeAddress(address){
+  return new Promise(resolve=>{
+    if(!geocoder||!String(address||'').trim())return resolve(null);
+    geocoder.addressSearch(String(address).trim(),(result,status)=>{
+      if(status!==kakao.maps.services.Status.OK||!result||!result.length)return resolve(null);
+      const first=result[0];
+      resolve({lat:Number(first.y),lng:Number(first.x)});
+    });
+  });
+}
+
 async function enrichOneRow(row){
   if(!row||!row.name)return false;
   const needsAddress=!String(row.address||'').trim();
-  const needsCoords=!hasValidCoords(row);
+  let needsCoords=!hasValidCoords(row);
   const needsCategory=!String(row.category||'').trim();
   if(!needsAddress&&!needsCoords&&!needsCategory)return false;
 
-  const place=await searchPlaceForRow(row);
-  if(!place)return false;
+  let changed=false;
+  let place=null;
 
-  const address=place.road_address_name||place.address_name||'';
-  if(needsAddress&&address)row.address=address;
-  if(needsCoords){
-    const lat=Number(place.y),lng=Number(place.x);
-    if(Number.isFinite(lat)&&Number.isFinite(lng)){
-      row.lat=lat;
-      row.lng=lng;
+  // 주소가 이미 있으면 주소를 기준으로 좌표를 먼저 계산한다.
+  if(!needsAddress&&needsCoords){
+    const geo=await geocodeAddress(row.address);
+    if(geo&&Number.isFinite(geo.lat)&&Number.isFinite(geo.lng)){
+      row.lat=geo.lat;
+      row.lng=geo.lng;
+      needsCoords=false;
+      changed=true;
     }
   }
-  if(needsCategory){
-    row.category=inferCategoryFromKakao(place)||'기타';
-  }
-  row._placeId=place.id||'';
 
-  if(row.address&&hasValidCoords(row)){
+  // 주소가 없거나 구분을 추정해야 하거나 주소 지오코딩이 실패한 경우에만 장소검색한다.
+  if(needsAddress||needsCategory||needsCoords){
+    place=await searchPlaceForRow(row);
+    if(place){
+      const address=place.road_address_name||place.address_name||'';
+      if(needsAddress&&address){
+        row.address=address;
+        changed=true;
+      }
+      if(needsCoords){
+        const lat=Number(place.y),lng=Number(place.x);
+        if(Number.isFinite(lat)&&Number.isFinite(lng)){
+          row.lat=lat;
+          row.lng=lng;
+          changed=true;
+        }
+      }
+      if(needsCategory){
+        row.category=inferCategoryFromKakao(place)||'기타';
+        changed=true;
+      }
+      row._placeId=place.id||'';
+    }
+  }
+
+  if(row.address&&hasValidCoords(row)&&changed){
     persistEnrichment(row,place);
     return true;
   }
-  return false;
+  return changed;
 }
 
 async function hydrateMissingRows(){
