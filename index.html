@@ -54,14 +54,39 @@ const colorFor=c=>COLORS[c]||FALLBACK;
 
 function loadKakao(){return new Promise((resolve,reject)=>{if(window.kakao&&kakao.maps)return resolve();const s=document.createElement('script');s.src='https://dapi.kakao.com/v2/maps/sdk.js?appkey='+KAKAO_KEY+'&autoload=false';s.async=true;s.onload=()=>window.kakao&&kakao.maps?resolve():reject(new Error('Kakao SDK init failed'));s.onerror=()=>reject(new Error('Kakao SDK load failed'));document.head.appendChild(s);});}
 function initMap(){loadKakao().then(()=>kakao.maps.load(()=>{map=new kakao.maps.Map(document.getElementById('map'),{center:new kakao.maps.LatLng(HOME_LAT,HOME_LNG),level:5});map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);infoOverlay=new kakao.maps.CustomOverlay({zIndex:20,yAnchor:1.15});mapReady=true;document.getElementById('mapStatus').classList.add('hidden');if(pendingRows){const r=pendingRows;pendingRows=null;renderMap(r);}})).catch(e=>{document.getElementById('mapStatus').textContent='카카오 지도 로딩 실패: '+e.message;});}
-function markerImage(category){const color=colorFor(category),svg='<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"><circle cx="11" cy="11" r="9" fill="'+color+'" stroke="#fff" stroke-width="3"/></svg>';return new kakao.maps.MarkerImage('data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),new kakao.maps.Size(22,22),{offset:new kakao.maps.Point(11,11)});}
+function markerImage(category,selected=false){
+  const color=colorFor(category);
+  const w=selected?38:32,h=selected?46:40;
+  const cx=w/2, headR=selected?11:9.5;
+  const tipY=h-3;
+  const svg=
+    '<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">'+
+      '<defs><filter id="s" x="-60%" y="-40%" width="220%" height="220%">'+
+        '<feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="#000" flood-opacity=".42"/>'+
+      '</filter></defs>'+
+      '<g filter="url(#s)">'+
+        '<path d="M '+cx+' '+tipY+
+          ' C '+(cx-2)+' '+(h-10)+', '+(cx-headR-5)+' '+(headR+15)+', '+(cx-headR-5)+' '+(headR+5)+
+          ' A '+(headR+5)+' '+(headR+5)+' 0 1 1 '+(cx+headR+5)+' '+(headR+5)+
+          ' C '+(cx+headR+5)+' '+(headR+15)+', '+(cx+2)+' '+(h-10)+', '+cx+' '+tipY+' Z"'+
+          ' fill="'+color+'" stroke="#fff" stroke-width="'+(selected?3.5:3)+'"/>'+
+        '<circle cx="'+cx+'" cy="'+(headR+5)+'" r="'+(selected?4.8:4.2)+'" fill="#fff"/>'+
+        '<circle cx="'+cx+'" cy="'+(headR+5)+'" r="'+(selected?2.1:1.8)+'" fill="'+color+'"/>'+
+      '</g>'+
+    '</svg>';
+  return new kakao.maps.MarkerImage(
+    'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),
+    new kakao.maps.Size(w,h),
+    {offset:new kakao.maps.Point(cx,h-3)}
+  );
+}
 function clearMarkers(){markers.forEach(m=>m.marker.setMap(null));markers=[];markerByRow.clear();if(infoOverlay)infoOverlay.setMap(null);}
 function popupHtml(x){return '<div class="kakao-info"><div class="popup-name">'+esc(x.name)+'</div><div class="popup-rating">'+esc(x.rating||'')+'</div>'+(x.feature?'<div class="popup-line"><b>특징</b> · '+esc(x.feature)+'</div>':'')+(x.capacity?'<div class="popup-line"><b>인원</b> · '+esc(x.capacity)+'</div>':'')+'<div class="popup-line"><b>주소</b> · '+esc(x.address)+'</div>'+(x.note?'<div class="popup-line"><b>비고</b> · '+esc(x.note)+'</div>':'')+'</div>';}
 function openInfo(item){if(!mapReady||!infoOverlay)return;infoOverlay.setContent(popupHtml(item.data));infoOverlay.setPosition(item.position);infoOverlay.setMap(map);}
-function renderMap(rows){if(!mapReady){pendingRows=rows;return;}clearMarkers();if(!rows.length)return;const bounds=new kakao.maps.LatLngBounds();rows.forEach(x=>{const p=new kakao.maps.LatLng(Number(x.lat),Number(x.lng));const marker=new kakao.maps.Marker({map,position:p,image:markerImage(x.category),title:x.name,clickable:true});const item={marker,position:p,data:x};kakao.maps.event.addListener(marker,'click',()=>openInfo(item));markers.push(item);markerByRow.set(x.row,item);bounds.extend(p);});if(rows.length===1){map.setCenter(markers[0].position);map.setLevel(3);}else map.setBounds(bounds,35,35,35,35);}
+function renderMap(rows){if(!mapReady){pendingRows=rows;return;}clearMarkers();if(!rows.length)return;const bounds=new kakao.maps.LatLngBounds();rows.forEach(x=>{const p=new kakao.maps.LatLng(Number(x.lat),Number(x.lng));const marker=new kakao.maps.Marker({map,position:p,image:markerImage(x.category),title:x.name,clickable:true});const item={marker,position:p,data:x};kakao.maps.event.addListener(marker,'click',()=>{markers.forEach(m=>m.marker.setImage(markerImage(m.data.category,false)));marker.setImage(markerImage(x.category,true));openInfo(item);});markers.push(item);markerByRow.set(x.row,item);bounds.extend(p);});if(rows.length===1){map.setCenter(markers[0].position);map.setLevel(3);}else map.setBounds(bounds,35,35,35,35);}
 function buildFilters(){const order=['전체','한식','일식','중식','양식','아시아','분식','카페','회식'];const cats=[...new Set(allData.map(x=>x.category).filter(Boolean))];const items=['전체',...cats].sort((a,b)=>(order.indexOf(a)<0?99:order.indexOf(a))-(order.indexOf(b)<0?99:order.indexOf(b)));const el=document.getElementById('filters');el.innerHTML=items.map(c=>'<button class="filter-btn '+(c===activeCategory?'active':'')+'" data-category="'+esc(c)+'">'+esc(c)+'</button>').join('');el.querySelectorAll('button').forEach(b=>b.onclick=()=>{activeCategory=b.dataset.category;buildFilters();render();});}
 function filtered(){const q=searchKeyword.trim().toLowerCase();return allData.filter(x=>(activeCategory==='전체'||x.category===activeCategory)&&(!q||[x.name,x.feature,x.address,x.note,x.locationHint,x.capacity].join(' ').toLowerCase().includes(q)));}
-function renderList(rows){const el=document.getElementById('list');if(!rows.length){el.innerHTML='<div class="empty">조건에 맞는 식당이 없습니다.</div>';return;}el.innerHTML=rows.map(x=>'<div class="card" data-row="'+x.row+'"><div class="card-head"><div class="name">'+esc(x.name)+'</div><div class="badge" style="background:'+colorFor(x.category)+'">'+esc(x.category)+'</div></div><div class="rating">'+esc(x.rating||'')+'</div>'+(x.feature?'<div class="desc">'+esc(x.feature)+'</div>':'')+'<div class="meta">'+(x.capacity?'<div>👥 '+esc(x.capacity)+'</div>':'')+'<div>📍 '+esc(x.address)+'</div></div></div>').join('');el.querySelectorAll('.card').forEach(card=>card.onclick=()=>{const item=markerByRow.get(Number(card.dataset.row));if(!item||!mapReady)return;map.setLevel(3);map.panTo(item.position);openInfo(item);});}
+function renderList(rows){const el=document.getElementById('list');if(!rows.length){el.innerHTML='<div class="empty">조건에 맞는 식당이 없습니다.</div>';return;}el.innerHTML=rows.map(x=>'<div class="card" data-row="'+x.row+'"><div class="card-head"><div class="name">'+esc(x.name)+'</div><div class="badge" style="background:'+colorFor(x.category)+'">'+esc(x.category)+'</div></div><div class="rating">'+esc(x.rating||'')+'</div>'+(x.feature?'<div class="desc">'+esc(x.feature)+'</div>':'')+'<div class="meta">'+(x.capacity?'<div>👥 '+esc(x.capacity)+'</div>':'')+'<div>📍 '+esc(x.address)+'</div></div></div>').join('');el.querySelectorAll('.card').forEach(card=>card.onclick=()=>{const item=markerByRow.get(Number(card.dataset.row));if(!item||!mapReady)return;markers.forEach(m=>m.marker.setImage(markerImage(m.data.category,false)));item.marker.setImage(markerImage(item.data.category,true));map.setLevel(3);map.panTo(item.position);openInfo(item);});}
 function renderLegend(){const used=[...new Set(allData.map(x=>x.category).filter(Boolean))];document.getElementById('legend').innerHTML=used.map(c=>'<div class="legend-row"><span class="dot" style="background:'+colorFor(c)+'"></span><span>'+esc(c)+'</span></div>').join('');}
 function render(){const rows=filtered();document.getElementById('count').textContent=rows.length+'곳';renderList(rows);renderMap(rows);}
 document.getElementById('search').addEventListener('input',e=>{searchKeyword=e.target.value||'';clearTimeout(searchTimer);searchTimer=setTimeout(render,120);});
