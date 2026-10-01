@@ -15,10 +15,8 @@
 .filter-btn{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:#514943;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer}
 .filter-btn.active{background:var(--brand);border-color:var(--brand);color:#fff}
 .content{min-height:0;display:grid;grid-template-columns:minmax(300px,36%) 1fr;gap:14px;padding:14px}
-.sidebar{min-height:0;display:grid;grid-template-rows:auto auto 1fr;background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.sidebar{min-height:0;display:grid;grid-template-rows:auto 1fr;background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
 .search-wrap{padding:12px;border-bottom:1px solid var(--line)}.search{width:100%;border:1px solid var(--line);background:#faf8f6;border-radius:12px;padding:11px 12px;font-size:13px;outline:none}
-.connect{display:none;margin:10px 12px 0;padding:10px 12px;border:1px solid #d9c7bd;border-radius:12px;background:#fff8f4;color:#704230;font-size:12px;line-height:1.5}
-.connect button{margin-left:8px;border:0;border-radius:8px;background:var(--brand);color:#fff;padding:7px 10px;font-weight:700;cursor:pointer}
 .list{overflow-y:auto;padding:9px}.card{border:1px solid transparent;border-bottom-color:#eee9e5;border-radius:13px;padding:12px;cursor:pointer;background:#fff}
 .card:hover{background:#faf6f3;border-color:#eadbd2}.card-head{display:flex;justify-content:space-between;gap:8px}.name{font-size:15px;font-weight:800}.badge{border-radius:999px;padding:4px 8px;color:#fff;font-size:10px;font-weight:800}
 .rating{margin-top:5px;color:#b06a2d;font-size:12px;min-height:16px}.desc{margin-top:6px;color:#5f5751;font-size:12px;line-height:1.5}.meta{display:grid;gap:3px;margin-top:8px;color:#857c75;font-size:11px;line-height:1.4}
@@ -29,7 +27,6 @@
 .kakao-info{position:relative;min-width:220px;max-width:310px;margin-bottom:14px;padding:12px 13px;border:1px solid #e5ddd7;border-radius:13px;background:#fff;box-shadow:0 8px 22px rgba(28,21,17,.18)}
 .popup-name{font-weight:800;font-size:14px;margin-bottom:4px}.popup-rating{color:#b06a2d;font-size:12px;margin-bottom:6px}.popup-line{color:#605852;font-size:11px;line-height:1.5;margin-top:3px}
 .empty{padding:24px;color:var(--muted);font-size:13px;text-align:center}
-.bridge{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;border:0}
 @media(max-width:760px){body{overflow:auto}.app{height:auto;min-height:100vh}.content{grid-template-columns:1fr;grid-template-rows:58vh auto}.map-panel{grid-row:1}.sidebar{grid-row:2;min-height:420px}.title{font-size:19px}}
 </style>
 </head>
@@ -42,20 +39,16 @@
 <main class="content">
   <section class="sidebar">
     <div class="search-wrap"><input id="search" class="search" type="search" placeholder="식당명 · 특징 · 주소 검색"></div>
-    <div id="connect" class="connect">회사 Google 계정에서 식당 데이터를 연결해야 합니다.<button id="connectBtn">데이터 연결</button></div>
     <div id="list" class="list"><div class="empty">식당 정보를 불러오는 중입니다.</div></div>
   </section>
   <section class="map-panel"><div id="map"></div><div id="mapStatus" class="map-status">카카오 지도를 준비하는 중입니다.</div><div id="legend" class="legend"></div></section>
 </main>
-<iframe id="bridgeFrame" class="bridge" title="data bridge"></iframe>
 </div>
 <script>
 const KAKAO_KEY='c6656c45b7640edcf233a408bf0afa9a';
-const BRIDGE_URL='https://script.google.com/a/seah.co.kr/macros/s/AKfycbxH7tlwejmJdT5XbWuBDynQLOdyFeO79oVI3rVt9sQldbixtdg2uV7laFljA03KoBk2/exec';
-const CACHE_KEY='lunch-map-secure-cache-v1';
 const COLORS={'한식':'#d97706','일식':'#2563eb','중식':'#dc2626','양식':'#7c3aed','아시아':'#059669','분식':'#db2777','카페':'#92400e','회식':'#475569'};
 const FALLBACK='#6b7280',HOME_LAT=37.5515,HOME_LNG=126.9125;
-let allData=[],activeCategory='전체',searchKeyword='',map=null,mapReady=false,markers=[],markerByRow=new Map(),infoOverlay=null,searchTimer=null,pendingRows=null,bridgePopup=null,bridgeTimer=null;
+let allData=[],activeCategory='전체',searchKeyword='',map=null,mapReady=false,markers=[],markerByRow=new Map(),infoOverlay=null,searchTimer=null,pendingRows=null;
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
 const colorFor=c=>COLORS[c]||FALLBACK;
 
@@ -71,13 +64,18 @@ function filtered(){const q=searchKeyword.trim().toLowerCase();return allData.fi
 function renderList(rows){const el=document.getElementById('list');if(!rows.length){el.innerHTML='<div class="empty">조건에 맞는 식당이 없습니다.</div>';return;}el.innerHTML=rows.map(x=>'<div class="card" data-row="'+x.row+'"><div class="card-head"><div class="name">'+esc(x.name)+'</div><div class="badge" style="background:'+colorFor(x.category)+'">'+esc(x.category)+'</div></div><div class="rating">'+esc(x.rating||'')+'</div>'+(x.feature?'<div class="desc">'+esc(x.feature)+'</div>':'')+'<div class="meta">'+(x.capacity?'<div>👥 '+esc(x.capacity)+'</div>':'')+'<div>📍 '+esc(x.address)+'</div></div></div>').join('');el.querySelectorAll('.card').forEach(card=>card.onclick=()=>{const item=markerByRow.get(Number(card.dataset.row));if(!item||!mapReady)return;map.setLevel(3);map.panTo(item.position);openInfo(item);});}
 function renderLegend(){const used=[...new Set(allData.map(x=>x.category).filter(Boolean))];document.getElementById('legend').innerHTML=used.map(c=>'<div class="legend-row"><span class="dot" style="background:'+colorFor(c)+'"></span><span>'+esc(c)+'</span></div>').join('');}
 function render(){const rows=filtered();document.getElementById('count').textContent=rows.length+'곳';renderList(rows);renderMap(rows);}
-function applyPayload(payload,save=true){const rows=Array.isArray(payload)?payload:(payload&&Array.isArray(payload.rows)?payload.rows:[]);if(!rows.length)return false;allData=rows;if(save){try{localStorage.setItem(CACHE_KEY,JSON.stringify({savedAt:Date.now(),payload:{rows}}));}catch(e){}}document.getElementById('connect').style.display='none';buildFilters();renderLegend();render();return true;}
-function readCache(){try{const raw=localStorage.getItem(CACHE_KEY);if(!raw)return false;const obj=JSON.parse(raw);return applyPayload(obj.payload,false);}catch(e){return false;}}
-function startBridge(){const frame=document.getElementById('bridgeFrame');frame.src=BRIDGE_URL+'&t='+Date.now();clearTimeout(bridgeTimer);bridgeTimer=setTimeout(()=>{if(!allData.length)document.getElementById('connect').style.display='block';},3500);}
-window.addEventListener('message',e=>{const d=e.data||{};if(d.source!=='lunch-map-bridge')return;const frame=document.getElementById('bridgeFrame');const sourceOK=(frame.contentWindow&&e.source===frame.contentWindow)||(bridgePopup&&e.source===bridgePopup);if(!sourceOK)return;if(d.type==='data'){applyPayload(d.payload,true);if(bridgePopup&&!bridgePopup.closed)bridgePopup.close();bridgePopup=null;}else if(d.type==='error'&&!allData.length){document.getElementById('connect').style.display='block';}});
-document.getElementById('connectBtn').onclick=()=>{bridgePopup=window.open(BRIDGE_URL+'&popup=1&t='+Date.now(),'lunchMapBridge','width=720,height=640');};
 document.getElementById('search').addEventListener('input',e=>{searchKeyword=e.target.value||'';clearTimeout(searchTimer);searchTimer=setTimeout(render,120);});
-readCache();startBridge();setTimeout(initMap,0);
+fetch('./restaurants.json',{cache:'no-store'})
+  .then(r=>{ if(!r.ok) throw new Error('restaurants.json '+r.status); return r.json(); })
+  .then(p=>{
+    allData=Array.isArray(p)?p:(Array.isArray(p.rows)?p.rows:[]);
+    buildFilters(); renderLegend(); render();
+  })
+  .catch(e=>{
+    document.getElementById('list').innerHTML='<div class="empty">식당 데이터를 불러오지 못했습니다.</div>';
+    document.getElementById('count').textContent='오류';
+  });
+setTimeout(initMap,0);
 </script>
 </body>
 </html>
