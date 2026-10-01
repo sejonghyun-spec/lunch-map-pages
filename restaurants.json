@@ -539,6 +539,17 @@
       "address": "서울 마포구 양화로1길 29 1층",
       "lat": 37.549997,
       "lng": 126.910299
+    },
+    {
+      "row": 51,
+      "category": "",
+      "name": "해물점",
+      "rating": "",
+      "feature": "",
+      "capacity": "",
+      "address": "",
+      "lat": null,
+      "lng": null
     }
   ]
 }
