@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-mobile-layout-v32">
+<meta name="lunch-map-build" content="2026-10-03-mobile-menu-search-list-v33">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -119,6 +119,7 @@ button,input,select{font:inherit}
 .mobile-menu-btn{
   display:none;
 }
+.mobile-nav-action{display:none}
 .header-actions{
   display:flex;
   align-items:center;
@@ -1378,6 +1379,22 @@ button,input,select{font:inherit}
     box-shadow:0 12px 32px rgba(28,38,44,.20);
   }
   .header-actions.mobile-open{display:grid}
+  .mobile-nav-action{
+    display:block;
+    width:100%;
+    height:44px;
+    border:1px solid #dfe4e7;
+    border-radius:10px;
+    padding:0 13px;
+    background:#fff;
+    color:#41494d;
+    font-size:13px;
+    font-weight:700;
+    text-align:left;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .mobile-nav-action:hover{background:#f6f8f9}
   .suggest-btn,
   .roulette-btn,
   .account-btn{
@@ -1405,7 +1422,7 @@ button,input,select{font:inherit}
   }
   .map-hint{
     left:10px;
-    bottom:calc(128px + var(--mobile-safe-bottom));
+    bottom:calc(16px + var(--mobile-safe-bottom));
     max-width:calc(100% - 20px);
     padding:8px 10px;
     font-size:11px;
@@ -1426,13 +1443,20 @@ button,input,select{font:inherit}
     overflow:hidden;
     overscroll-behavior:contain;
     transition:transform .22s ease;
-    transform:translateY(calc(100% - 126px));
+    transform:translateY(calc(100% + 18px));
+    pointer-events:none;
     grid-template-rows:24px auto auto auto auto minmax(0,1fr);
     background:rgba(255,255,255,.985);
     backdrop-filter:blur(10px);
   }
-  .sidebar.sheet-mid{transform:translateY(46%)}
-  .sidebar.sheet-full{transform:translateY(0)}
+  .sidebar.sheet-mid{
+    transform:translateY(46%);
+    pointer-events:auto;
+  }
+  .sidebar.sheet-full{
+    transform:translateY(0);
+    pointer-events:auto;
+  }
 
   .sheet-handle{
     display:flex;
@@ -1606,7 +1630,7 @@ button,input,select{font:inherit}
   .comment-panel{
     left:8px;
     right:8px;
-    bottom:calc(140px + var(--mobile-safe-bottom));
+    bottom:calc(16px + var(--mobile-safe-bottom));
     width:auto;
     max-height:min(42dvh,330px);
     transform:translateY(16px);
@@ -1703,8 +1727,9 @@ button,input,select{font:inherit}
   .brand-sub{display:none}
   .mobile-menu-btn{width:38px;height:38px}
   .top-filters{padding-top:4px;padding-bottom:5px}
-  .sidebar{transform:translateY(calc(100% - 116px))}
-  .sidebar.sheet-mid{transform:translateY(52%)}
+  .sidebar{transform:translateY(calc(100% + 18px))}
+  .sidebar.sheet-mid{transform:translateY(52%);pointer-events:auto}
+  .sidebar.sheet-full{transform:translateY(0);pointer-events:auto}
   .comment-panel{max-height:48dvh}
 }
 
@@ -1721,6 +1746,8 @@ button,input,select{font:inherit}
       <span></span><span></span><span></span>
     </button>
     <div id="headerActions" class="header-actions">
+      <button id="mobileSearchOpen" class="mobile-nav-action" type="button">🔎 식당 검색</button>
+      <button id="mobileListOpen" class="mobile-nav-action" type="button">☰ 식당 목록</button>
       <button id="accountButton" class="account-btn needs-auth" type="button">👤 회사 계정 연결</button>
       <button id="rouletteOpen" class="roulette-btn" type="button">🎲 점심 룰렛</button>
       <button id="suggestOpen" class="suggest-btn" type="button">＋ 제안하기</button>
@@ -3805,6 +3832,8 @@ const sidebar=document.getElementById('sidebar');
 const sheetHandle=document.getElementById('sheetHandle');
 const mobileMenuButton=document.getElementById('mobileMenuButton');
 const headerActions=document.getElementById('headerActions');
+const mobileSearchOpen=document.getElementById('mobileSearchOpen');
+const mobileListOpen=document.getElementById('mobileListOpen');
 
 function closeMobileMenu(){
   if(!mobileMenuButton||!headerActions)return;
@@ -3835,19 +3864,37 @@ document.addEventListener('click',()=>closeMobileMenu());
   const el=document.getElementById(id);
   if(el)el.addEventListener('click',()=>closeMobileMenu());
 });
-let sheetState='peek',sheetStartY=null;
+let sheetState='hidden',sheetStartY=null;
 
 function isMobile(){return window.matchMedia('(max-width:900px)').matches;}
 function setSheetState(state){
   if(!sidebar)return;
+  if(isMobile()&&state==='peek')state='hidden';
   sheetState=state;
   sidebar.classList.toggle('sheet-mid',state==='mid');
   sidebar.classList.toggle('sheet-full',state==='full');
 }
 function nextSheetState(){
-  if(sheetState==='peek')setSheetState('mid');
+  if(sheetState==='hidden'||sheetState==='peek')setSheetState('mid');
   else if(sheetState==='mid')setSheetState('full');
-  else setSheetState('peek');
+  else setSheetState('hidden');
+}
+if(mobileSearchOpen){
+  mobileSearchOpen.addEventListener('click',()=>{
+    closeMobileMenu();
+    setSheetState('full');
+    requestAnimationFrame(()=>document.getElementById('search')?.focus());
+  });
+}
+if(mobileListOpen){
+  mobileListOpen.addEventListener('click',()=>{
+    closeMobileMenu();
+    setSheetState('full');
+    requestAnimationFrame(()=>{
+      const list=document.getElementById('list');
+      if(list)list.scrollTop=0;
+    });
+  });
 }
 if(sheetHandle){
   sheetHandle.addEventListener('click',()=>{if(isMobile())nextSheetState();});
@@ -3856,14 +3903,21 @@ if(sheetHandle){
     if(!isMobile()||sheetStartY===null)return;
     const dy=e.clientY-sheetStartY;sheetStartY=null;
     if(Math.abs(dy)<24)return;
-    if(dy<-35){if(sheetState==='peek')setSheetState('mid');else setSheetState('full');}
-    else if(dy>35){if(sheetState==='full')setSheetState('mid');else setSheetState('peek');}
+    if(dy<-35){
+      if(sheetState==='hidden'||sheetState==='peek')setSheetState('mid');
+      else setSheetState('full');
+    }else if(dy>35){
+      if(sheetState==='full')setSheetState('mid');
+      else setSheetState('hidden');
+    }
   });
 }
 window.addEventListener('resize',()=>{
   if(!isMobile()){
     setSheetState('peek');
     closeMobileMenu();
+  }else if(sheetState==='peek'){
+    setSheetState('hidden');
   }
   if(mapReady&&map){
     requestAnimationFrame(()=>{
@@ -3923,6 +3977,7 @@ document.getElementById('myLocation').onclick=locateMe;
 
 updateMultiFilterUI();
 syncSortUI();
+if(isMobile())setSheetState('hidden');
 loadDashboardData();
 setTimeout(initMap,0);
 </script>
