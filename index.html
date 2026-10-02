@@ -342,6 +342,164 @@ button,input,select{font:inherit}
   pointer-events:none;
 }
 
+/* RESTAURANT COMMENTS */
+.comment-panel{
+  position:absolute;
+  left:50%;
+  bottom:18px;
+  z-index:18;
+  width:min(680px,calc(100% - 36px));
+  max-height:390px;
+  transform:translateX(-50%) translateY(18px);
+  opacity:0;
+  pointer-events:none;
+  overflow:hidden;
+  border:1px solid rgba(217,209,203,.96);
+  border-radius:18px;
+  background:rgba(255,255,255,.97);
+  box-shadow:0 16px 42px rgba(27,21,18,.24);
+  backdrop-filter:blur(12px);
+  transition:opacity .16s,transform .16s;
+}
+.comment-panel.open{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+  pointer-events:auto;
+}
+.comment-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:13px 15px 11px;
+  border-bottom:1px solid #eee8e3;
+}
+.comment-restaurant{
+  min-width:0;
+  flex:1;
+}
+.comment-name{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:17px;
+  font-weight:950;
+  letter-spacing:-.3px;
+}
+.comment-sub{
+  margin-top:3px;
+  color:#827872;
+  font-size:11.5px;
+  font-weight:700;
+}
+.comment-count{
+  flex:0 0 auto;
+  padding:5px 8px;
+  border-radius:999px;
+  background:#f5ebe5;
+  color:var(--brand-dark);
+  font-size:11.5px;
+  font-weight:900;
+}
+.comment-close{
+  flex:0 0 auto;
+  width:32px;
+  height:32px;
+  border:0;
+  border-radius:9px;
+  background:#f3efec;
+  color:#5f5751;
+  font-size:19px;
+  cursor:pointer;
+}
+.comment-list{
+  max-height:165px;
+  overflow:auto;
+  padding:0 15px;
+}
+.comment-item{
+  padding:11px 1px 10px;
+  border-bottom:1px solid #f0ebe7;
+}
+.comment-item:last-child{border-bottom:0}
+.comment-item-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.comment-nick{
+  color:#3e3834;
+  font-size:12.5px;
+  font-weight:900;
+}
+.comment-date{
+  color:#9a918a;
+  font-size:10.5px;
+  font-weight:650;
+}
+.comment-text{
+  margin-top:5px;
+  color:#4e4742;
+  font-size:13.5px;
+  font-weight:600;
+  line-height:1.5;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+.comment-empty,
+.comment-loading{
+  padding:18px 4px;
+  color:#8a817b;
+  text-align:center;
+  font-size:12.5px;
+  font-weight:650;
+}
+.comment-compose{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+  padding:11px 13px 13px;
+  border-top:1px solid #eee8e3;
+  background:#fcfaf9;
+}
+.comment-input{
+  width:100%;
+  height:44px;
+  resize:none;
+  border:1px solid #d9d1cb;
+  border-radius:11px;
+  padding:10px 11px;
+  background:#fff;
+  color:var(--text);
+  font-size:13.5px;
+  line-height:1.4;
+  outline:none;
+}
+.comment-input:focus{
+  border-color:#bd8c77;
+  box-shadow:0 0 0 3px rgba(154,79,49,.08);
+}
+.comment-submit{
+  min-width:72px;
+  height:44px;
+  border:0;
+  border-radius:11px;
+  background:var(--brand);
+  color:#fff;
+  font-size:13px;
+  font-weight:900;
+  cursor:pointer;
+}
+.comment-submit:disabled{opacity:.5;cursor:not-allowed}
+.comment-status{
+  grid-column:1/-1;
+  min-height:0;
+  color:#8a817b;
+  font-size:11px;
+  font-weight:700;
+}
+.comment-status.error{color:#b42318}
+
 /* MAP LABEL MARKERS */
 .marker-label{
   display:flex;
@@ -979,6 +1137,26 @@ button,input,select{font:inherit}
   .popup-rating{font-size:14px}
   .popup-line{font-size:13px}
 
+  .comment-panel{
+    left:8px;
+    right:8px;
+    bottom:144px;
+    width:auto;
+    max-height:300px;
+    transform:translateY(16px);
+    border-radius:16px;
+  }
+  .comment-panel.open{transform:translateY(0)}
+  .comment-head{padding:11px 12px 9px}
+  .comment-name{font-size:16px}
+  .comment-sub{font-size:11px}
+  .comment-list{max-height:115px;padding:0 12px}
+  .comment-item{padding:9px 1px}
+  .comment-text{font-size:13px}
+  .comment-compose{padding:9px 10px 10px}
+  .comment-input{height:44px;font-size:16px}
+  .comment-submit{height:44px;min-width:68px;font-size:13px}
+
   .modal-backdrop{padding:8px;align-items:flex-end}
   .suggest-modal{
     width:100%;
@@ -1057,7 +1235,26 @@ button,input,select{font:inherit}
     <section class="map-wrap">
       <div id="map"></div>
       <div id="mapStatus" class="map-status">카카오 지도를 준비하는 중입니다.</div>
-      <div class="map-hint">마커 또는 식당을 클릭하면 상세 정보가 열립니다.</div>
+      <div id="mapHint" class="map-hint">마커 또는 식당을 클릭하면 상세 정보가 열립니다.</div>
+
+      <section id="commentPanel" class="comment-panel" aria-live="polite">
+        <div class="comment-head">
+          <div class="comment-restaurant">
+            <div id="commentName" class="comment-name">식당을 선택해 주세요.</div>
+            <div id="commentSub" class="comment-sub"></div>
+          </div>
+          <div id="commentCount" class="comment-count">댓글 0</div>
+          <button id="commentClose" class="comment-close" type="button" aria-label="댓글 닫기">×</button>
+        </div>
+        <div id="commentList" class="comment-list">
+          <div class="comment-empty">식당을 선택하면 댓글을 볼 수 있습니다.</div>
+        </div>
+        <form id="commentForm" class="comment-compose" autocomplete="off">
+          <textarea id="commentInput" class="comment-input" maxlength="400" placeholder="이 식당에 대한 댓글을 남겨보세요."></textarea>
+          <button id="commentSubmit" class="comment-submit" type="submit">등록</button>
+          <div id="commentStatus" class="comment-status"></div>
+        </form>
+      </section>
     </section>
   </main>
 </div>
@@ -1190,6 +1387,7 @@ let allData=[],activeCategory='전체',searchKeyword='',sortMode='default';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,searchTimer=null;
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,suggestTimeout=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false;
+let commentRestaurant=null,commentRequestSeq=0,commentSubmitting=false;
 let rouletteCandidates=[],rouletteWinner=null,rouletteSpinning=false,rouletteRotation=0,rouletteTicker=null,rouletteCategory='전체';
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
 const colorFor=c=>COLORS[c]||'#64748b';
@@ -1246,7 +1444,12 @@ function selectRow(row,pan=true){
   selectedRow=row;
   document.querySelectorAll('.marker-label').forEach(el=>el.classList.toggle('selected',Number(el.dataset.row)===row));
   document.querySelectorAll('.card').forEach(el=>el.classList.toggle('active',Number(el.dataset.row)===row));
-  const item=markerByRow.get(row);if(!item||!mapReady)return;
+
+  const data=allData.find(x=>Number(x.row)===Number(row));
+  if(data)openComments(data);
+
+  const item=markerByRow.get(row);
+  if(!item||!mapReady)return;
   if(pan){map.setLevel(3);map.panTo(item.position);}
   infoOverlay.setContent(popupHtml(item.data));infoOverlay.setPosition(item.position);infoOverlay.setMap(map);
   if(isMobile()&&pan)setSheetState('peek');
@@ -1539,6 +1742,161 @@ async function loadDashboardData(){
   const live=await loadLiveDb();
   if(!live)await loadStaticFallback();
 }
+
+const commentPanel=document.getElementById('commentPanel');
+const commentName=document.getElementById('commentName');
+const commentSub=document.getElementById('commentSub');
+const commentCount=document.getElementById('commentCount');
+const commentList=document.getElementById('commentList');
+const commentForm=document.getElementById('commentForm');
+const commentInput=document.getElementById('commentInput');
+const commentSubmit=document.getElementById('commentSubmit');
+const commentStatus=document.getElementById('commentStatus');
+const mapHint=document.getElementById('mapHint');
+
+const commentSink=document.createElement('iframe');
+commentSink.name='commentSink';
+commentSink.id='commentSink';
+commentSink.title='댓글 전송';
+commentSink.style.display='none';
+document.body.appendChild(commentSink);
+
+function restaurantCommentKey(x){
+  return String((x&&x.name)||'').trim()+'||'+String((x&&x.address)||'').trim();
+}
+function getCommentNickname(){
+  const key='lunch-map-comment-nick-v1';
+  try{
+    let nick=localStorage.getItem(key);
+    if(!nick){
+      nick='익명'+String(Math.floor(1000+Math.random()*9000));
+      localStorage.setItem(key,nick);
+    }
+    return nick;
+  }catch(e){
+    return '익명';
+  }
+}
+function closeComments(){
+  commentPanel.classList.remove('open');
+  if(mapHint)mapHint.style.display='';
+}
+function renderComments(comments){
+  const rows=Array.isArray(comments)?comments:[];
+  commentCount.textContent='댓글 '+rows.length;
+  if(!rows.length){
+    commentList.innerHTML='<div class="comment-empty">아직 댓글이 없습니다. 첫 댓글을 남겨보세요.</div>';
+    return;
+  }
+  commentList.innerHTML=rows.map(x=>
+    '<div class="comment-item">'+
+      '<div class="comment-item-top">'+
+        '<div class="comment-nick">'+esc(x.nickname||'익명')+'</div>'+
+        '<div class="comment-date">'+esc(x.createdAt||'')+'</div>'+
+      '</div>'+
+      '<div class="comment-text">'+esc(x.comment||'')+'</div>'+
+    '</div>'
+  ).join('');
+}
+function loadComments(restaurant){
+  if(!restaurant)return;
+  const seq=++commentRequestSeq;
+  const key=restaurantCommentKey(restaurant);
+  const callback='__lunchComments_'+Date.now()+'_'+seq;
+  let script=null;
+  let done=false;
+
+  commentList.innerHTML='<div class="comment-loading">댓글을 불러오는 중입니다.</div>';
+
+  function finish(){
+    if(done)return;
+    done=true;
+    try{delete window[callback];}catch(e){window[callback]=undefined;}
+    if(script)script.remove();
+  }
+
+  window[callback]=payload=>{
+    if(seq!==commentRequestSeq){finish();return;}
+    const rows=payload&&Array.isArray(payload.comments)?payload.comments:[];
+    renderComments(rows);
+    finish();
+  };
+
+  script=document.createElement('script');
+  script.async=true;
+  script.src=SUGGEST_URL+'?mode=comments&key='+encodeURIComponent(key)+'&callback='+encodeURIComponent(callback)+'&t='+Date.now();
+  script.onerror=()=>{
+    if(seq===commentRequestSeq){
+      commentList.innerHTML='<div class="comment-empty">댓글을 불러오지 못했습니다.</div>';
+    }
+    finish();
+  };
+  document.head.appendChild(script);
+
+  setTimeout(()=>{
+    if(done)return;
+    if(seq===commentRequestSeq){
+      commentList.innerHTML='<div class="comment-empty">댓글을 불러오지 못했습니다.</div>';
+    }
+    finish();
+  },4500);
+}
+function openComments(restaurant){
+  commentRestaurant=restaurant;
+  commentName.textContent=restaurant.name||'선택한 식당';
+  commentSub.textContent=[restaurant.category,restaurant.address].filter(Boolean).join(' · ');
+  commentStatus.textContent=getCommentNickname()+'로 등록됩니다.';
+  commentStatus.className='comment-status';
+  commentInput.value='';
+  commentPanel.classList.add('open');
+  if(mapHint)mapHint.style.display='none';
+  loadComments(restaurant);
+}
+document.getElementById('commentClose').addEventListener('click',closeComments);
+
+commentForm.addEventListener('submit',e=>{
+  e.preventDefault();
+  if(commentSubmitting||!commentRestaurant)return;
+  const textValue=commentInput.value.trim();
+  if(!textValue){
+    commentStatus.textContent='댓글 내용을 입력해 주세요.';
+    commentStatus.className='comment-status error';
+    commentInput.focus();
+    return;
+  }
+
+  commentSubmitting=true;
+  commentSubmit.disabled=true;
+  commentSubmit.textContent='등록 중';
+  commentStatus.textContent='댓글을 등록하고 있습니다.';
+  commentStatus.className='comment-status';
+
+  const form=document.createElement('form');
+  form.method='POST';
+  form.action=SUGGEST_URL;
+  form.target='commentSink';
+  form.style.display='none';
+
+  const fields={
+    mode:'comment',
+    key:restaurantCommentKey(commentRestaurant),
+    name:commentRestaurant.name||'',
+    address:commentRestaurant.address||'',
+    nickname:getCommentNickname(),
+    comment:textValue,
+    website:''
+  };
+  Object.entries(fields).forEach(([name,value])=>{
+    const input=document.createElement('input');
+    input.type='hidden';
+    input.name=name;
+    input.value=value;
+    form.appendChild(input);
+  });
+  document.body.appendChild(form);
+  HTMLFormElement.prototype.submit.call(form);
+  setTimeout(()=>form.remove(),1200);
+});
 
 const rouletteModal=document.getElementById('rouletteModal');
 const rouletteWheel=document.getElementById('rouletteWheel');
@@ -1853,6 +2211,25 @@ suggestForm.addEventListener('submit',e=>{
 
 window.addEventListener('message',e=>{
   const d=e.data||{};
+
+  if(d.source==='lunch-map-comment'){
+    if(e.source!==commentSink.contentWindow)return;
+    commentSubmitting=false;
+    commentSubmit.disabled=false;
+    commentSubmit.textContent='등록';
+    if(d.ok){
+      commentInput.value='';
+      commentStatus.textContent=getCommentNickname()+'로 등록되었습니다.';
+      commentStatus.className='comment-status';
+      showToast(d.message||'댓글이 등록되었습니다.');
+      if(commentRestaurant)setTimeout(()=>loadComments(commentRestaurant),180);
+    }else{
+      commentStatus.textContent=d.message||'댓글 등록에 실패했습니다.';
+      commentStatus.className='comment-status error';
+    }
+    return;
+  }
+
   if(d.source!=='lunch-map-suggest')return;
   if(e.source!==suggestSink.contentWindow)return;
   clearTimeout(suggestTimeout);
