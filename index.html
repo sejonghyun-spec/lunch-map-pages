@@ -407,6 +407,38 @@ button,input,select{font:inherit}
   pointer-events:none;
 }
 .map-status.hidden{display:none}
+.selection-bar{
+  position:absolute;
+  top:14px;
+  left:14px;
+  z-index:19;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:36px;
+  padding:5px 7px 5px 11px;
+  border:1px solid #dfe4e7;
+  border-radius:999px;
+  background:rgba(255,255,255,.96);
+  box-shadow:0 3px 12px rgba(37,48,54,.14);
+  color:#394247;
+  font-size:12.5px;
+  font-weight:700;
+}
+.selection-bar.hidden{display:none}
+.selection-clear{
+  height:26px;
+  border:0;
+  border-radius:999px;
+  padding:0 9px;
+  background:#f1f4f5;
+  color:#596267;
+  font-size:11.5px;
+  font-weight:650;
+  cursor:pointer;
+}
+.selection-clear:hover{background:#e7ecee}
+
 .map-hint{
   position:absolute;
   left:16px;
@@ -675,9 +707,10 @@ button,input,select{font:inherit}
   width:29px;
   height:29px;
   background:var(--marker-color);
-  font-size:13px;
+  font-size:14px;
+  font-weight:800;
   border-width:3px;
-  box-shadow:0 4px 10px rgba(35,45,50,.34),0 0 0 2px rgba(255,255,255,.88);
+  box-shadow:0 4px 10px rgba(35,45,50,.34),0 0 0 3px rgba(255,255,255,.94),0 0 0 5px rgba(49,63,70,.22);
 }
 .marker-label.selected .marker-name{
   font-size:12.5px;
@@ -1404,7 +1437,11 @@ button,input,select{font:inherit}
     <section class="map-wrap">
       <div id="map"></div>
       <div id="mapStatus" class="map-status">카카오 지도를 준비하는 중입니다.</div>
-      <div id="mapHint" class="map-hint">마커 또는 식당을 클릭하면 상세 정보가 열립니다.</div>
+      <div id="selectionBar" class="selection-bar hidden">
+        <span id="selectionCount">선택 0곳</span>
+        <button id="selectionClear" class="selection-clear" type="button">전체 해제</button>
+      </div>
+      <div id="mapHint" class="map-hint">마커는 여러 곳을 동시에 선택할 수 있습니다.</div>
 
       <section id="commentPanel" class="comment-panel" aria-live="polite">
         <div class="comment-head">
@@ -1672,11 +1709,27 @@ function clearMarkers(){overlays.forEach(o=>o.overlay.setMap(null));overlays=[];
 function popupHtml(x){return '<div class="kakao-info"><div class="popup-name">'+esc(x.name)+'</div><div class="popup-rating">'+esc(x.rating||'')+'</div>'+(x.feature?'<div class="popup-line"><b>특징</b> · '+esc(x.feature)+'</div>':'')+(x.capacity?'<div class="popup-line"><b>인원</b> · '+esc(x.capacity)+'</div>':'')+'<div class="popup-line"><b>주소</b> · '+esc(x.address)+'</div></div>';}
 function syncSelectedRowsUI(){
   document.querySelectorAll('.marker-label').forEach(el=>{
-    el.classList.toggle('selected',selectedRows.has(Number(el.dataset.row)));
+    const selected=selectedRows.has(Number(el.dataset.row));
+    el.classList.toggle('selected',selected);
+    const pin=el.querySelector('.marker-pin');
+    if(pin)pin.textContent=selected?'✓':'★';
   });
   document.querySelectorAll('.card').forEach(el=>{
     el.classList.toggle('active',selectedRows.has(Number(el.dataset.row)));
   });
+
+  const bar=document.getElementById('selectionBar');
+  const count=document.getElementById('selectionCount');
+  if(count)count.textContent='선택 '+selectedRows.size+'곳';
+  if(bar)bar.classList.toggle('hidden',selectedRows.size===0);
+}
+
+function clearSelectedRows(){
+  selectedRows.clear();
+  selectedRow=null;
+  syncSelectedRowsUI();
+  if(infoOverlay)infoOverlay.setMap(null);
+  closeComments();
 }
 
 function selectRow(row,pan=true){
@@ -1837,7 +1890,11 @@ function renderMap(rows,fit=true){
     });
 
     const item={overlay,position,data:x,content};
-    content.addEventListener('click',()=>selectRow(x.row,false));
+    content.addEventListener('click',e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      selectRow(x.row,false);
+    });
     overlays.push(item);
     markerByRow.set(x.row,item);
     bounds.extend(position);
@@ -3035,6 +3092,7 @@ document.getElementById('multiFilterReset').addEventListener('click',()=>{
 
 document.getElementById('showAll').onclick=showAll;
 document.getElementById('myLocation').onclick=locateMe;
+document.getElementById('selectionClear').onclick=clearSelectedRows;
 
 updateMultiFilterUI();
 loadDashboardData();
