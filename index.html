@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-mobile-separated-search-list-v34">
+<meta name="lunch-map-build" content="2026-10-03-mobile-compact-list-v35">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -1465,6 +1465,9 @@ button,input,select{font:inherit}
   .sidebar.mobile-list-mode{
     grid-template-rows:24px auto minmax(0,1fr);
   }
+  .sidebar.mobile-list-mode.sheet-mid{
+    transform:translateY(62%);
+  }
   .sidebar.mobile-search-mode{
     grid-template-rows:24px auto auto auto auto minmax(0,1fr);
   }
@@ -1740,6 +1743,7 @@ button,input,select{font:inherit}
   .top-filters{padding-top:4px;padding-bottom:5px}
   .sidebar{transform:translateY(calc(100% + 18px))}
   .sidebar.sheet-mid{transform:translateY(52%);pointer-events:auto}
+  .sidebar.mobile-list-mode.sheet-mid{transform:translateY(66%)}
   .sidebar.sheet-full{transform:translateY(0);pointer-events:auto}
   .comment-panel{max-height:48dvh}
 }
@@ -3893,7 +3897,7 @@ function setMobilePanelMode(mode){
   sidebar.classList.toggle('mobile-search-mode',searchMode);
   sidebar.classList.toggle('mobile-list-mode',!searchMode);
   if(mobileListTitle)mobileListTitle.textContent=searchMode?'검색 결과':'식당 목록';
-  if(mobileListSub)mobileListSub.textContent=searchMode?'검색어와 조건에 맞는 식당':'현재 분류에 해당하는 식당';
+  if(mobileListSub)mobileListSub.textContent=searchMode?'검색어와 조건에 맞는 식당':'지도를 보면서 목록을 확인할 수 있습니다';
 }
 function nextSheetState(){
   if(sheetState==='hidden'||sheetState==='peek')setSheetState('mid');
@@ -3917,7 +3921,7 @@ if(mobileListOpen){
     updateMultiFilterUI();
     setMobilePanelMode('list');
     render(false);
-    setSheetState('full');
+    setSheetState('mid');
     requestAnimationFrame(()=>{
       const list=document.getElementById('list');
       if(list)list.scrollTop=0;
