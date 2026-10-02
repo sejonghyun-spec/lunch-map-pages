@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-sidebar-controls-v22">
+<meta name="lunch-map-build" content="2026-10-03-hapjeong-initial-view-v23">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -1785,7 +1785,8 @@ button,input,select{font:inherit}
 const KAKAO_KEY='c6656c45b7640edcf233a408bf0afa9a';
 const COLORS={'한식':'#d97706','일식':'#2563eb','중식':'#dc2626','양식':'#7c3aed','아시아':'#059669','분식':'#db2777','카페':'#92400e','회식':'#475569'};
 const ORDER=['전체','한식','일식','중식','양식','아시아','분식','카페','회식'];
-const HOME_LAT=37.5515,HOME_LNG=126.9125;
+const HOME_LAT=37.5501151,HOME_LNG=126.9146385;
+const INITIAL_MAP_LEVEL=2;
 const SUGGEST_URL='https://script.google.com/a/seah.co.kr/macros/s/AKfycbzpCuw9c6Y8K6_4tnqZzwMBoKGIiW3pv-DheDHYD6XpbT1tEqDlZUFFkPgn-7w_q1L7tA/exec';
 let allData=[],selectedCategories=new Set(),searchKeyword='',sortMode='default';
 let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all';
@@ -1926,7 +1927,7 @@ function syncMarkerLabelVisibility(){
 function initMap(){
   loadKakao().then(()=>kakao.maps.load(()=>{
     const mapEl=document.getElementById('map');
-    map=new kakao.maps.Map(mapEl,{center:new kakao.maps.LatLng(HOME_LAT,HOME_LNG),level:5});
+    map=new kakao.maps.Map(mapEl,{center:new kakao.maps.LatLng(HOME_LAT,HOME_LNG),level:INITIAL_MAP_LEVEL});
     map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
     infoOverlay=new kakao.maps.CustomOverlay({zIndex:30,yAnchor:1.12});
     placesService=new kakao.maps.services.Places();
@@ -1941,18 +1942,20 @@ function initMap(){
         if(!mapReady)return;
         map.relayout();
         const rows=getRows().filter(hasValidCoords);
-        if(rows.length) renderMap(rows,true);
-        else{
-          map.setCenter(new kakao.maps.LatLng(HOME_LAT,HOME_LNG));
-          map.setLevel(5);
-        }
+        if(rows.length) renderMap(rows,false);
+        map.setCenter(new kakao.maps.LatLng(HOME_LAT,HOME_LNG));
+        map.setLevel(INITIAL_MAP_LEVEL);
       },80);
     });
 
     if(pendingRows){
       const r=pendingRows;
       pendingRows=null;
-      setTimeout(()=>renderMap(r,true),0);
+      setTimeout(()=>{
+        renderMap(r,false);
+        map.setCenter(new kakao.maps.LatLng(HOME_LAT,HOME_LNG));
+        map.setLevel(INITIAL_MAP_LEVEL);
+      },0);
     }
     setTimeout(hydrateMissingRows,120);
   })).catch(e=>{
@@ -2174,7 +2177,7 @@ function renderMap(rows,fit=true){
 
   if(!validRows.length){
     map.setCenter(new kakao.maps.LatLng(HOME_LAT,HOME_LNG));
-    map.setLevel(5);
+    map.setLevel(INITIAL_MAP_LEVEL);
     return;
   }
 
@@ -2537,7 +2540,7 @@ function applyDbRows(rows){
   buildFilters();
   renderList(getRows());
   document.getElementById('count').textContent=displayRestaurants().length+'곳';
-  if(mapReady)render(true);
+  if(mapReady)render(false);
   hydrateMissingRows();
   return true;
 }
