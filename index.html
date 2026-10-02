@@ -607,18 +607,28 @@ button,input,select{font:inherit}
   background:#fff;
   color:var(--marker-color);
 }
+.marker-label.nearby-split{
+  position:relative;
+}
 .marker-label.nearby-split .marker-main{
   box-shadow:0 5px 14px rgba(0,0,0,.36);
 }
-.marker-label.nearby-split::after{
+.marker-label.nearby-left::after,
+.marker-label.nearby-right::after{
   content:'';
-  width:7px;
-  height:7px;
-  margin-right:calc(50% - 3px);
-  border:2px solid #fff;
-  border-radius:50%;
+  position:absolute;
+  top:17px;
+  width:10px;
+  height:2px;
+  border-radius:2px;
   background:var(--marker-color);
-  box-shadow:0 1px 4px rgba(0,0,0,.28);
+  box-shadow:0 1px 3px rgba(0,0,0,.18);
+}
+.marker-label.nearby-left::after{
+  right:-9px;
+}
+.marker-label.nearby-right::after{
+  left:-9px;
 }
 
 /* INFO POPUP */
@@ -1512,9 +1522,10 @@ function distanceMeters(a,b){
   return 2*R*Math.asin(Math.sqrt(q));
 }
 
-function nearbyPlacements(rows,thresholdMeters=20){
+function nearbyPlacements(rows,thresholdMeters=5){
   const n=rows.length;
   const parent=Array.from({length:n},(_,i)=>i);
+
   const find=i=>{
     while(parent[i]!==i){
       parent[i]=parent[parent[i]];
@@ -1541,36 +1552,47 @@ function nearbyPlacements(rows,thresholdMeters=20){
   });
 
   const result=new Map();
-  const patterns={
-    2:[
-      {xAnchor:.5,yAnchor:1.35,zIndex:9},
-      {xAnchor:.5,yAnchor:-.28,zIndex:8}
-    ],
-    3:[
-      {xAnchor:.5,yAnchor:1.35,zIndex:10},
-      {xAnchor:.5,yAnchor:-.28,zIndex:9},
-      {xAnchor:1.05,yAnchor:.55,zIndex:8}
-    ],
-    4:[
-      {xAnchor:.5,yAnchor:1.35,zIndex:11},
-      {xAnchor:.5,yAnchor:-.28,zIndex:10},
-      {xAnchor:1.05,yAnchor:.55,zIndex:9},
-      {xAnchor:-.05,yAnchor:.55,zIndex:8}
-    ]
-  };
 
   groups.forEach(group=>{
     if(group.length<2)return;
     const sorted=[...group].sort((a,b)=>Number(a.row)-Number(b.row));
-    const pattern=patterns[Math.min(sorted.length,4)]||patterns[4];
+
+    if(sorted.length===2){
+      // Same/near-identical coordinate: keep the real point between the
+      // labels. First item sits left, second item sits right.
+      result.set(Number(sorted[0].row),{
+        xAnchor:1.08,
+        yAnchor:.72,
+        zIndex:9,
+        nearby:true,
+        side:'left'
+      });
+      result.set(Number(sorted[1].row),{
+        xAnchor:-.08,
+        yAnchor:.72,
+        zIndex:8,
+        nearby:true,
+        side:'right'
+      });
+      return;
+    }
+
+    // Rare 3+ pile-up: still keep displacement compact around the real point.
+    const compact=[
+      {xAnchor:1.08,yAnchor:.72,side:'left'},
+      {xAnchor:-.08,yAnchor:.72,side:'right'},
+      {xAnchor:.5,yAnchor:1.18,side:'top'},
+      {xAnchor:.5,yAnchor:.12,side:'bottom'}
+    ];
 
     sorted.forEach((row,index)=>{
-      const p=pattern[index%pattern.length];
+      const p=compact[index%compact.length];
       result.set(Number(row.row),{
         xAnchor:p.xAnchor,
         yAnchor:p.yAnchor,
-        zIndex:p.zIndex-index,
-        nearby:true
+        zIndex:10-index,
+        nearby:true,
+        side:p.side
       });
     });
   });
@@ -1592,7 +1614,7 @@ function renderMap(rows,fit=true){
   }
 
   const bounds=new kakao.maps.LatLngBounds();
-  const placements=nearbyPlacements(validRows,20);
+  const placements=nearbyPlacements(validRows,5);
 
   validRows.forEach(x=>{
     const position=new kakao.maps.LatLng(Number(x.lat),Number(x.lng));
@@ -1603,6 +1625,8 @@ function renderMap(rows,fit=true){
 
     if(placement&&placement.nearby){
       content.classList.add('nearby-split');
+      if(placement.side==='left')content.classList.add('nearby-left');
+      if(placement.side==='right')content.classList.add('nearby-right');
     }
 
     const overlay=new kakao.maps.CustomOverlay({
