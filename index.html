@@ -1405,6 +1405,7 @@ let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,p
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,suggestTimeout=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false;
 let commentRestaurant=null,commentRequestSeq=0,commentSubmitting=false;
+const commentCache=new Map();
 let rouletteCandidates=[],rouletteWinner=null,rouletteSpinning=false,rouletteRotation=0,rouletteTicker=null,rouletteCategory='전체';
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
 const colorFor=c=>COLORS[c]||'#64748b';
@@ -1704,24 +1705,23 @@ function applyDbRows(rows){
   return true;
 }
 
-function loadStaticFallback(){
-  return fetch('./restaurants.json',{cache:'no-store'})
+function loadStaticData(){
+  return fetch('./restaurants.json',{cache:'default'})
     .then(r=>{if(!r.ok)throw new Error('restaurants.json '+r.status);return r.json();})
     .then(p=>{
-      if(dbLoadDone)return;
       const rows=Array.isArray(p)?p:(Array.isArray(p.rows)?p.rows:[]);
-      applyDbRows(rows);
+      if(rows.length){
+        applyDbRows(rows);
+        return true;
+      }
+      return false;
     })
-    .catch(()=>{
-      if(dbLoadDone)return;
-      document.getElementById('list').innerHTML='<div class="empty">식당 데이터를 불러오지 못했습니다.</div>';
-      document.getElementById('count').textContent='오류';
-    });
+    .catch(()=>false);
 }
 
 function loadLiveDb(){
   return new Promise(resolve=>{
-    const callback='__lunchMapDbCallback';
+    const callback='__lunchMapDbCallback_'+Date.now();
     let script=null;
     let finished=false;
 
@@ -1751,13 +1751,22 @@ function loadLiveDb(){
     script.onerror=()=>done(false);
     document.head.appendChild(script);
 
-    dbLoadTimer=setTimeout(()=>done(false),3500);
+    dbLoadTimer=setTimeout(()=>done(false),3000);
   });
 }
 
 async function loadDashboardData(){
-  const live=await loadLiveDb();
-  if(!live)await loadStaticFallback();
+  const staticLoaded=await loadStaticData();
+  if(!staticLoaded){
+    document.getElementById('list').innerHTML='<div class="empty">식당 정보를 불러오는 중입니다.</div>';
+  }
+
+  const refreshLive=()=>loadLiveDb().catch(()=>false);
+  if('requestIdleCallback' in window){
+    requestIdleCallback(refreshLive,{timeout:1200});
+  }else{
+    setTimeout(refreshLive,350);
+  }
 }
 
 const commentPanel=document.getElementById('commentPanel');
@@ -1841,6 +1850,28 @@ function makeClientCommentId(){
   return 'c-'+Date.now()+'-'+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
 }
 
+function getCachedComments(restaurant,maxAge=30000){
+  const key=restaurantCommentKey(restaurant);
+  const cached=commentCache.get(key);
+  if(!cached)return null;
+  if(Date.now()-cached.at>maxAge)return null;
+  return cached.rows;
+}
+function setCachedComments(restaurant,rows){
+  commentCache.set(restaurantCommentKey(restaurant),{
+    at:Date.now(),
+    rows:Array.isArray(rows)?rows:[]
+  });
+}
+function updateCachedComment(restaurant,updater){
+  const key=restaurantCommentKey(restaurant);
+  const current=commentCache.get(key);
+  const rows=current&&Array.isArray(current.rows)?current.rows.slice():[];
+  const next=updater(rows);
+  commentCache.set(key,{at:Date.now(),rows:next});
+  return next;
+}
+
 function fetchCommentsJsonp(restaurant,timeoutMs=5000){
   return new Promise((resolve,reject)=>{
     if(!restaurant)return reject(new Error('restaurant required'));
@@ -1864,7 +1895,9 @@ function fetchCommentsJsonp(restaurant,timeoutMs=5000){
       clearTimeout(timer);
       try{delete window[callback];}catch(e){window[callback]=undefined;}
       script.remove();
-      resolve(payload&&Array.isArray(payload.comments)?payload.comments:[]);
+      const rows=payload&&Array.isArray(payload.comments)?payload.comments:[];
+      setCachedComments(restaurant,rows);
+      resolve(rows);
     };
 
     script.onerror=()=>{
@@ -1889,16 +1922,23 @@ function fetchCommentsJsonp(restaurant,timeoutMs=5000){
 async function loadComments(restaurant){
   if(!restaurant)return [];
   const seq=++commentRequestSeq;
-  commentList.innerHTML='<div class="comment-loading">댓글을 불러오는 중입니다.</div>';
+  const cached=getCachedComments(restaurant);
+
+  if(cached){
+    renderComments(cached);
+  }else{
+    commentList.innerHTML='<div class="comment-loading">댓글을 불러오는 중입니다.</div>';
+  }
+
   try{
-    const rows=await fetchCommentsJsonp(restaurant,5000);
+    const rows=await fetchCommentsJsonp(restaurant,3500);
     if(seq===commentRequestSeq)renderComments(rows);
     return rows;
   }catch(err){
-    if(seq===commentRequestSeq){
+    if(seq===commentRequestSeq&&!cached){
       commentList.innerHTML='<div class="comment-empty">댓글을 불러오지 못했습니다.</div>';
     }
-    return [];
+    return cached||[];
   }
 }
 
@@ -1923,10 +1963,11 @@ function postCommentFields(fields){
 }
 
 async function waitForCommentState(restaurant,commentId,shouldExist){
-  for(let attempt=0;attempt<8;attempt++){
-    await new Promise(r=>setTimeout(r,attempt===0?350:400));
+  const delays=[550,1100];
+  for(const delay of delays){
+    await new Promise(r=>setTimeout(r,delay));
     try{
-      const rows=await fetchCommentsJsonp(restaurant,5000);
+      const rows=await fetchCommentsJsonp(restaurant,3500);
       const exists=rows.some(x=>String(x.id||'')===String(commentId));
       if(commentRestaurant&&restaurantCommentKey(commentRestaurant)===restaurantCommentKey(restaurant)){
         renderComments(rows);
@@ -1942,12 +1983,19 @@ async function deleteComment(commentId,button){
   if(!window.confirm('이 댓글을 삭제하시겠습니까?'))return;
 
   const restaurant=commentRestaurant;
+  const previous=getCachedComments(restaurant,Infinity)||[];
+
+  // 화면에서는 즉시 제거
+  const optimistic=previous.filter(x=>String(x.id||'')!==String(commentId));
+  setCachedComments(restaurant,optimistic);
+  renderComments(optimistic);
+
   if(button){
     button.disabled=true;
     button.textContent='삭제 중';
   }
   commentSubmitting=true;
-  commentStatus.textContent='댓글을 삭제하고 있습니다.';
+  commentStatus.textContent='댓글을 삭제했습니다. 서버에 반영 중입니다.';
   commentStatus.className='comment-status';
 
   postCommentFields({
@@ -1965,8 +2013,10 @@ async function deleteComment(commentId,button){
     commentStatus.className='comment-status';
     showToast('댓글이 삭제되었습니다.');
   }else{
-    commentStatus.textContent='삭제 반영을 확인하지 못했습니다. 목록을 다시 확인해 주세요.';
+    // 서버 반영 여부가 불명확하면 최신 목록으로 복구/동기화
+    commentStatus.textContent='삭제 반영 확인이 지연되어 최신 목록을 다시 불러옵니다.';
     commentStatus.className='comment-status error';
+    commentCache.delete(restaurantCommentKey(restaurant));
     await loadComments(restaurant);
   }
 }
@@ -1998,10 +2048,23 @@ commentForm.addEventListener('submit',async e=>{
   }
 
   const commentId=makeClientCommentId();
+  const nickname=getCommentNickname();
+  const optimisticRow={
+    id:commentId,
+    nickname:nickname,
+    comment:textValue,
+    createdAt:'방금',
+    canDelete:true
+  };
+
+  // 화면에 즉시 표시
+  const optimistic=updateCachedComment(restaurant,rows=>[optimisticRow,...rows]);
+  renderComments(optimistic);
+  commentInput.value='';
   commentSubmitting=true;
   commentSubmit.disabled=true;
   commentSubmit.textContent='등록 중';
-  commentStatus.textContent='댓글을 등록하고 있습니다.';
+  commentStatus.textContent=nickname+'로 표시했습니다. 서버에 반영 중입니다.';
   commentStatus.className='comment-status';
 
   postCommentFields({
@@ -2009,7 +2072,7 @@ commentForm.addEventListener('submit',async e=>{
     key:restaurantCommentKey(restaurant),
     name:restaurant.name||'',
     address:restaurant.address||'',
-    nickname:getCommentNickname(),
+    nickname:nickname,
     owner:getCommentOwnerKey(),
     commentId:commentId,
     comment:textValue,
@@ -2023,13 +2086,13 @@ commentForm.addEventListener('submit',async e=>{
   commentSubmit.textContent='등록';
 
   if(confirmed){
-    commentInput.value='';
-    commentStatus.textContent=getCommentNickname()+'로 등록되었습니다.';
+    commentStatus.textContent=nickname+'로 등록되었습니다.';
     commentStatus.className='comment-status';
     showToast('댓글이 등록되었습니다.');
   }else{
-    commentStatus.textContent='등록은 요청됐지만 목록 갱신에 실패했습니다. 식당을 다시 선택하면 확인할 수 있습니다.';
+    commentStatus.textContent='서버 반영 확인이 지연되어 최신 목록을 다시 불러옵니다.';
     commentStatus.className='comment-status error';
+    commentCache.delete(restaurantCommentKey(restaurant));
     await loadComments(restaurant);
   }
 });
