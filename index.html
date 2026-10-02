@@ -1439,8 +1439,12 @@ function initMap(){
       setTimeout(()=>{
         if(!mapReady)return;
         map.relayout();
-        const rows=getRows();
+        const rows=getRows().filter(hasValidCoords);
         if(rows.length) renderMap(rows,true);
+        else{
+          map.setCenter(new kakao.maps.LatLng(HOME_LAT,HOME_LNG));
+          map.setLevel(5);
+        }
       },80);
     });
 
@@ -1484,18 +1488,38 @@ function selectRow(row,pan=true){
   if(isMobile()&&pan)setSheetState('peek');
 }
 function renderMap(rows,fit=true){
-  if(!mapReady){pendingRows=rows;return;}
-  clearMarkers();selectedRow=null;if(!rows.length)return;
+  const validRows=(Array.isArray(rows)?rows:[]).filter(hasValidCoords);
+  if(!mapReady){pendingRows=validRows;return;}
+
+  clearMarkers();
+  selectedRow=null;
+
+  if(!validRows.length){
+    map.setCenter(new kakao.maps.LatLng(HOME_LAT,HOME_LNG));
+    map.setLevel(5);
+    return;
+  }
+
   const bounds=new kakao.maps.LatLngBounds();
-  rows.forEach(x=>{
+  validRows.forEach(x=>{
     const position=new kakao.maps.LatLng(Number(x.lat),Number(x.lng));
-    const wrap=document.createElement('div');wrap.innerHTML=markerHtml(x);const content=wrap.firstElementChild;
+    const wrap=document.createElement('div');
+    wrap.innerHTML=markerHtml(x);
+    const content=wrap.firstElementChild;
     const overlay=new kakao.maps.CustomOverlay({map,position,content,xAnchor:.5,yAnchor:1,zIndex:5});
-    const item={overlay,position,data:x,content};content.addEventListener('click',()=>selectRow(x.row,false));
-    overlays.push(item);markerByRow.set(x.row,item);bounds.extend(position);
+    const item={overlay,position,data:x,content};
+    content.addEventListener('click',()=>selectRow(x.row,false));
+    overlays.push(item);
+    markerByRow.set(x.row,item);
+    bounds.extend(position);
   });
-  if(rows.length===1){map.setCenter(overlays[0].position);map.setLevel(3);}
-  else if(fit)map.setBounds(bounds,46,46,46,46);
+
+  if(validRows.length===1){
+    map.setCenter(overlays[0].position);
+    map.setLevel(3);
+  }else if(fit){
+    map.setBounds(bounds,46,46,46,46);
+  }
 }
 function buildFilters(){
   const cats=[...new Set(allData.map(x=>x.category).filter(Boolean))];
@@ -1524,7 +1548,7 @@ function renderList(rows){
 }
 function hasValidCoords(x){
   const lat=Number(x&&x.lat),lng=Number(x&&x.lng);
-  return Number.isFinite(lat)&&lat!==0&&Number.isFinite(lng)&&lng!==0;
+  return Number.isFinite(lat)&&Number.isFinite(lng)&&lat>=33&&lat<=39&&lng>=124&&lng<=132;
 }
 function render(fit=true){
   const rows=getRows();
