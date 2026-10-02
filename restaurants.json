@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-01",
+  "updatedAt": "2026-10-02",
   "rows": [
     {
       "row": 2,
@@ -542,14 +542,14 @@
     },
     {
       "row": 51,
-      "category": "",
+      "category": "기타",
       "name": "해물점",
       "rating": "",
       "feature": "",
       "capacity": "",
-      "address": "",
-      "lat": null,
-      "lng": null
+      "address": "서울 마포구 독막로3길 24-9",
+      "lat": 37.54923052,
+      "lng": 126.9174345
     }
   ]
 }
