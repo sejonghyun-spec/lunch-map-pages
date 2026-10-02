@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-popup-readability-v19">
+<meta name="lunch-map-build" content="2026-10-03-list-category-badge-v20">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -350,21 +350,25 @@ button,input,select{font:inherit}
   flex:0 0 auto;
   display:inline-flex;
   align-items:center;
-  gap:5px;
+  justify-content:center;
+  gap:6px;
+  min-height:28px;
   margin-left:auto;
-  border:1px solid #e5e8ea;
+  border:1px solid color-mix(in srgb,var(--badge-color,#64748b) 30%,#fff);
   border-radius:999px;
-  padding:4px 7px;
-  background:#fff;
-  color:#687076;
-  font-size:10.5px;
-  font-weight:550;
+  padding:5px 10px;
+  background:color-mix(in srgb,var(--badge-color,#64748b) 9%,#fff);
+  color:var(--badge-color,#64748b);
+  font-size:12px;
+  font-weight:650;
+  line-height:1;
 }
 .badge-dot{
-  width:6px;
-  height:6px;
+  width:7px;
+  height:7px;
   border-radius:50%;
   flex:0 0 auto;
+  background:var(--badge-color,#64748b);
 }
 .rating{
   min-height:18px;
@@ -1303,9 +1307,10 @@ button,input,select{font:inherit}
   .card{padding:12px 10px 13px}
   .name{font-size:15.5px;font-weight:700}
   .badge{
-    padding:4px 7px;
-    font-size:10.5px;
-    font-weight:550;
+    min-height:27px;
+    padding:5px 9px;
+    font-size:11.5px;
+    font-weight:650;
   }
   .rating{
     margin-top:4px;
@@ -2208,7 +2213,7 @@ function renderList(rows){
   document.getElementById('listSub').textContent='현재 '+rows.length+'곳';
   if(!rows.length){el.innerHTML='<div class="empty">조건에 맞는 식당이 없습니다.</div>';return;}
   el.innerHTML=rows.map(x=>'<div class="card" data-row="'+x.row+'" style="--card-color:'+colorFor(x.category)+'">'+
-    '<div class="card-head"><div class="name">'+esc(x.name)+'</div><div class="badge"><span class="badge-dot" style="background:'+colorFor(x.category)+'"></span>'+esc(x.category)+'</div></div>'+
+    '<div class="card-head"><div class="name">'+esc(x.name)+'</div><div class="badge" style="--badge-color:'+colorFor(x.category)+'"><span class="badge-dot"></span>'+esc(x.category)+'</div></div>'+
     '<div class="rating">'+esc(ratingText(x))+'</div>'+
     (x.feature?'<div class="desc">'+esc(x.feature)+'</div>':'')+
     '<div class="meta">'+(x.capacity?'<div>👥 '+esc(x.capacity)+'</div>':'')+'<div>📍 '+esc(x.address)+'</div></div></div>').join('');
