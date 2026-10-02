@@ -1404,7 +1404,7 @@ let allData=[],activeCategory='전체',searchKeyword='',sortMode='default';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,searchTimer=null;
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,suggestTimeout=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false;
-let commentRestaurant=null,commentRequestSeq=0,commentSubmitting=false;
+let commentRestaurant=null,commentRequestSeq=0,commentSubmitting=false,commentSubmitTimer=null;
 let rouletteCandidates=[],rouletteWinner=null,rouletteSpinning=false,rouletteRotation=0,rouletteTicker=null,rouletteCategory='전체';
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
 const colorFor=c=>COLORS[c]||'#64748b';
@@ -1887,6 +1887,15 @@ function deleteComment(commentId,button){
     button.disabled=true;
     button.textContent='삭제 중';
   }
+  commentSubmitting=true;
+  clearTimeout(commentSubmitTimer);
+  commentSubmitTimer=setTimeout(()=>{
+    if(!commentSubmitting)return;
+    commentSubmitting=false;
+    commentStatus.textContent='댓글 서버에 연결되지 않아 삭제하지 못했습니다.';
+    commentStatus.className='comment-status error';
+    if(commentRestaurant)loadComments(commentRestaurant);
+  },5000);
   commentStatus.textContent='댓글을 삭제하고 있습니다.';
   commentStatus.className='comment-status';
 
@@ -1943,6 +1952,16 @@ commentForm.addEventListener('submit',e=>{
   commentSubmit.textContent='등록 중';
   commentStatus.textContent='댓글을 등록하고 있습니다.';
   commentStatus.className='comment-status';
+
+  clearTimeout(commentSubmitTimer);
+  commentSubmitTimer=setTimeout(()=>{
+    if(!commentSubmitting)return;
+    commentSubmitting=false;
+    commentSubmit.disabled=false;
+    commentSubmit.textContent='등록';
+    commentStatus.textContent='댓글 서버에 연결되지 않았습니다. 잠시 후 다시 시도해 주세요.';
+    commentStatus.className='comment-status error';
+  },5000);
 
   const form=document.createElement('form');
   form.method='POST';
@@ -2288,6 +2307,8 @@ window.addEventListener('message',e=>{
 
   if(d.source==='lunch-map-comment-delete'){
     if(e.source!==commentSink.contentWindow)return;
+    clearTimeout(commentSubmitTimer);
+    commentSubmitting=false;
     if(d.ok){
       commentStatus.textContent='댓글이 삭제되었습니다.';
       commentStatus.className='comment-status';
@@ -2303,6 +2324,7 @@ window.addEventListener('message',e=>{
 
   if(d.source==='lunch-map-comment'){
     if(e.source!==commentSink.contentWindow)return;
+    clearTimeout(commentSubmitTimer);
     commentSubmitting=false;
     commentSubmit.disabled=false;
     commentSubmit.textContent='등록';
