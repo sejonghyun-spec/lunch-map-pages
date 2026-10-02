@@ -181,7 +181,7 @@ button,input,select{font:inherit}
   background:#fff;
   border-right:1px solid var(--line);
   display:grid;
-  grid-template-rows:auto auto auto 1fr;
+  grid-template-rows:auto auto auto auto 1fr;
   z-index:20;
   box-shadow:5px 0 18px rgba(36,30,25,.06);
   overflow:hidden;
@@ -1122,7 +1122,7 @@ button,input,select{font:inherit}
     overflow:hidden;
     transition:transform .22s ease;
     transform:translateY(calc(100% - 132px));
-    grid-template-rows:24px auto auto auto 1fr;
+    grid-template-rows:24px auto auto auto auto 1fr;
     background:rgba(255,255,255,.98);
     backdrop-filter:blur(10px);
   }
@@ -1845,7 +1845,7 @@ function getRows(){
 
     const maxPeople=capacityMax(x);
     if(capacityFilter==='4'&&maxPeople<4&&!isGroupFriendly(x))return false;
-    if(capacityFilter==='8'&&maxPeople<8&&!isGroupFriendly(x))return false;
+    if(capacityFilter==='8'&&maxPeople<8)return false;
     if(capacityFilter==='group'&&!isGroupFriendly(x))return false;
 
     if(commentFilter==='has'&&(!commentsPreloaded||commentCountFor(x)<1))return false;
