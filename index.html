@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-category-active-color-v13">
+<meta name="lunch-map-build" content="2026-10-03-smart-marker-labels-v14">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -710,12 +710,17 @@ button,input,select{font:inherit}
   transition:transform .12s,box-shadow .12s,width .12s,height .12s;
 }
 .marker-caption{
-  display:flex;
+  position:absolute;
+  left:50%;
+  top:calc(100% + 3px);
+  transform:translateX(-50%);
+  display:none;
   align-items:center;
   justify-content:center;
   width:max-content;
   max-width:190px;
   line-height:1;
+  pointer-events:none;
 }
 .marker-name{
   display:inline-block;
@@ -743,6 +748,11 @@ button,input,select{font:inherit}
 .marker-label:hover{
   transform:translateY(-4px);
   filter:drop-shadow(0 2px 2px rgba(20,30,36,.14));
+}
+.marker-label:hover .marker-caption,
+.marker-label.selected .marker-caption,
+.map-wrap.show-marker-labels .marker-caption{
+  display:flex;
 }
 .marker-label:hover .marker-pin{
   transform:scale(1.06);
@@ -1298,7 +1308,7 @@ button,input,select{font:inherit}
     font-weight:500;
   }
 
-  /* 모바일도 데스크톱과 동일한 Naver-style 텍스트 라벨 유지 */
+  /* 모바일도 기본은 마커만 표시하고 선택/고배율에서 라벨 표시 */
   .marker-label{
     width:max-content;
     max-width:165px;
@@ -1778,6 +1788,15 @@ function resetMultiFilters(){
 }
 
 function loadKakao(){return new Promise((resolve,reject)=>{if(window.kakao&&kakao.maps)return resolve();const s=document.createElement('script');s.src='https://dapi.kakao.com/v2/maps/sdk.js?appkey='+KAKAO_KEY+'&autoload=false&libraries=services';s.async=true;s.onload=()=>window.kakao&&kakao.maps?resolve():reject(new Error('SDK init failed'));s.onerror=()=>reject(new Error('SDK load failed'));document.head.appendChild(s);});}
+function syncMarkerLabelVisibility(){
+  if(!mapReady||!map)return;
+  const wrap=document.querySelector('.map-wrap');
+  if(!wrap)return;
+  // Kakao map levels get smaller as the user zooms in.
+  // Keep the map clean at broad views; reveal all names only at close zoom.
+  wrap.classList.toggle('show-marker-labels',map.getLevel()<=3);
+}
+
 function initMap(){
   loadKakao().then(()=>kakao.maps.load(()=>{
     const mapEl=document.getElementById('map');
@@ -1788,6 +1807,8 @@ function initMap(){
     geocoder=new kakao.maps.services.Geocoder();
     mapReady=true;
     document.getElementById('mapStatus').classList.add('hidden');
+    syncMarkerLabelVisibility();
+    kakao.maps.event.addListener(map,'zoom_changed',syncMarkerLabelVisibility);
 
     requestAnimationFrame(()=>{
       map.relayout();
@@ -2035,6 +2056,14 @@ function renderMap(rows,fit=true){
     content.addEventListener('pointerdown',e=>e.stopPropagation());
     content.addEventListener('mousedown',e=>e.stopPropagation());
     content.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+    content.addEventListener('mouseenter',()=>{
+      if(overlay&&typeof overlay.setZIndex==='function')overlay.setZIndex(55);
+    });
+    content.addEventListener('mouseleave',()=>{
+      if(overlay&&typeof overlay.setZIndex==='function'){
+        overlay.setZIndex(isRowSelected(x.row)?60:(placement?placement.zIndex:5));
+      }
+    });
     content.addEventListener('click',e=>{
       e.preventDefault();
       e.stopPropagation();
@@ -2053,6 +2082,7 @@ function renderMap(rows,fit=true){
   }else if(fit){
     map.setBounds(bounds,46,46,46,46);
   }
+  setTimeout(syncMarkerLabelVisibility,0);
 }
 function buildFilters(){
   const cats=[...new Set(allData.map(x=>x.category).filter(Boolean))];
