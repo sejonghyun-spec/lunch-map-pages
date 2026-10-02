@@ -710,7 +710,7 @@ button,input,select{font:inherit}
 .popup-name{
   margin-bottom:5px;
   font-size:17px;
-  font-weight:800;
+  font-weight:700;
   letter-spacing:-.25px;
 }
 .popup-rating{
@@ -1730,15 +1730,15 @@ function nearbyPlacements(rows,thresholdMeters=5){
       // Same/near-identical coordinate: keep the real point between the
       // labels. First item sits left, second item sits right.
       result.set(Number(sorted[0].row),{
-        xAnchor:1.08,
-        yAnchor:.72,
+        xAnchor:1.16,
+        yAnchor:.30,
         zIndex:9,
         nearby:true,
         side:'left'
       });
       result.set(Number(sorted[1].row),{
-        xAnchor:-.08,
-        yAnchor:.72,
+        xAnchor:-.16,
+        yAnchor:.30,
         zIndex:8,
         nearby:true,
         side:'right'
@@ -1748,10 +1748,10 @@ function nearbyPlacements(rows,thresholdMeters=5){
 
     // Rare 3+ pile-up: still keep displacement compact around the real point.
     const compact=[
-      {xAnchor:1.08,yAnchor:.72,side:'left'},
-      {xAnchor:-.08,yAnchor:.72,side:'right'},
-      {xAnchor:.5,yAnchor:1.18,side:'top'},
-      {xAnchor:.5,yAnchor:.12,side:'bottom'}
+      {xAnchor:1.16,yAnchor:.30,side:'left'},
+      {xAnchor:-.16,yAnchor:.30,side:'right'},
+      {xAnchor:.5,yAnchor:.92,side:'top'},
+      {xAnchor:.5,yAnchor:-.28,side:'bottom'}
     ];
 
     sorted.forEach((row,index)=>{
@@ -1803,7 +1803,7 @@ function renderMap(rows,fit=true){
       position,
       content,
       xAnchor:placement?placement.xAnchor:.5,
-      yAnchor:placement?placement.yAnchor:1,
+      yAnchor:placement?placement.yAnchor:.30,
       zIndex:placement?placement.zIndex:5
     });
 
