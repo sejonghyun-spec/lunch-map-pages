@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-mobile-layout-v31">
+<meta name="lunch-map-build" content="2026-10-03-mobile-layout-v32">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -1682,29 +1682,30 @@ button,input,select{font:inherit}
   .roulette-actions{position:sticky;bottom:0;background:#fff;padding-top:10px}
   .roulette-action{flex:1;min-width:0}
 
-  @media(max-width:430px){
-    .brand-title{font-size:17px}
-    .brand-sub{display:none}
-    .top-filters{padding-left:8px;padding-right:8px}
-    .filter-btn{padding-left:12px;padding-right:12px}
-    .sidebar{left:6px;right:6px;border-radius:18px 18px 14px 14px}
-    .search-wrap{padding-left:10px;padding-right:10px}
-    .multi-filter-wrap{padding-left:10px;padding-right:10px}
-    .quick-row{padding-left:10px;padding-right:10px}
-    .card{padding-left:8px;padding-right:8px}
-  }
+}
 
-  @media(max-height:620px){
-    :root{--header:calc(96px + var(--mobile-safe-top))}
-    .topbar{grid-template-rows:48px 48px}
-    .brand-title{font-size:17px}
-    .brand-sub{display:none}
-    .mobile-menu-btn{width:38px;height:38px}
-    .top-filters{padding-top:4px;padding-bottom:5px}
-    .sidebar{transform:translateY(calc(100% - 116px))}
-    .sidebar.sheet-mid{transform:translateY(52%)}
-    .comment-panel{max-height:48dvh}
-  }
+@media(max-width:430px){
+  .brand-title{font-size:17px}
+  .brand-sub{display:none}
+  .top-filters{padding-left:8px;padding-right:8px}
+  .filter-btn{padding-left:12px;padding-right:12px}
+  .sidebar{left:6px;right:6px;border-radius:18px 18px 14px 14px}
+  .search-wrap{padding-left:10px;padding-right:10px}
+  .multi-filter-wrap{padding-left:10px;padding-right:10px}
+  .quick-row{padding-left:10px;padding-right:10px}
+  .card{padding-left:8px;padding-right:8px}
+}
+
+@media(max-width:900px) and (max-height:620px){
+  :root{--header:calc(96px + var(--mobile-safe-top))}
+  .topbar{grid-template-rows:48px 48px}
+  .brand-title{font-size:17px}
+  .brand-sub{display:none}
+  .mobile-menu-btn{width:38px;height:38px}
+  .top-filters{padding-top:4px;padding-bottom:5px}
+  .sidebar{transform:translateY(calc(100% - 116px))}
+  .sidebar.sheet-mid{transform:translateY(52%)}
+  .comment-panel{max-height:48dvh}
 }
 
 </style>
