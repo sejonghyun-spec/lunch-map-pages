@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-list-typography-v9">
+<meta name="lunch-map-build" content="2026-10-03-borderless-marker-v10">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -683,13 +683,13 @@ button,input,select{font:inherit}
   justify-content:center;
   border-radius:50%;
   background:var(--marker-color);
-  border:2px solid #fff;
+  border:0;
   color:#fff;
   font-family:Arial,sans-serif;
   font-size:10px;
   font-weight:900;
   line-height:1;
-  box-shadow:0 1px 4px rgba(24,34,40,.30);
+  box-shadow:0 1px 3px rgba(24,34,40,.18);
   transition:transform .12s,box-shadow .12s,width .12s,height .12s;
 }
 .marker-caption{
@@ -720,15 +720,8 @@ button,input,select{font:inherit}
   -webkit-font-smoothing:antialiased;
   text-rendering:geometricPrecision;
   text-shadow:
-    -1px -1px 0 rgba(255,255,255,.98),
-     1px -1px 0 rgba(255,255,255,.98),
-    -1px  1px 0 rgba(255,255,255,.98),
-     1px  1px 0 rgba(255,255,255,.98),
-     0 -2px 1px rgba(255,255,255,.88),
-     0  2px 1px rgba(255,255,255,.88),
-    -2px  0 1px rgba(255,255,255,.88),
-     2px  0 1px rgba(255,255,255,.88),
-     0  1px 3px rgba(255,255,255,.98);
+    0 1px 1px rgba(255,255,255,.72),
+    0 0 2px rgba(255,255,255,.48);
 }
 .marker-label:hover{
   transform:translateY(-4px);
@@ -746,10 +739,8 @@ button,input,select{font:inherit}
   width:27px;
   height:27px;
   font-size:13px;
-  border-width:3px;
-  box-shadow:
-    0 3px 8px rgba(24,34,40,.32),
-    0 0 0 3px rgba(255,255,255,.94);
+  border-width:0;
+  box-shadow:0 3px 7px rgba(24,34,40,.24);
 }
 .marker-label.selected .marker-name{
   max-width:185px;
@@ -1311,7 +1302,7 @@ button,input,select{font:inherit}
   .marker-pin{
     width:20px;
     height:20px;
-    border-width:2px;
+    border-width:0;
     font-size:9px;
   }
   .marker-caption{
@@ -1344,6 +1335,7 @@ button,input,select{font:inherit}
   .marker-label.selected .marker-pin{
     width:25px;
     height:25px;
+    border-width:0;
     font-size:12px;
   }
   .marker-label.selected .marker-name{
