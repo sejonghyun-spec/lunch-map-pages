@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-smart-marker-labels-v14">
+<meta name="lunch-map-build" content="2026-10-03-marker-label-zoom2-v15">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -1793,8 +1793,8 @@ function syncMarkerLabelVisibility(){
   const wrap=document.querySelector('.map-wrap');
   if(!wrap)return;
   // Kakao map levels get smaller as the user zooms in.
-  // Keep the map clean at broad views; reveal all names only at close zoom.
-  wrap.classList.toggle('show-marker-labels',map.getLevel()<=3);
+  // Keep labels hidden longer; reveal all names only at very close zoom.
+  wrap.classList.toggle('show-marker-labels',map.getLevel()<=2);
 }
 
 function initMap(){
