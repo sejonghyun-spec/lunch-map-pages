@@ -1405,6 +1405,7 @@ let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,p
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,suggestTimeout=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false;
 let commentRestaurant=null,commentRequestSeq=0,commentSubmitting=false,commentSubmitTimer=null;
+const commentFrameRequests=new Map();
 let rouletteCandidates=[],rouletteWinner=null,rouletteSpinning=false,rouletteRotation=0,rouletteTicker=null,rouletteCategory='전체';
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
 const colorFor=c=>COLORS[c]||'#64748b';
@@ -1836,66 +1837,97 @@ function renderComments(comments){
     btn.addEventListener('click',()=>deleteComment(btn.dataset.commentId,btn));
   });
 }
-function loadComments(restaurant){
-  if(!restaurant)return;
-  const seq=++commentRequestSeq;
-  const key=restaurantCommentKey(restaurant);
-  const callback='__lunchComments_'+Date.now()+'_'+seq;
-  let script=null;
-  let done=false;
+function makeClientCommentId(){
+  if(window.crypto&&crypto.randomUUID)return crypto.randomUUID();
+  return 'c-'+Date.now()+'-'+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+}
 
+function requestComments(restaurant,timeoutMs=7000){
+  return new Promise((resolve,reject)=>{
+    if(!restaurant)return reject(new Error('restaurant required'));
+
+    const requestId='comments-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+    const key=restaurantCommentKey(restaurant);
+    const frame=document.createElement('iframe');
+    frame.style.display='none';
+    frame.title='댓글 조회';
+
+    const timer=setTimeout(()=>{
+      commentFrameRequests.delete(requestId);
+      frame.remove();
+      reject(new Error('comment request timeout'));
+    },timeoutMs);
+
+    commentFrameRequests.set(requestId,{
+      resolve:(rows)=>{
+        clearTimeout(timer);
+        frame.remove();
+        resolve(rows);
+      },
+      reject:(err)=>{
+        clearTimeout(timer);
+        frame.remove();
+        reject(err);
+      }
+    });
+
+    frame.src=SUGGEST_URL+
+      '?mode=commentsFrame'+
+      '&key='+encodeURIComponent(key)+
+      '&owner='+encodeURIComponent(getCommentOwnerKey())+
+      '&requestId='+encodeURIComponent(requestId)+
+      '&t='+Date.now();
+
+    document.body.appendChild(frame);
+  });
+}
+
+async function loadComments(restaurant){
+  if(!restaurant)return [];
+  const seq=++commentRequestSeq;
   commentList.innerHTML='<div class="comment-loading">댓글을 불러오는 중입니다.</div>';
 
-  function finish(){
-    if(done)return;
-    done=true;
-    try{delete window[callback];}catch(e){window[callback]=undefined;}
-    if(script)script.remove();
-  }
-
-  window[callback]=payload=>{
-    if(seq!==commentRequestSeq){finish();return;}
-    const rows=payload&&Array.isArray(payload.comments)?payload.comments:[];
+  try{
+    const rows=await requestComments(restaurant,8000);
+    if(seq!==commentRequestSeq)return rows;
     renderComments(rows);
-    finish();
-  };
-
-  script=document.createElement('script');
-  script.async=true;
-  script.src=SUGGEST_URL+'?mode=comments&key='+encodeURIComponent(key)+'&owner='+encodeURIComponent(getCommentOwnerKey())+'&callback='+encodeURIComponent(callback)+'&t='+Date.now();
-  script.onerror=()=>{
+    return rows;
+  }catch(err){
     if(seq===commentRequestSeq){
       commentList.innerHTML='<div class="comment-empty">댓글을 불러오지 못했습니다.</div>';
     }
-    finish();
-  };
-  document.head.appendChild(script);
-
-  setTimeout(()=>{
-    if(done)return;
-    if(seq===commentRequestSeq){
-      commentList.innerHTML='<div class="comment-empty">댓글을 불러오지 못했습니다.</div>';
-    }
-    finish();
-  },4500);
+    return [];
+  }
 }
-function deleteComment(commentId,button){
+
+async function waitForCommentState(restaurant,commentId,shouldExist,timeoutMs=10000){
+  const deadline=Date.now()+timeoutMs;
+  while(Date.now()<deadline){
+    try{
+      const rows=await requestComments(restaurant,5000);
+      const exists=rows.some(x=>String(x.id||'')===String(commentId));
+      if(exists===shouldExist){
+        if(commentRestaurant&&restaurantCommentKey(commentRestaurant)===restaurantCommentKey(restaurant)){
+          renderComments(rows);
+        }
+        return true;
+      }
+    }catch(err){}
+    await new Promise(r=>setTimeout(r,450));
+  }
+  return false;
+}
+
+async function deleteComment(commentId,button){
   if(!commentRestaurant||!commentId)return;
   if(!window.confirm('이 댓글을 삭제하시겠습니까?'))return;
 
+  const restaurant=commentRestaurant;
   if(button){
     button.disabled=true;
     button.textContent='삭제 중';
   }
   commentSubmitting=true;
-  clearTimeout(commentSubmitTimer);
-  commentSubmitTimer=setTimeout(()=>{
-    if(!commentSubmitting)return;
-    commentSubmitting=false;
-    commentStatus.textContent='댓글 서버에 연결되지 않아 삭제하지 못했습니다.';
-    commentStatus.className='comment-status error';
-    if(commentRestaurant)loadComments(commentRestaurant);
-  },5000);
   commentStatus.textContent='댓글을 삭제하고 있습니다.';
   commentStatus.className='comment-status';
 
@@ -1907,7 +1939,7 @@ function deleteComment(commentId,button){
 
   const fields={
     mode:'commentDelete',
-    key:restaurantCommentKey(commentRestaurant),
+    key:restaurantCommentKey(restaurant),
     commentId:commentId,
     owner:getCommentOwnerKey()
   };
@@ -1921,6 +1953,19 @@ function deleteComment(commentId,button){
   document.body.appendChild(form);
   HTMLFormElement.prototype.submit.call(form);
   setTimeout(()=>form.remove(),1200);
+
+  const confirmed=await waitForCommentState(restaurant,commentId,false,10000);
+  commentSubmitting=false;
+
+  if(confirmed){
+    commentStatus.textContent='댓글이 삭제되었습니다.';
+    commentStatus.className='comment-status';
+    showToast('댓글이 삭제되었습니다.');
+  }else{
+    commentStatus.textContent='삭제 요청은 전송됐지만 반영 확인이 지연되고 있습니다.';
+    commentStatus.className='comment-status error';
+    await loadComments(restaurant);
+  }
 }
 
 function openComments(restaurant){
@@ -1936,9 +1981,11 @@ function openComments(restaurant){
 }
 document.getElementById('commentClose').addEventListener('click',closeComments);
 
-commentForm.addEventListener('submit',e=>{
+commentForm.addEventListener('submit',async e=>{
   e.preventDefault();
   if(commentSubmitting||!commentRestaurant)return;
+
+  const restaurant=commentRestaurant;
   const textValue=commentInput.value.trim();
   if(!textValue){
     commentStatus.textContent='댓글 내용을 입력해 주세요.';
@@ -1947,21 +1994,12 @@ commentForm.addEventListener('submit',e=>{
     return;
   }
 
+  const commentId=makeClientCommentId();
   commentSubmitting=true;
   commentSubmit.disabled=true;
   commentSubmit.textContent='등록 중';
   commentStatus.textContent='댓글을 등록하고 있습니다.';
   commentStatus.className='comment-status';
-
-  clearTimeout(commentSubmitTimer);
-  commentSubmitTimer=setTimeout(()=>{
-    if(!commentSubmitting)return;
-    commentSubmitting=false;
-    commentSubmit.disabled=false;
-    commentSubmit.textContent='등록';
-    commentStatus.textContent='댓글 서버에 연결되지 않았습니다. 잠시 후 다시 시도해 주세요.';
-    commentStatus.className='comment-status error';
-  },5000);
 
   const form=document.createElement('form');
   form.method='POST';
@@ -1971,11 +2009,12 @@ commentForm.addEventListener('submit',e=>{
 
   const fields={
     mode:'comment',
-    key:restaurantCommentKey(commentRestaurant),
-    name:commentRestaurant.name||'',
-    address:commentRestaurant.address||'',
+    key:restaurantCommentKey(restaurant),
+    name:restaurant.name||'',
+    address:restaurant.address||'',
     nickname:getCommentNickname(),
     owner:getCommentOwnerKey(),
+    commentId:commentId,
     comment:textValue,
     website:''
   };
@@ -1989,6 +2028,23 @@ commentForm.addEventListener('submit',e=>{
   document.body.appendChild(form);
   HTMLFormElement.prototype.submit.call(form);
   setTimeout(()=>form.remove(),1200);
+
+  const confirmed=await waitForCommentState(restaurant,commentId,true,10000);
+
+  commentSubmitting=false;
+  commentSubmit.disabled=false;
+  commentSubmit.textContent='등록';
+
+  if(confirmed){
+    commentInput.value='';
+    commentStatus.textContent=getCommentNickname()+'로 등록되었습니다.';
+    commentStatus.className='comment-status';
+    showToast('댓글이 등록되었습니다.');
+  }else{
+    commentStatus.textContent='등록 요청은 전송됐지만 반영 확인이 지연되고 있습니다. 중복 방지를 위해 다시 누르지 말고 잠시 후 목록을 확인해 주세요.';
+    commentStatus.className='comment-status error';
+    await loadComments(restaurant);
+  }
 });
 
 const rouletteModal=document.getElementById('rouletteModal');
@@ -2315,35 +2371,26 @@ window.addEventListener('message',e=>{
   if(!isAppsScriptMessageOrigin(e.origin))return;
   const d=e.data||{};
 
+  if(d.source==='lunch-map-comments-data'){
+    const pending=commentFrameRequests.get(String(d.requestId||''));
+    if(!pending)return;
+    commentFrameRequests.delete(String(d.requestId||''));
+    const rows=Array.isArray(d.comments)?d.comments:[];
+    pending.resolve(rows);
+    return;
+  }
+
   if(d.source==='lunch-map-comment-delete'){
-    clearTimeout(commentSubmitTimer);
-    commentSubmitting=false;
-    if(d.ok){
-      commentStatus.textContent='댓글이 삭제되었습니다.';
-      commentStatus.className='comment-status';
-      showToast(d.message||'댓글이 삭제되었습니다.');
-      if(commentRestaurant)setTimeout(()=>loadComments(commentRestaurant),120);
-    }else{
-      commentStatus.textContent=d.message||'댓글 삭제에 실패했습니다.';
+    if(!d.ok){
+      commentStatus.textContent=d.message||'댓글 삭제 요청이 실패했습니다.';
       commentStatus.className='comment-status error';
-      if(commentRestaurant)setTimeout(()=>loadComments(commentRestaurant),120);
     }
     return;
   }
 
   if(d.source==='lunch-map-comment'){
-    clearTimeout(commentSubmitTimer);
-    commentSubmitting=false;
-    commentSubmit.disabled=false;
-    commentSubmit.textContent='등록';
-    if(d.ok){
-      commentInput.value='';
-      commentStatus.textContent=getCommentNickname()+'로 등록되었습니다.';
-      commentStatus.className='comment-status';
-      showToast(d.message||'댓글이 등록되었습니다.');
-      if(commentRestaurant)setTimeout(()=>loadComments(commentRestaurant),180);
-    }else{
-      commentStatus.textContent=d.message||'댓글 등록에 실패했습니다.';
+    if(!d.ok){
+      commentStatus.textContent=d.message||'댓글 등록 요청이 실패했습니다.';
       commentStatus.className='comment-status error';
     }
     return;
