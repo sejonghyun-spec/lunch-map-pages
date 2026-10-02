@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-list-category-badge-v21">
+<meta name="lunch-map-build" content="2026-10-03-sidebar-controls-v22">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -231,37 +231,56 @@ button,input,select{font:inherit}
   width:100%;
   min-width:0;
   max-width:none;
-  height:38px;
-  border:1px solid #e0e5e8;
-  border-radius:10px;
-  padding:0 32px 0 12px;
-  background:#fff;
-  color:#4c4540;
+  height:40px;
+  appearance:none;
+  -webkit-appearance:none;
+  border:1px solid #dfe4e7;
+  border-radius:11px;
+  padding:0 34px 0 12px;
+  background-color:#fff;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M2 2l4 4 4-4' fill='none' stroke='%23646b70' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  color:#4a5155;
   font-size:13px;
-  font-weight:650;
+  font-weight:600;
   outline:none;
   cursor:pointer;
+  transition:border-color .14s,background-color .14s,color .14s,box-shadow .14s;
+}
+.multi-filter-select:hover{
+  border-color:#cbd2d6;
+  background-color:#fafbfc;
+}
+.multi-filter-select:focus{
+  border-color:#9da8ae;
+  box-shadow:0 0 0 3px rgba(74,87,94,.07);
 }
 .multi-filter-select.active{
-  border-color:#caa18f;
-  background:#faf4f1;
+  border-color:#c79a86;
+  background-color:#fbf4f0;
   color:var(--brand-dark);
+  font-weight:700;
 }
-.multi-filter-select:disabled{opacity:.52;cursor:not-allowed}
+.multi-filter-select:disabled{opacity:.48;cursor:not-allowed}
 .multi-filter-reset{
   grid-column:1/-1;
-  width:100%;
-  height:32px;
+  justify-self:end;
+  width:auto;
+  height:28px;
   border:0;
-  border-radius:10px;
-  padding:0 12px;
-  background:#f2efec;
-  color:#6b625c;
-  font-size:12.5px;
-  font-weight:650;
+  border-radius:7px;
+  padding:0 4px;
+  background:transparent;
+  color:#7b8286;
+  font-size:12px;
+  font-weight:600;
   cursor:pointer;
 }
-.multi-filter-reset:hover{background:#e9e4e0}
+.multi-filter-reset:hover{
+  background:#f5f6f7;
+  color:#50575b;
+}
 .quick-row{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -269,16 +288,21 @@ button,input,select{font:inherit}
   padding:0 16px 12px;
 }
 .quick-btn{
-  height:43px;
-  border:1px solid #e0e5e8;
-  border-radius:10px;
+  height:44px;
+  border:1px solid #dfe4e7;
+  border-radius:11px;
   background:#fff;
-  color:#40474b;
+  color:#41494d;
   font-size:14px;
-  font-weight:700;
+  font-weight:650;
   cursor:pointer;
+  transition:background .12s,border-color .12s,box-shadow .12s;
 }
-.quick-btn:hover{background:#f6f8f9}
+.quick-btn:hover{
+  background:#fafbfc;
+  border-color:#cbd2d6;
+  box-shadow:0 1px 3px rgba(34,44,50,.06);
+}
 .list-head{
   display:flex;
   justify-content:space-between;
@@ -300,15 +324,82 @@ button,input,select{font:inherit}
   font-weight:500;
   color:#777f84;
 }
-.sort{
+.sort-wrap{
+  position:relative;
+  flex:0 0 auto;
+}
+.sort-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  height:34px;
   border:0;
+  border-radius:8px;
+  padding:0 7px 0 9px;
   background:transparent;
-  color:#626a6f;
+  color:#555e63;
   font-size:12.5px;
-  font-weight:500;
-  outline:none;
+  font-weight:650;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.sort-btn:hover,
+.sort-wrap.open .sort-btn{
+  background:#f4f6f7;
+  color:#2f373b;
+}
+.sort-chevron{
+  width:7px;
+  height:7px;
+  border-right:1.5px solid currentColor;
+  border-bottom:1.5px solid currentColor;
+  transform:rotate(45deg) translateY(-2px);
+  transition:transform .14s;
+}
+.sort-wrap.open .sort-chevron{
+  transform:rotate(225deg) translate(-1px,-1px);
+}
+.sort-menu{
+  position:absolute;
+  top:calc(100% + 4px);
+  right:0;
+  z-index:60;
+  display:none;
+  min-width:112px;
+  padding:5px;
+  border:1px solid #dfe4e7;
+  border-radius:10px;
+  background:#fff;
+  box-shadow:0 7px 22px rgba(35,45,51,.16);
+}
+.sort-wrap.open .sort-menu{display:block}
+.sort-option{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  width:100%;
+  height:34px;
+  border:0;
+  border-radius:7px;
+  padding:0 9px 0 10px;
+  background:#fff;
+  color:#4e575c;
+  font-size:12.5px;
+  font-weight:550;
+  text-align:left;
   cursor:pointer;
 }
+.sort-option:hover{background:#f5f7f8}
+.sort-option.active{
+  background:#f5f3f2;
+  color:var(--brand-dark);
+  font-weight:700;
+}
+.sort-check{
+  visibility:hidden;
+  font-size:12px;
+}
+.sort-option.active .sort-check{visibility:visible}
 .list{
   min-height:0;
   overflow-y:auto;
@@ -1279,14 +1370,15 @@ button,input,select{font:inherit}
     width:100%;
     min-width:0;
     max-width:none;
-    height:36px;
-    padding:0 28px 0 10px;
+    height:38px;
+    padding:0 32px 0 11px;
+    background-position:right 11px center;
     font-size:12.5px;
   }
   .multi-filter-reset{
     grid-column:1/-1;
-    height:30px;
-    font-size:12px;
+    height:27px;
+    font-size:11.5px;
   }
   .quick-row{
     gap:8px;
@@ -1302,7 +1394,7 @@ button,input,select{font:inherit}
   }
   .list-title{font-size:16.5px;font-weight:700}
   .list-sub{font-size:11.5px;font-weight:500}
-  .sort{font-size:12px;font-weight:500}
+  .sort-btn{height:32px;font-size:12px}
   .list{padding:0 8px 14px}
   .card{padding:12px 10px 13px}
   .name{font-size:15.5px;font-weight:700}
@@ -1521,7 +1613,7 @@ button,input,select{font:inherit}
             <option value="group">단체</option>
             <option value="fast">빠른 식사</option>
           </select>
-          <button id="multiFilterReset" class="multi-filter-reset" type="button">초기화</button>
+          <button id="multiFilterReset" class="multi-filter-reset" type="button">↻ 초기화</button>
         </div>
       </div>
       <div class="quick-row">
@@ -1530,7 +1622,16 @@ button,input,select{font:inherit}
       </div>
       <div class="list-head">
         <div><div class="list-title">식당 목록</div><div id="listSub" class="list-sub">지도에 표시된 식당</div></div>
-        <select id="sort" class="sort"><option value="default">기본순</option><option value="rating">별점순</option><option value="name">이름순</option></select>
+        <div id="sortWrap" class="sort-wrap">
+          <button id="sortButton" class="sort-btn" type="button" aria-haspopup="menu" aria-expanded="false">
+            <span id="sortLabel">기본순</span><span class="sort-chevron" aria-hidden="true"></span>
+          </button>
+          <div id="sortMenu" class="sort-menu" role="menu">
+            <button class="sort-option active" type="button" data-sort="default" role="menuitem"><span>기본순</span><span class="sort-check">✓</span></button>
+            <button class="sort-option" type="button" data-sort="rating" role="menuitem"><span>별점순</span><span class="sort-check">✓</span></button>
+            <button class="sort-option" type="button" data-sort="name" role="menuitem"><span>이름순</span><span class="sort-check">✓</span></button>
+          </div>
+        </div>
       </div>
       <div id="list" class="list"><div class="empty">식당 정보를 불러오는 중입니다.</div></div>
     </aside>
@@ -2230,13 +2331,28 @@ function render(fit=true){
   renderList(rows);
   renderMap(rows.filter(hasValidCoords),fit);
 }
+function syncSortUI(){
+  const labels={default:'기본순',rating:'별점순',name:'이름순'};
+  const label=document.getElementById('sortLabel');
+  if(label)label.textContent=labels[sortMode]||labels.default;
+  document.querySelectorAll('.sort-option').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.sort===sortMode);
+  });
+}
+function closeSortMenu(){
+  const wrap=document.getElementById('sortWrap');
+  const button=document.getElementById('sortButton');
+  if(wrap)wrap.classList.remove('open');
+  if(button)button.setAttribute('aria-expanded','false');
+}
 function showAll(){
   selectedCategories.clear();
   searchKeyword='';
   sortMode='default';
   resetMultiFilters();
   document.getElementById('search').value='';
-  document.getElementById('sort').value='default';
+  syncSortUI();
+  closeSortMenu();
   buildFilters();
   render(true);
   if(isMobile())setSheetState('mid');
@@ -3354,7 +3470,28 @@ window.addEventListener('resize',()=>{
 });
 
 document.getElementById('search').addEventListener('input',e=>{searchKeyword=e.target.value||'';clearTimeout(searchTimer);searchTimer=setTimeout(()=>render(true),120);});
-document.getElementById('sort').addEventListener('change',e=>{sortMode=e.target.value;render(false);});
+const sortWrap=document.getElementById('sortWrap');
+const sortButton=document.getElementById('sortButton');
+if(sortButton&&sortWrap){
+  sortButton.addEventListener('click',e=>{
+    e.stopPropagation();
+    const open=!sortWrap.classList.contains('open');
+    sortWrap.classList.toggle('open',open);
+    sortButton.setAttribute('aria-expanded',open?'true':'false');
+  });
+}
+document.querySelectorAll('.sort-option').forEach(btn=>{
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    sortMode=btn.dataset.sort||'default';
+    syncSortUI();
+    closeSortMenu();
+    render(false);
+  });
+});
+document.addEventListener('click',e=>{
+  if(sortWrap&&!sortWrap.contains(e.target))closeSortMenu();
+});
 
 [
   ['ratingFilter',v=>ratingFilter=v],
@@ -3380,6 +3517,7 @@ document.getElementById('myLocation').onclick=locateMe;
 
 
 updateMultiFilterUI();
+syncSortUI();
 loadDashboardData();
 setTimeout(initMap,0);
 </script>
