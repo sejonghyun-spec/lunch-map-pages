@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-marker-label-zoom2-v15">
+<meta name="lunch-map-build" content="2026-10-03-naver-hover-card-v16">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -745,18 +745,93 @@ button,input,select{font:inherit}
     0 1px 1px rgba(255,255,255,.72),
     0 0 2px rgba(255,255,255,.48);
 }
+.marker-hover-card{
+  position:absolute;
+  left:50%;
+  bottom:calc(100% + 10px);
+  transform:translateX(-50%);
+  display:none;
+  width:max-content;
+  min-width:190px;
+  max-width:250px;
+  padding:12px 14px 11px;
+  border:1px solid #e1e5e8;
+  border-radius:13px;
+  background:#fff;
+  box-shadow:0 5px 18px rgba(27,35,40,.18);
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","맑은 고딕",Arial,sans-serif;
+  text-align:left;
+  pointer-events:none;
+}
+.marker-hover-card::after{
+  content:'';
+  position:absolute;
+  left:50%;
+  bottom:-6px;
+  width:10px;
+  height:10px;
+  transform:translateX(-50%) rotate(45deg);
+  border-right:1px solid #e1e5e8;
+  border-bottom:1px solid #e1e5e8;
+  background:#fff;
+}
+.marker-hover-title{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#1769e0;
+  font-size:15px;
+  font-weight:700;
+  line-height:1.28;
+  letter-spacing:-.28px;
+}
+.marker-hover-meta{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-top:6px;
+  color:#697177;
+  font-size:12px;
+  font-weight:500;
+  line-height:1.35;
+  white-space:nowrap;
+}
+.marker-hover-dot{
+  width:7px;
+  height:7px;
+  flex:0 0 auto;
+  border-radius:50%;
+  background:var(--marker-color);
+}
+.marker-hover-rating{
+  color:#e77b18;
+  font-weight:650;
+}
+.marker-hover-detail{
+  overflow:hidden;
+  max-width:220px;
+  margin-top:4px;
+  color:#858c91;
+  font-size:11.5px;
+  font-weight:450;
+  line-height:1.35;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
 .marker-label:hover{
   transform:translateY(-4px);
-  filter:drop-shadow(0 2px 2px rgba(20,30,36,.14));
 }
-.marker-label:hover .marker-caption,
 .marker-label.selected .marker-caption,
 .map-wrap.show-marker-labels .marker-caption{
   display:flex;
 }
+@media(hover:hover) and (pointer:fine){
+  .marker-label:hover .marker-hover-card{display:block}
+  .marker-label:hover .marker-caption{display:none}
+}
 .marker-label:hover .marker-pin{
   transform:scale(1.06);
-  box-shadow:0 2px 6px rgba(24,34,40,.34);
+  box-shadow:0 2px 6px rgba(24,34,40,.24);
 }
 .marker-label.selected{
   transform:translateY(-5px);
@@ -1838,8 +1913,19 @@ function initMap(){
 }
 
 function markerHtml(x){
+  const rating=ratingText(x);
+  const detail=String(x.feature||x.locationHint||x.address||'').trim();
   return '<div class="marker-label" data-row="'+x.row+'" style="--marker-color:'+colorFor(x.category)+'">'+
     '<div class="marker-main">'+
+      '<div class="marker-hover-card">'+
+        '<div class="marker-hover-title">'+esc(x.name)+'</div>'+
+        '<div class="marker-hover-meta">'+
+          '<span class="marker-hover-dot"></span>'+
+          '<span>'+esc(x.category||'기타')+'</span>'+
+          (rating?'<span class="marker-hover-rating">'+esc(rating)+'</span>':'')+
+        '</div>'+
+        (detail?'<div class="marker-hover-detail">'+esc(detail)+'</div>':'')+
+      '</div>'+
       '<span class="marker-pin">★</span>'+
       '<span class="marker-caption">'+
         '<span class="marker-name">'+esc(x.name)+'</span>'+
