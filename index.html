@@ -437,6 +437,23 @@ button,input,select{font:inherit}
   font-size:10.5px;
   font-weight:650;
 }
+.comment-meta-right{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+.comment-delete{
+  border:0;
+  border-radius:7px;
+  padding:4px 7px;
+  background:#f4efec;
+  color:#8b4030;
+  font-size:10.5px;
+  font-weight:850;
+  cursor:pointer;
+}
+.comment-delete:hover{background:#f6e2dc}
+.comment-delete:disabled{opacity:.45;cursor:not-allowed}
 .comment-text{
   margin-top:5px;
   color:#4e4742;
@@ -1777,6 +1794,20 @@ function getCommentNickname(){
     return '익명';
   }
 }
+function getCommentOwnerKey(){
+  const key='lunch-map-comment-owner-v1';
+  try{
+    let value=localStorage.getItem(key);
+    if(!value){
+      if(window.crypto&&crypto.randomUUID)value=crypto.randomUUID();
+      else value='owner-'+Date.now()+'-'+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+      localStorage.setItem(key,value);
+    }
+    return value;
+  }catch(e){
+    return 'session-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+  }
+}
 function closeComments(){
   commentPanel.classList.remove('open');
   if(mapHint)mapHint.style.display='';
@@ -1789,14 +1820,21 @@ function renderComments(comments){
     return;
   }
   commentList.innerHTML=rows.map(x=>
-    '<div class="comment-item">'+
+    '<div class="comment-item" data-comment-id="'+esc(x.id||'')+'">'+
       '<div class="comment-item-top">'+
         '<div class="comment-nick">'+esc(x.nickname||'익명')+'</div>'+
-        '<div class="comment-date">'+esc(x.createdAt||'')+'</div>'+
+        '<div class="comment-meta-right">'+
+          '<div class="comment-date">'+esc(x.createdAt||'')+'</div>'+
+          (x.canDelete&&x.id?'<button type="button" class="comment-delete" data-comment-id="'+esc(x.id)+'">삭제</button>':'')+
+        '</div>'+
       '</div>'+
       '<div class="comment-text">'+esc(x.comment||'')+'</div>'+
     '</div>'
   ).join('');
+
+  commentList.querySelectorAll('.comment-delete').forEach(btn=>{
+    btn.addEventListener('click',()=>deleteComment(btn.dataset.commentId,btn));
+  });
 }
 function loadComments(restaurant){
   if(!restaurant)return;
@@ -1824,7 +1862,7 @@ function loadComments(restaurant){
 
   script=document.createElement('script');
   script.async=true;
-  script.src=SUGGEST_URL+'?mode=comments&key='+encodeURIComponent(key)+'&callback='+encodeURIComponent(callback)+'&t='+Date.now();
+  script.src=SUGGEST_URL+'?mode=comments&key='+encodeURIComponent(key)+'&owner='+encodeURIComponent(getCommentOwnerKey())+'&callback='+encodeURIComponent(callback)+'&t='+Date.now();
   script.onerror=()=>{
     if(seq===commentRequestSeq){
       commentList.innerHTML='<div class="comment-empty">댓글을 불러오지 못했습니다.</div>';
@@ -1841,6 +1879,41 @@ function loadComments(restaurant){
     finish();
   },4500);
 }
+function deleteComment(commentId,button){
+  if(!commentRestaurant||!commentId)return;
+  if(!window.confirm('이 댓글을 삭제하시겠습니까?'))return;
+
+  if(button){
+    button.disabled=true;
+    button.textContent='삭제 중';
+  }
+  commentStatus.textContent='댓글을 삭제하고 있습니다.';
+  commentStatus.className='comment-status';
+
+  const form=document.createElement('form');
+  form.method='POST';
+  form.action=SUGGEST_URL;
+  form.target='commentSink';
+  form.style.display='none';
+
+  const fields={
+    mode:'commentDelete',
+    key:restaurantCommentKey(commentRestaurant),
+    commentId:commentId,
+    owner:getCommentOwnerKey()
+  };
+  Object.entries(fields).forEach(([name,value])=>{
+    const input=document.createElement('input');
+    input.type='hidden';
+    input.name=name;
+    input.value=value;
+    form.appendChild(input);
+  });
+  document.body.appendChild(form);
+  HTMLFormElement.prototype.submit.call(form);
+  setTimeout(()=>form.remove(),1200);
+}
+
 function openComments(restaurant){
   commentRestaurant=restaurant;
   commentName.textContent=restaurant.name||'선택한 식당';
@@ -1883,6 +1956,7 @@ commentForm.addEventListener('submit',e=>{
     name:commentRestaurant.name||'',
     address:commentRestaurant.address||'',
     nickname:getCommentNickname(),
+    owner:getCommentOwnerKey(),
     comment:textValue,
     website:''
   };
@@ -2211,6 +2285,21 @@ suggestForm.addEventListener('submit',e=>{
 
 window.addEventListener('message',e=>{
   const d=e.data||{};
+
+  if(d.source==='lunch-map-comment-delete'){
+    if(e.source!==commentSink.contentWindow)return;
+    if(d.ok){
+      commentStatus.textContent='댓글이 삭제되었습니다.';
+      commentStatus.className='comment-status';
+      showToast(d.message||'댓글이 삭제되었습니다.');
+      if(commentRestaurant)setTimeout(()=>loadComments(commentRestaurant),120);
+    }else{
+      commentStatus.textContent=d.message||'댓글 삭제에 실패했습니다.';
+      commentStatus.className='comment-status error';
+      if(commentRestaurant)setTimeout(()=>loadComments(commentRestaurant),120);
+    }
+    return;
+  }
 
   if(d.source==='lunch-map-comment'){
     if(e.source!==commentSink.contentWindow)return;
