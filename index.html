@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-restaurant-edit-tab-v26">
+<meta name="lunch-map-build" content="2026-10-03-edit-restaurant-dropdown-v27">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -1013,7 +1013,6 @@ button,input,select{font:inherit}
   line-height:1.45;
 }
 .suggest-form.edit-mode .edit-rating-help{display:block}
-.edit-results{top:52px}
 
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}
 .form-field{min-width:0}
@@ -1763,13 +1762,12 @@ button,input,select{font:inherit}
         </div>
 
         <div class="form-field full mode-edit">
-          <label class="form-label" for="editRestaurantSearch">수정할 식당 <span class="required">*</span></label>
-          <div class="place-search-wrap">
-            <input id="editRestaurantSearch" class="form-input" type="search" placeholder="등록된 식당 이름 또는 주소 검색">
-            <div id="editRestaurantResults" class="place-results edit-results"></div>
-          </div>
+          <label class="form-label" for="editRestaurantSelect">수정할 식당 <span class="required">*</span></label>
+          <select id="editRestaurantSelect" class="form-select">
+            <option value="">등록된 식당 선택</option>
+          </select>
           <div id="selectedEditRestaurant" class="selected-place"></div>
-          <div class="form-help">기존 등록 식당을 선택하면 현재 정보가 자동으로 입력됩니다.</div>
+          <div class="form-help">현재 등록된 식당 목록에서 선택하면 기존 정보가 자동으로 입력됩니다.</div>
         </div>
 
         <div class="form-field">
@@ -1848,7 +1846,7 @@ const SUGGEST_URL='https://script.google.com/a/seah.co.kr/macros/s/AKfycbzpCuw9c
 let allData=[],selectedCategories=new Set(),searchKeyword='',sortMode='default';
 let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',hoveredMarkerRow=null,searchTimer=null;
-let placesService=null,geocoder=null,placeSearchTimer=null,editSearchTimer=null,selectedSuggestPlace=null,selectedEditRestaurant=null,suggestMode='new',suggestPending=false,pendingSuggestionTemp=null,pendingEditUpdate=null;
+let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,selectedEditRestaurant=null,suggestMode='new',suggestPending=false,pendingSuggestionTemp=null,pendingEditUpdate=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
 let currentAccount=null,lastAuthRetry=0;
 const COMMENT_ADMIN_EMAILS=new Set(['sejong.hyun@seah.co.kr']);
@@ -2599,6 +2597,7 @@ function applyDbRows(rows){
   renderList(getRows());
   document.getElementById('count').textContent=displayRestaurants().length+'곳';
   if(mapReady)render(false);
+  if(suggestMode==='edit'&&suggestModal&&suggestModal.classList.contains('open'))populateEditRestaurantSelect();
   hydrateMissingRows();
   return true;
 }
@@ -3199,8 +3198,7 @@ const suggestForm=document.getElementById('suggestForm');
 const suggestSearch=document.getElementById('suggestSearch');
 const placeResults=document.getElementById('placeResults');
 const selectedPlaceEl=document.getElementById('selectedPlace');
-const editRestaurantSearch=document.getElementById('editRestaurantSearch');
-const editRestaurantResults=document.getElementById('editRestaurantResults');
+const editRestaurantSelect=document.getElementById('editRestaurantSelect');
 const selectedEditRestaurantEl=document.getElementById('selectedEditRestaurant');
 const editRatingHelp=document.getElementById('editRatingHelp');
 const suggestTabNew=document.getElementById('suggestTabNew');
@@ -3230,7 +3228,7 @@ function applySuggestModeUI(){
   suggestTabEdit.setAttribute('aria-selected',edit?'true':'false');
   suggestModeInput.value=edit?'restaurantUpdate':'suggest';
   suggestSearch.required=!edit;
-  editRestaurantSearch.required=edit;
+  editRestaurantSelect.required=edit;
   document.getElementById('suggestTitle').textContent=edit?'식당 정보 수정':'식당 제안하기';
   document.querySelector('#suggestModal .modal-sub').textContent=edit
     ? '등록된 식당을 선택해 분류·특징·수용가능인원·비고 등을 수정할 수 있습니다.'
@@ -3243,8 +3241,7 @@ function clearSuggestFields(){
   selectedEditRestaurant=null;
   placeResults.innerHTML='';
   placeResults.classList.remove('open');
-  editRestaurantResults.innerHTML='';
-  editRestaurantResults.classList.remove('open');
+  editRestaurantSelect.innerHTML='<option value="">등록된 식당 선택</option>';
   selectedPlaceEl.textContent='';
   selectedPlaceEl.classList.remove('show');
   selectedEditRestaurantEl.textContent='';
@@ -3259,9 +3256,10 @@ function setSuggestMode(mode){
   suggestMode=mode==='edit'?'edit':'new';
   clearSuggestFields();
   applySuggestModeUI();
+  if(suggestMode==='edit')populateEditRestaurantSelect();
   setTimeout(()=>{
     if(!suggestModal.classList.contains('open'))return;
-    (suggestMode==='edit'?editRestaurantSearch:suggestSearch).focus();
+    (suggestMode==='edit'?editRestaurantSelect:suggestSearch).focus();
   },50);
 }
 function openSuggestModal(){
@@ -3279,7 +3277,6 @@ function closeSuggestModal(){
   suggestModal.classList.remove('open');
   suggestModal.setAttribute('aria-hidden','true');
   placeResults.classList.remove('open');
-  editRestaurantResults.classList.remove('open');
 }
 function resetSuggestForm(){
   suggestMode='new';
@@ -3313,33 +3310,17 @@ function clearSelectedSuggestPlace(){
   document.getElementById('suggestPlaceUrl').value='';
 }
 
-function searchExistingRestaurants(keyword){
-  const q=String(keyword||'').trim().toLowerCase();
-  if(q.length<1){
-    editRestaurantResults.classList.remove('open');
-    editRestaurantResults.innerHTML='';
-    return;
-  }
+function populateEditRestaurantSelect(){
   const rows=displayRestaurants()
-    .filter(x=>[x.name,x.address,x.category,x.feature].filter(Boolean).join(' ').toLowerCase().includes(q))
-    .slice(0,12);
-  if(!rows.length){
-    editRestaurantResults.innerHTML='<div class="place-empty">등록된 식당을 찾을 수 없습니다.</div>';
-    editRestaurantResults.classList.add('open');
-    return;
-  }
-  editRestaurantResults.innerHTML=rows.map(x=>
-    '<div class="place-item" data-row="'+Number(x.row)+'">'+
-      '<div class="place-name">'+esc(x.name)+'</div>'+
-      '<div class="place-address">📍 '+esc(x.address||'주소 정보 없음')+'</div>'+
-      '<div class="place-category">'+esc(x.category||'기타')+(Number(x._registrationCount)>1?' · 등록 '+Number(x._registrationCount)+'건':'')+'</div>'+
-    '</div>'
-  ).join('');
-  editRestaurantResults.classList.add('open');
-  editRestaurantResults.querySelectorAll('.place-item').forEach(el=>{
-    el.addEventListener('click',()=>selectExistingRestaurant(Number(el.dataset.row)));
-  });
+    .slice()
+    .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ko'));
+  editRestaurantSelect.innerHTML='<option value="">등록된 식당 선택 · '+rows.length+'곳</option>'+
+    rows.map(x=>{
+      const label=[x.name,x.category].filter(Boolean).join(' · ');
+      return '<option value="'+Number(x.row)+'">'+esc(label)+'</option>';
+    }).join('');
 }
+
 
 function selectExistingRestaurant(row){
   const restaurant=dataForRow(row);
@@ -3351,8 +3332,7 @@ function selectExistingRestaurant(row){
   const ratingRow=sourceRows[0];
   const ratingSource=allData.find(x=>Number(x.row)===ratingRow)||restaurant;
 
-  editRestaurantSearch.value=restaurant.name||'';
-  editRestaurantResults.classList.remove('open');
+  editRestaurantSelect.value=String(Number(restaurant.row));
   selectedEditRestaurantEl.innerHTML='<b>'+esc(restaurant.name||'')+'</b><br>'+esc(restaurant.address||'')+
     (sourceRows.length>1?'<br>동일 식당 등록 '+sourceRows.length+'건을 함께 수정합니다.':'');
   selectedEditRestaurantEl.classList.add('show');
@@ -3455,20 +3435,18 @@ document.addEventListener('keydown',e=>{
 suggestTabNew.addEventListener('click',()=>setSuggestMode('new'));
 suggestTabEdit.addEventListener('click',()=>setSuggestMode('edit'));
 
-editRestaurantSearch.addEventListener('input',()=>{
-  selectedEditRestaurant=null;
-  selectedEditRestaurantEl.textContent='';
-  selectedEditRestaurantEl.classList.remove('show');
-  editKeyName.value='';
-  editKeyAddress.value='';
-  editRatingRow.value='';
-  clearTimeout(editSearchTimer);
-  editSearchTimer=setTimeout(()=>searchExistingRestaurants(editRestaurantSearch.value),180);
-});
-editRestaurantSearch.addEventListener('focus',()=>{
-  if(editRestaurantSearch.value.trim().length>=1&&!selectedEditRestaurant){
-    searchExistingRestaurants(editRestaurantSearch.value);
+editRestaurantSelect.addEventListener('change',()=>{
+  const row=Number(editRestaurantSelect.value);
+  if(!Number.isFinite(row)){
+    selectedEditRestaurant=null;
+    selectedEditRestaurantEl.textContent='';
+    selectedEditRestaurantEl.classList.remove('show');
+    editKeyName.value='';
+    editKeyAddress.value='';
+    editRatingRow.value='';
+    return;
   }
+  selectExistingRestaurant(row);
 });
 
 suggestSearch.addEventListener('input',()=>{
@@ -3491,7 +3469,7 @@ suggestForm.addEventListener('submit',e=>{
     if(!selectedEditRestaurant||!editKeyName.value||!editKeyAddress.value){
       suggestStatus.textContent='수정할 기존 식당을 먼저 선택해 주세요.';
       suggestStatus.className='form-status error';
-      editRestaurantSearch.focus();
+      editRestaurantSelect.focus();
       return;
     }
     if(!ensureCompanyAccount()){
