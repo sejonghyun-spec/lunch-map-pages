@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-mobile-level4-fix-v29">
+<meta name="lunch-map-build" content="2026-10-03-mobile-hamburger-v30">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -115,6 +115,9 @@ button,input,select{font:inherit}
 }
 .filter-btn[data-category="전체"]{
   --filter-color:#5f676d;
+}
+.mobile-menu-btn{
+  display:none;
 }
 .header-actions{
   display:flex;
@@ -1284,21 +1287,61 @@ button,input,select{font:inherit}
     grid-template-rows:var(--header) 1fr;
   }
   .topbar{
-    grid-template-columns:minmax(0,1fr) auto;
+    position:relative;
+    grid-template-columns:minmax(0,1fr) 48px;
     grid-template-rows:54px 52px;
   }
   .brand{
+    grid-column:1;
+    grid-row:1;
     border-right:0;
-    padding:0 14px;
+    padding:0 10px 0 14px;
+    overflow:hidden;
   }
   .brand-title{
-    font-size:19px;
+    overflow:hidden;
+    font-size:18px;
     line-height:1.15;
+    text-overflow:ellipsis;
+    white-space:nowrap;
   }
   .brand-sub{
-    font-size:12px;
+    overflow:hidden;
     margin-top:3px;
+    font-size:11.5px;
+    text-overflow:ellipsis;
+    white-space:nowrap;
   }
+  .mobile-menu-btn{
+    grid-column:2;
+    grid-row:1;
+    align-self:center;
+    justify-self:center;
+    display:flex;
+    width:40px;
+    height:40px;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    border:1px solid #dfe4e7;
+    border-radius:11px;
+    background:#fff;
+    color:#444c50;
+    cursor:pointer;
+    box-shadow:0 1px 4px rgba(34,44,50,.05);
+  }
+  .mobile-menu-btn span{
+    display:block;
+    width:18px;
+    height:2px;
+    border-radius:999px;
+    background:currentColor;
+    transition:transform .16s,opacity .16s;
+  }
+  .mobile-menu-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+  .mobile-menu-btn.open span:nth-child(2){opacity:0}
+  .mobile-menu-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
   .top-filters{
     grid-column:1/3;
     grid-row:2;
@@ -1312,23 +1355,41 @@ button,input,select{font:inherit}
     font-size:13px;
   }
   .header-actions{
-    grid-column:2;
-    grid-row:1;
-    margin-right:10px;
+    position:absolute;
+    top:48px;
+    right:8px;
+    z-index:80;
+    display:none;
+    width:min(244px,calc(100vw - 16px));
+    margin-right:0;
+    padding:8px;
+    grid-template-columns:1fr;
     gap:6px;
+    border:1px solid #dfe4e7;
+    border-radius:14px;
+    background:#fff;
+    box-shadow:0 10px 30px rgba(28,38,44,.18);
+  }
+  .header-actions.mobile-open{
+    display:grid;
   }
   .suggest-btn,
   .roulette-btn,
   .account-btn{
-    height:38px;
-    padding:0 10px;
-    font-size:12px;
+    width:100%;
+    height:42px;
+    max-width:none;
+    padding:0 12px;
+    font-size:13px;
+    text-align:left;
   }
-  .account-btn{max-width:108px}
   .header-count{
+    width:100%;
     margin-right:0;
-    padding:7px 9px;
-    font-size:12px;
+    padding:9px 11px;
+    border-radius:10px;
+    font-size:12.5px;
+    text-align:center;
   }
 
   .main{
@@ -1611,7 +1672,10 @@ button,input,select{font:inherit}
       <div><div class="brand-title">막냉이 합정 점심 뭐먹지 🍴</div><div class="brand-sub">합정·망원 점심 식당 지도</div></div>
     </div>
     <div id="filters" class="top-filters"></div>
-    <div class="header-actions">
+    <button id="mobileMenuButton" class="mobile-menu-btn" type="button" aria-label="메뉴 열기" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <div id="headerActions" class="header-actions">
       <button id="accountButton" class="account-btn needs-auth" type="button">👤 회사 계정 연결</button>
       <button id="rouletteOpen" class="roulette-btn" type="button">🎲 점심 룰렛</button>
       <button id="suggestOpen" class="suggest-btn" type="button">＋ 제안하기</button>
@@ -3439,6 +3503,7 @@ document.getElementById('suggestCancel').addEventListener('click',closeSuggestMo
 suggestModal.addEventListener('click',e=>{if(e.target===suggestModal)closeSuggestModal();});
 document.addEventListener('keydown',e=>{
   if(e.key!=='Escape')return;
+  closeMobileMenu();
   if(suggestModal.classList.contains('open'))closeSuggestModal();
   if(rouletteModal.classList.contains('open'))closeRoulette();
 });
@@ -3696,6 +3761,38 @@ window.addEventListener('message',e=>{
 
 const sidebar=document.getElementById('sidebar');
 const sheetHandle=document.getElementById('sheetHandle');
+const mobileMenuButton=document.getElementById('mobileMenuButton');
+const headerActions=document.getElementById('headerActions');
+
+function closeMobileMenu(){
+  if(!mobileMenuButton||!headerActions)return;
+  mobileMenuButton.classList.remove('open');
+  mobileMenuButton.setAttribute('aria-expanded','false');
+  mobileMenuButton.setAttribute('aria-label','메뉴 열기');
+  headerActions.classList.remove('mobile-open');
+}
+function toggleMobileMenu(){
+  if(!mobileMenuButton||!headerActions)return;
+  const open=!headerActions.classList.contains('mobile-open');
+  mobileMenuButton.classList.toggle('open',open);
+  mobileMenuButton.setAttribute('aria-expanded',open?'true':'false');
+  mobileMenuButton.setAttribute('aria-label',open?'메뉴 닫기':'메뉴 열기');
+  headerActions.classList.toggle('mobile-open',open);
+}
+if(mobileMenuButton){
+  mobileMenuButton.addEventListener('click',e=>{
+    e.stopPropagation();
+    toggleMobileMenu();
+  });
+}
+if(headerActions){
+  headerActions.addEventListener('click',e=>e.stopPropagation());
+}
+document.addEventListener('click',()=>closeMobileMenu());
+['accountButton','rouletteOpen','suggestOpen'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el)el.addEventListener('click',()=>closeMobileMenu());
+});
 let sheetState='peek',sheetStartY=null;
 
 function isMobile(){return window.matchMedia('(max-width:800px)').matches;}
@@ -3722,7 +3819,10 @@ if(sheetHandle){
   });
 }
 window.addEventListener('resize',()=>{
-  if(!isMobile())setSheetState('peek');
+  if(!isMobile()){
+    setSheetState('peek');
+    closeMobileMenu();
+  }
   if(mapReady&&map){
     requestAnimationFrame(()=>{
       map.relayout();
