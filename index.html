@@ -1404,8 +1404,7 @@ let allData=[],activeCategory='전체',searchKeyword='',sortMode='default';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,searchTimer=null;
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,suggestTimeout=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false;
-let commentRestaurant=null,commentRequestSeq=0,commentSubmitting=false;
-const commentCache=new Map();
+let commentRestaurant=null,commentRequestSeq=0,commentSubmitting=false,currentCommentRows=[];
 let rouletteCandidates=[],rouletteWinner=null,rouletteSpinning=false,rouletteRotation=0,rouletteTicker=null,rouletteCategory='전체';
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
 const colorFor=c=>COLORS[c]||'#64748b';
@@ -1823,6 +1822,7 @@ function closeComments(){
 }
 function renderComments(comments){
   const rows=Array.isArray(comments)?comments:[];
+  currentCommentRows=rows.slice();
   commentCount.textContent='댓글 '+rows.length;
   if(!rows.length){
     commentList.innerHTML='<div class="comment-empty">아직 댓글이 없습니다. 첫 댓글을 남겨보세요.</div>';
@@ -1850,28 +1850,6 @@ function makeClientCommentId(){
   return 'c-'+Date.now()+'-'+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
 }
 
-function getCachedComments(restaurant,maxAge=30000){
-  const key=restaurantCommentKey(restaurant);
-  const cached=commentCache.get(key);
-  if(!cached)return null;
-  if(Date.now()-cached.at>maxAge)return null;
-  return cached.rows;
-}
-function setCachedComments(restaurant,rows){
-  commentCache.set(restaurantCommentKey(restaurant),{
-    at:Date.now(),
-    rows:Array.isArray(rows)?rows:[]
-  });
-}
-function updateCachedComment(restaurant,updater){
-  const key=restaurantCommentKey(restaurant);
-  const current=commentCache.get(key);
-  const rows=current&&Array.isArray(current.rows)?current.rows.slice():[];
-  const next=updater(rows);
-  commentCache.set(key,{at:Date.now(),rows:next});
-  return next;
-}
-
 function fetchCommentsJsonp(restaurant,timeoutMs=5000){
   return new Promise((resolve,reject)=>{
     if(!restaurant)return reject(new Error('restaurant required'));
@@ -1896,7 +1874,6 @@ function fetchCommentsJsonp(restaurant,timeoutMs=5000){
       try{delete window[callback];}catch(e){window[callback]=undefined;}
       script.remove();
       const rows=payload&&Array.isArray(payload.comments)?payload.comments:[];
-      setCachedComments(restaurant,rows);
       resolve(rows);
     };
 
@@ -1922,23 +1899,16 @@ function fetchCommentsJsonp(restaurant,timeoutMs=5000){
 async function loadComments(restaurant){
   if(!restaurant)return [];
   const seq=++commentRequestSeq;
-  const cached=getCachedComments(restaurant);
-
-  if(cached){
-    renderComments(cached);
-  }else{
-    commentList.innerHTML='<div class="comment-loading">댓글을 불러오는 중입니다.</div>';
-  }
-
+  commentList.innerHTML='<div class="comment-loading">댓글을 불러오는 중입니다.</div>';
   try{
-    const rows=await fetchCommentsJsonp(restaurant,3500);
+    const rows=await fetchCommentsJsonp(restaurant,4500);
     if(seq===commentRequestSeq)renderComments(rows);
     return rows;
   }catch(err){
-    if(seq===commentRequestSeq&&!cached){
+    if(seq===commentRequestSeq){
       commentList.innerHTML='<div class="comment-empty">댓글을 불러오지 못했습니다.</div>';
     }
-    return cached||[];
+    return [];
   }
 }
 
@@ -1962,63 +1932,64 @@ function postCommentFields(fields){
   setTimeout(()=>form.remove(),1000);
 }
 
-async function waitForCommentState(restaurant,commentId,shouldExist){
-  const delays=[550,1100];
+async function reconcileCommentState(restaurant,commentId,shouldExist){
+  const restaurantKey=restaurantCommentKey(restaurant);
+  const delays=[700,1100];
+
   for(const delay of delays){
     await new Promise(r=>setTimeout(r,delay));
     try{
-      const rows=await fetchCommentsJsonp(restaurant,3500);
+      const rows=await fetchCommentsJsonp(restaurant,4500);
       const exists=rows.some(x=>String(x.id||'')===String(commentId));
-      if(commentRestaurant&&restaurantCommentKey(commentRestaurant)===restaurantCommentKey(restaurant)){
+      if(commentRestaurant&&restaurantCommentKey(commentRestaurant)===restaurantKey){
         renderComments(rows);
       }
       if(exists===shouldExist)return true;
     }catch(err){}
   }
+
   return false;
 }
 
-async function deleteComment(commentId,button){
+function deleteComment(commentId,button){
   if(!commentRestaurant||!commentId)return;
   if(!window.confirm('이 댓글을 삭제하시겠습니까?'))return;
 
   const restaurant=commentRestaurant;
-  const previous=getCachedComments(restaurant,Infinity)||[];
+  const restaurantKey=restaurantCommentKey(restaurant);
 
-  // 화면에서는 즉시 제거
-  const optimistic=previous.filter(x=>String(x.id||'')!==String(commentId));
-  setCachedComments(restaurant,optimistic);
-  renderComments(optimistic);
+  // 화면에서는 즉시 삭제
+  renderComments(currentCommentRows.filter(x=>String(x.id||'')!==String(commentId)));
 
   if(button){
     button.disabled=true;
     button.textContent='삭제 중';
   }
-  commentSubmitting=true;
-  commentStatus.textContent='댓글을 삭제했습니다. 서버에 반영 중입니다.';
+  commentStatus.textContent='댓글을 삭제했습니다.';
   commentStatus.className='comment-status';
 
   postCommentFields({
     mode:'commentDelete',
-    key:restaurantCommentKey(restaurant),
+    key:restaurantKey,
     commentId:commentId,
     owner:getCommentOwnerKey()
   });
 
-  const confirmed=await waitForCommentState(restaurant,commentId,false);
-  commentSubmitting=false;
+  showToast('댓글 삭제 요청을 보냈습니다.');
 
-  if(confirmed){
-    commentStatus.textContent='댓글이 삭제되었습니다.';
-    commentStatus.className='comment-status';
-    showToast('댓글이 삭제되었습니다.');
-  }else{
-    // 서버 반영 여부가 불명확하면 최신 목록으로 복구/동기화
-    commentStatus.textContent='삭제 반영 확인이 지연되어 최신 목록을 다시 불러옵니다.';
-    commentStatus.className='comment-status error';
-    commentCache.delete(restaurantCommentKey(restaurant));
-    await loadComments(restaurant);
-  }
+  // 사용자는 기다리지 않고, 실제 시트 상태만 뒤에서 확인한다.
+  reconcileCommentState(restaurant,commentId,false).then(ok=>{
+    if(commentRestaurant&&restaurantCommentKey(commentRestaurant)===restaurantKey){
+      if(ok){
+        commentStatus.textContent='댓글이 삭제되었습니다.';
+        commentStatus.className='comment-status';
+      }else{
+        commentStatus.textContent='삭제 확인이 지연되어 댓글 목록을 다시 불러왔습니다.';
+        commentStatus.className='comment-status error';
+        loadComments(restaurant);
+      }
+    }
+  });
 }
 
 function openComments(restaurant){
@@ -2034,11 +2005,12 @@ function openComments(restaurant){
 }
 document.getElementById('commentClose').addEventListener('click',closeComments);
 
-commentForm.addEventListener('submit',async e=>{
+commentForm.addEventListener('submit',e=>{
   e.preventDefault();
   if(commentSubmitting||!commentRestaurant)return;
 
   const restaurant=commentRestaurant;
+  const restaurantKey=restaurantCommentKey(restaurant);
   const textValue=commentInput.value.trim();
   if(!textValue){
     commentStatus.textContent='댓글 내용을 입력해 주세요.';
@@ -2057,19 +2029,18 @@ commentForm.addEventListener('submit',async e=>{
     canDelete:true
   };
 
-  // 화면에 즉시 표시
-  const optimistic=updateCachedComment(restaurant,rows=>[optimisticRow,...rows]);
-  renderComments(optimistic);
+  // 입력 즉시 화면에 표시한다.
+  renderComments([optimisticRow,...currentCommentRows]);
   commentInput.value='';
   commentSubmitting=true;
   commentSubmit.disabled=true;
   commentSubmit.textContent='등록 중';
-  commentStatus.textContent=nickname+'로 표시했습니다. 서버에 반영 중입니다.';
+  commentStatus.textContent=nickname+'로 댓글을 표시했습니다.';
   commentStatus.className='comment-status';
 
   postCommentFields({
     mode:'comment',
-    key:restaurantCommentKey(restaurant),
+    key:restaurantKey,
     name:restaurant.name||'',
     address:restaurant.address||'',
     nickname:nickname,
@@ -2079,22 +2050,27 @@ commentForm.addEventListener('submit',async e=>{
     website:''
   });
 
-  const confirmed=await waitForCommentState(restaurant,commentId,true);
+  // 버튼은 서버 재조회를 기다리지 않는다.
+  setTimeout(()=>{
+    commentSubmitting=false;
+    commentSubmit.disabled=false;
+    commentSubmit.textContent='등록';
+  },500);
 
-  commentSubmitting=false;
-  commentSubmit.disabled=false;
-  commentSubmit.textContent='등록';
-
-  if(confirmed){
-    commentStatus.textContent=nickname+'로 등록되었습니다.';
-    commentStatus.className='comment-status';
-    showToast('댓글이 등록되었습니다.');
-  }else{
-    commentStatus.textContent='서버 반영 확인이 지연되어 최신 목록을 다시 불러옵니다.';
-    commentStatus.className='comment-status error';
-    commentCache.delete(restaurantCommentKey(restaurant));
-    await loadComments(restaurant);
-  }
+  // 실제 시트 반영은 뒤에서 검증하고 최신 목록으로 동기화한다.
+  reconcileCommentState(restaurant,commentId,true).then(ok=>{
+    if(commentRestaurant&&restaurantCommentKey(commentRestaurant)===restaurantKey){
+      if(ok){
+        commentStatus.textContent=nickname+'로 등록되었습니다.';
+        commentStatus.className='comment-status';
+        showToast('댓글이 등록되었습니다.');
+      }else{
+        commentStatus.textContent='등록 확인이 지연되어 댓글 목록을 다시 불러왔습니다.';
+        commentStatus.className='comment-status error';
+        loadComments(restaurant);
+      }
+    }
+  });
 });
 
 const rouletteModal=document.getElementById('rouletteModal');
