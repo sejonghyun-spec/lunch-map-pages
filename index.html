@@ -132,6 +132,31 @@ button,input,select{font:inherit}
   box-shadow:0 3px 10px rgba(105,68,48,.10);
 }
 .roulette-btn:hover{background:#f6e9e1;border-color:#c9ad9d}
+.account-btn{
+  height:42px;
+  max-width:170px;
+  border:1px solid #d9d1cb;
+  border-radius:12px;
+  padding:0 12px;
+  background:#fff;
+  color:#5d554f;
+  font-size:13px;
+  font-weight:850;
+  cursor:pointer;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.account-btn.connected{
+  border-color:#bfd8c4;
+  background:#f3fbf5;
+  color:#2e6b3e;
+}
+.account-btn.needs-auth{
+  border-color:#e8b4a2;
+  background:#fff5f0;
+  color:#a1492b;
+}
 .header-count{
   margin-right:0;
   padding:9px 13px;
@@ -1008,11 +1033,13 @@ button,input,select{font:inherit}
     gap:6px;
   }
   .suggest-btn,
-  .roulette-btn{
+  .roulette-btn,
+  .account-btn{
     height:38px;
-    padding:0 11px;
-    font-size:12.5px;
+    padding:0 10px;
+    font-size:12px;
   }
+  .account-btn{max-width:108px}
   .header-count{
     margin-right:0;
     padding:7px 9px;
@@ -1262,6 +1289,7 @@ button,input,select{font:inherit}
     </div>
     <div id="filters" class="top-filters"></div>
     <div class="header-actions">
+      <button id="accountButton" class="account-btn needs-auth" type="button">👤 회사 계정 연결</button>
       <button id="rouletteOpen" class="roulette-btn" type="button">🎲 점심 룰렛</button>
       <button id="suggestOpen" class="suggest-btn" type="button">＋ 제안하기</button>
       <div id="count" class="header-count">불러오는 중…</div>
@@ -1438,6 +1466,7 @@ let allData=[],activeCategory='전체',searchKeyword='',sortMode='default';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,searchTimer=null;
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,suggestTimeout=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
+let currentAccount=null,lastAuthRetry=0;
 let commentRestaurant=null,commentRequestSeq=0,commentSubmitting=false,currentCommentRows=[];
 let commentsPreloaded=false;
 const preloadedComments=new Map();
@@ -1885,6 +1914,47 @@ function loadStaticData(){
     .catch(()=>false);
 }
 
+const accountButton=document.getElementById('accountButton');
+
+function updateAccountUI(user,needsAuth=false){
+  if(user&&user.email){
+    currentAccount=user;
+    accountButton.textContent='👤 '+(user.name||user.email);
+    accountButton.title=user.email;
+    accountButton.classList.add('connected');
+    accountButton.classList.remove('needs-auth');
+  }else{
+    currentAccount=null;
+    accountButton.textContent='👤 회사 계정 연결';
+    accountButton.title='seah.co.kr Google 계정 연결';
+    accountButton.classList.remove('connected');
+    if(needsAuth)accountButton.classList.add('needs-auth');
+  }
+}
+
+function openAccountConnection(){
+  window.open(SUGGEST_URL,'lunchMapCompanyAccount','width=620,height=720');
+}
+
+accountButton.addEventListener('click',openAccountConnection);
+
+window.addEventListener('focus',()=>{
+  if(currentAccount)return;
+  const now=Date.now();
+  if(now-lastAuthRetry<2500)return;
+  lastAuthRetry=now;
+  setTimeout(()=>{
+    loadLiveDb().catch(()=>false);
+  },500);
+});
+
+function ensureCompanyAccount(){
+  if(currentAccount)return true;
+  updateAccountUI(null,true);
+  openAccountConnection();
+  return false;
+}
+
 function applyCommentBundle(bundle){
   preloadedComments.clear();
   if(bundle&&typeof bundle==='object'){
@@ -1917,6 +1987,12 @@ function loadLiveDb(){
     }
 
     window[callback]=payload=>{
+      if(payload&&payload.authRequired){
+        updateAccountUI(null,true);
+        done(false);
+        return;
+      }
+      if(payload&&payload.user)updateAccountUI(payload.user,false);
       const rows=payload&&Array.isArray(payload.rows)?payload.rows:[];
       if(payload&&payload.commentsByKey)applyCommentBundle(payload.commentsByKey);
       if(rows.length){
@@ -1931,7 +2007,6 @@ function loadLiveDb(){
     script=document.createElement('script');
     script.src=SUGGEST_URL+
       '?mode=data'+
-      '&owner='+encodeURIComponent(getCommentOwnerKey())+
       '&callback='+callback+
       '&t='+Date.now();
     script.async=true;
@@ -1975,31 +2050,7 @@ function restaurantCommentKey(x){
   return String((x&&x.name)||'').trim()+'||'+String((x&&x.address)||'').trim();
 }
 function getCommentNickname(){
-  const key='lunch-map-comment-nick-v1';
-  try{
-    let nick=localStorage.getItem(key);
-    if(!nick){
-      nick='익명'+String(Math.floor(1000+Math.random()*9000));
-      localStorage.setItem(key,nick);
-    }
-    return nick;
-  }catch(e){
-    return '익명';
-  }
-}
-function getCommentOwnerKey(){
-  const key='lunch-map-comment-owner-v1';
-  try{
-    let value=localStorage.getItem(key);
-    if(!value){
-      if(window.crypto&&crypto.randomUUID)value=crypto.randomUUID();
-      else value='owner-'+Date.now()+'-'+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
-      localStorage.setItem(key,value);
-    }
-    return value;
-  }catch(e){
-    return 'session-'+Date.now()+'-'+Math.random().toString(36).slice(2);
-  }
+  return currentAccount ? (currentAccount.name||currentAccount.email) : '회사 계정';
 }
 function closeComments(){
   commentPanel.classList.remove('open');
@@ -2061,6 +2112,12 @@ function fetchComments(restaurant,timeoutMs=5000){
       done=true;
       clearTimeout(timer);
       cleanup();
+      if(payload&&payload.authRequired){
+        updateAccountUI(null,true);
+        reject(new Error(payload.message||'company account required'));
+        return;
+      }
+      if(payload&&payload.user)updateAccountUI(payload.user,false);
       if(payload&&payload.ok===false){
         reject(new Error(payload.message||'comments failed'));
         return;
@@ -2079,7 +2136,6 @@ function fetchComments(restaurant,timeoutMs=5000){
     script.src=SUGGEST_URL+
       '?mode=comments'+
       '&key='+encodeURIComponent(key)+
-      '&owner='+encodeURIComponent(getCommentOwnerKey())+
       '&callback='+encodeURIComponent(callback)+
       '&t='+Date.now();
 
@@ -2150,6 +2206,7 @@ function postCommentFields(fields){
   return fetch(SUGGEST_URL,{
     method:'POST',
     mode:'no-cors',
+    credentials:'include',
     cache:'no-store',
     redirect:'follow',
     keepalive:true,
@@ -2176,6 +2233,7 @@ function refreshCommentsSoon(restaurant,delay=3000){
 
 function deleteComment(commentId,button){
   if(!commentRestaurant||!commentId)return;
+  if(!ensureCompanyAccount())return;
   if(!window.confirm('이 댓글을 삭제하시겠습니까?'))return;
 
   const restaurant=commentRestaurant;
@@ -2191,8 +2249,7 @@ function deleteComment(commentId,button){
   postCommentFields({
     mode:'commentDelete',
     key:restaurantKey,
-    commentId:commentId,
-    owner:getCommentOwnerKey()
+    commentId:commentId
   }).catch(()=>{
     commentStatus.textContent='댓글 삭제 전송에 실패했습니다.';
     commentStatus.className='comment-status error';
@@ -2206,7 +2263,9 @@ function openComments(restaurant){
   commentRestaurant=restaurant;
   commentName.textContent=restaurant.name||'선택한 식당';
   commentSub.textContent=[restaurant.category,restaurant.address].filter(Boolean).join(' · ');
-  commentStatus.textContent=getCommentNickname()+'로 등록됩니다.';
+  commentStatus.textContent=currentAccount
+    ? getCommentNickname()+' 계정으로 등록됩니다.'
+    : '회사 Google 계정 연결 후 댓글을 등록할 수 있습니다.';
   commentStatus.className='comment-status';
   commentInput.value='';
   commentPanel.classList.add('open');
@@ -2218,6 +2277,11 @@ document.getElementById('commentClose').addEventListener('click',closeComments);
 commentForm.addEventListener('submit',e=>{
   e.preventDefault();
   if(commentSubmitting||!commentRestaurant)return;
+  if(!ensureCompanyAccount()){
+    commentStatus.textContent='회사 Google 계정을 먼저 연결해 주세요.';
+    commentStatus.className='comment-status error';
+    return;
+  }
 
   const restaurant=commentRestaurant;
   const restaurantKey=restaurantCommentKey(restaurant);
@@ -2255,8 +2319,6 @@ commentForm.addEventListener('submit',e=>{
     key:restaurantKey,
     name:restaurant.name||'',
     address:restaurant.address||'',
-    nickname:nickname,
-    owner:getCommentOwnerKey(),
     commentId:commentId,
     comment:textValue,
     website:''
