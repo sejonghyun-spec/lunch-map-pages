@@ -1275,58 +1275,67 @@ button,input,select{font:inherit}
     font-size:14px;
   }
 
-  /* 모바일은 기본 점 마커, 선택 시 식당명 + 별점 확장 */
+  /* 모바일도 데스크톱과 동일한 Naver-style 텍스트 라벨 유지 */
   .marker-label{
-    width:28px;
-    max-width:28px;
-    gap:0;
+    width:max-content;
+    max-width:165px;
     align-items:center;
-    transform:translateY(-3px);
+    transform:translateY(-2px);
   }
   .marker-main{
-    width:28px;
-    min-height:28px;
-    max-width:28px;
+    width:max-content;
+    max-width:165px;
+    min-height:0;
     padding:0;
     justify-content:center;
-    gap:0;
-    border-width:3px;
-    border-radius:50%;
-    box-shadow:0 3px 9px rgba(0,0,0,.34);
+    gap:2px;
+    border:0;
+    border-radius:0;
+    box-shadow:none;
   }
-  .marker-dot{
-    width:9px;
-    height:9px;
+  .marker-pin{
+    width:20px;
+    height:20px;
+    border-width:2px;
+    font-size:9px;
   }
-  .marker-name,
-  .marker-rating{
-    display:none;
+  .marker-caption{
+    max-width:165px;
+  }
+  .marker-name{
+    display:inline-block;
+    max-width:145px;
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:-.4px;
   }
   .marker-label.selected{
-    width:auto;
-    max-width:190px;
-    align-items:flex-end;
-    gap:3px;
-    transform:translateY(-6px) scale(1.03);
+    width:max-content;
+    max-width:175px;
+    align-items:center;
+    transform:translateY(-4px);
   }
   .marker-label.selected .marker-main{
-    width:auto;
-    min-height:38px;
-    max-width:190px;
-    padding:0 11px 0 9px;
-    justify-content:flex-start;
-    gap:8px;
-    border-radius:22px;
+    width:max-content;
+    max-width:175px;
+    min-height:0;
+    padding:0;
+    justify-content:center;
+    gap:2px;
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+  }
+  .marker-label.selected .marker-pin{
+    width:25px;
+    height:25px;
+    font-size:12px;
   }
   .marker-label.selected .marker-name{
-    display:inline;
-    font-size:13px;
-  }
-  .marker-label.selected .marker-rating{
-    display:block;
-    margin-right:7px;
-    padding:3px 7px 4px;
-    font-size:11px;
+    display:inline-block;
+    max-width:155px;
+    font-size:14px;
+    font-weight:900;
   }
 
   .kakao-info{
