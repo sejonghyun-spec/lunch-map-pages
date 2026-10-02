@@ -307,6 +307,9 @@ button,input,select{font:inherit}
   background:#f7f5f3;
   box-shadow:inset 3px 0 0 var(--brand);
 }
+.card.active .name{
+  color:#5e3524;
+}
 .card-head{
   display:flex;
   gap:10px;
@@ -1551,7 +1554,7 @@ const HOME_LAT=37.5515,HOME_LNG=126.9125;
 const SUGGEST_URL='https://script.google.com/a/seah.co.kr/macros/s/AKfycbzpCuw9c6Y8K6_4tnqZzwMBoKGIiW3pv-DheDHYD6XpbT1tEqDlZUFFkPgn-7w_q1L7tA/exec';
 let allData=[],activeCategory='전체',searchKeyword='',sortMode='default';
 let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all';
-let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,searchTimer=null;
+let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,selectedRows=new Set(),searchTimer=null;
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,pendingSuggestionTemp=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
 let currentAccount=null,lastAuthRetry=0;
@@ -1667,18 +1670,44 @@ function markerHtml(x){
 }
 function clearMarkers(){overlays.forEach(o=>o.overlay.setMap(null));overlays=[];markerByRow.clear();if(infoOverlay)infoOverlay.setMap(null);}
 function popupHtml(x){return '<div class="kakao-info"><div class="popup-name">'+esc(x.name)+'</div><div class="popup-rating">'+esc(x.rating||'')+'</div>'+(x.feature?'<div class="popup-line"><b>특징</b> · '+esc(x.feature)+'</div>':'')+(x.capacity?'<div class="popup-line"><b>인원</b> · '+esc(x.capacity)+'</div>':'')+'<div class="popup-line"><b>주소</b> · '+esc(x.address)+'</div></div>';}
-function selectRow(row,pan=true){
-  selectedRow=row;
-  document.querySelectorAll('.marker-label').forEach(el=>el.classList.toggle('selected',Number(el.dataset.row)===row));
-  document.querySelectorAll('.card').forEach(el=>el.classList.toggle('active',Number(el.dataset.row)===row));
+function syncSelectedRowsUI(){
+  document.querySelectorAll('.marker-label').forEach(el=>{
+    el.classList.toggle('selected',selectedRows.has(Number(el.dataset.row)));
+  });
+  document.querySelectorAll('.card').forEach(el=>{
+    el.classList.toggle('active',selectedRows.has(Number(el.dataset.row)));
+  });
+}
 
-  const data=allData.find(x=>Number(x.row)===Number(row));
+function selectRow(row,pan=true){
+  row=Number(row);
+  if(!Number.isFinite(row))return;
+
+  if(selectedRows.has(row)){
+    selectedRows.delete(row);
+    syncSelectedRowsUI();
+
+    if(selectedRow===row){
+      selectedRow=null;
+      if(infoOverlay)infoOverlay.setMap(null);
+      closeComments();
+    }
+    return;
+  }
+
+  selectedRows.add(row);
+  selectedRow=row;
+  syncSelectedRowsUI();
+
+  const data=allData.find(x=>Number(x.row)===row);
   if(data)openComments(data);
 
   const item=markerByRow.get(row);
   if(!item||!mapReady)return;
   if(pan){map.setLevel(3);map.panTo(item.position);}
-  infoOverlay.setContent(popupHtml(item.data));infoOverlay.setPosition(item.position);infoOverlay.setMap(map);
+  infoOverlay.setContent(popupHtml(item.data));
+  infoOverlay.setPosition(item.position);
+  infoOverlay.setMap(map);
   if(isMobile()&&pan)setSheetState('peek');
 }
 function distanceMeters(a,b){
@@ -1775,7 +1804,6 @@ function renderMap(rows,fit=true){
   if(!mapReady){pendingRows=validRows;return;}
 
   clearMarkers();
-  selectedRow=null;
 
   if(!validRows.length){
     map.setCenter(new kakao.maps.LatLng(HOME_LAT,HOME_LNG));
@@ -1814,6 +1842,8 @@ function renderMap(rows,fit=true){
     markerByRow.set(x.row,item);
     bounds.extend(position);
   });
+
+  syncSelectedRowsUI();
 
   if(validRows.length===1){
     map.setCenter(overlays[0].position);
@@ -1875,6 +1905,7 @@ function renderList(rows){
     (x.feature?'<div class="desc">'+esc(x.feature)+'</div>':'')+
     '<div class="meta">'+(x.capacity?'<div>👥 '+esc(x.capacity)+'</div>':'')+'<div>📍 '+esc(x.address)+'</div></div></div>').join('');
   el.querySelectorAll('.card').forEach(card=>card.onclick=()=>selectRow(Number(card.dataset.row),true));
+  syncSelectedRowsUI();
 }
 function hasValidCoords(x){
   const lat=Number(x&&x.lat),lng=Number(x&&x.lng);
