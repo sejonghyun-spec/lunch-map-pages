@@ -1458,13 +1458,13 @@ button,input,select{font:inherit}
     <div class="modal-head">
       <div>
         <div id="suggestTitle" class="modal-title">식당 제안하기</div>
-        <div class="modal-sub">카카오맵에서 식당을 선택하면 주소가 자동으로 입력됩니다. 제안은 검토 후 목록에 반영됩니다.</div>
+        <div class="modal-sub">카카오맵에서 식당을 선택하면 주소가 자동으로 입력됩니다. 등록 즉시 목록과 지도에 반영됩니다.</div>
       </div>
       <button id="suggestClose" class="modal-close" type="button" aria-label="닫기">×</button>
     </div>
 
     <form id="suggestForm" class="suggest-form" method="POST"
-      action="https://script.google.com/macros/s/AKfycbzpCuw9c6Y8K6_4tnqZzwMBoKGIiW3pv-DheDHYD6XpbT1tEqDlZUFFkPgn-7w_q1L7tA/exec"
+      action="https://script.google.com/a/seah.co.kr/macros/s/AKfycbzpCuw9c6Y8K6_4tnqZzwMBoKGIiW3pv-DheDHYD6XpbT1tEqDlZUFFkPgn-7w_q1L7tA/exec"
       target="suggestSink" autocomplete="off">
       <div class="form-grid">
         <div class="form-field full">
@@ -1529,7 +1529,7 @@ button,input,select{font:inherit}
       <div id="suggestStatus" class="form-status"></div>
       <div class="modal-actions">
         <button id="suggestCancel" class="modal-btn secondary" type="button">취소</button>
-        <button id="suggestSubmit" class="modal-btn primary" type="submit">제안 접수</button>
+        <button id="suggestSubmit" class="modal-btn primary" type="submit">바로 등록</button>
       </div>
     </form>
     <iframe name="suggestSink" id="suggestSink" title="제안 전송" style="display:none"></iframe>
@@ -1547,7 +1547,7 @@ const SUGGEST_URL='https://script.google.com/a/seah.co.kr/macros/s/AKfycbzpCuw9c
 let allData=[],activeCategory='전체',searchKeyword='',sortMode='default';
 let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,searchTimer=null;
-let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false;
+let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,pendingSuggestionTemp=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
 let currentAccount=null,lastAuthRetry=0;
 let commentRestaurant=null,commentRequestSeq=0,commentSubmitting=false,currentCommentRows=[];
@@ -2679,7 +2679,7 @@ function resetSuggestForm(){
     .forEach(id=>{document.getElementById(id).value='';});
   suggestPending=false;
   suggestSubmit.disabled=false;
-  suggestSubmit.textContent='제안 접수';
+  suggestSubmit.textContent='바로 등록';
 }
 
 function inferCategory(place){
@@ -2807,32 +2807,87 @@ suggestForm.addEventListener('submit',e=>{
     return;
   }
 
-  // DB에는 기존 hidden form POST 한 번만 보낸다.
-  // 화면에서는 서버 응답을 기다리지 않고 즉시 완료 처리한다.
-  suggestPending=true;
-  suggestSubmit.disabled=true;
-  suggestSubmit.textContent='접수 중…';
-  suggestStatus.textContent='제안 내용을 저장했습니다.';
-  suggestStatus.className='form-status success';
+  const name=document.getElementById('suggestNameHidden').value.trim();
+  const address=document.getElementById('suggestAddress').value.trim();
+  const lat=Number(document.getElementById('suggestLat').value);
+  const lng=Number(document.getElementById('suggestLng').value);
+  const rating=document.getElementById('suggestRating').value;
+  const feature=document.getElementById('suggestFeature').value.trim();
+  const capacity=document.getElementById('suggestCapacity').value.trim();
+  const note=document.getElementById('suggestNote').value.trim();
 
-  try{
-    HTMLFormElement.prototype.submit.call(suggestForm);
-  }catch(err){
-    suggestPending=false;
-    suggestSubmit.disabled=false;
-    suggestSubmit.textContent='제안 접수';
-    suggestStatus.textContent='제안 전송을 시작하지 못했습니다.';
+  const already=allData.some(x=>
+    String(x.name||'').trim()===name &&
+    String(x.address||'').trim()===address
+  );
+  if(already){
+    suggestStatus.textContent='이미 등록된 식당입니다.';
     suggestStatus.className='form-status error';
     return;
   }
 
-  showToast('식당 제안이 접수되었습니다.');
+  suggestPending=true;
+  suggestSubmit.disabled=true;
+  suggestSubmit.textContent='등록 중…';
 
+  // 화면에는 즉시 추가한다. 실제 DB 저장은 아래 form POST 1회로 처리된다.
+  const tempRow=(Math.max(1,...allData.map(x=>Number(x.row)||0))+1);
+  const item={
+    row:tempRow,
+    category,
+    name,
+    note,
+    rating,
+    feature,
+    locationHint:'',
+    capacity,
+    address,
+    lat,
+    lng,
+    _placeId:document.getElementById('suggestPlaceId').value,
+    _optimistic:true
+  };
+  pendingSuggestionTemp={name,address,row:tempRow};
+  allData.push(item);
+
+  activeCategory='전체';
+  searchKeyword='';
+  sortMode='default';
+  resetMultiFilters();
+  document.getElementById('search').value='';
+  document.getElementById('sort').value='default';
+  buildFilters();
+  render(true);
+
+  try{
+    HTMLFormElement.prototype.submit.call(suggestForm);
+  }catch(err){
+    allData=allData.filter(x=>Number(x.row)!==tempRow);
+    pendingSuggestionTemp=null;
+    render(true);
+    suggestPending=false;
+    suggestSubmit.disabled=false;
+    suggestSubmit.textContent='바로 등록';
+    suggestStatus.textContent='DB 등록 요청을 시작하지 못했습니다.';
+    suggestStatus.className='form-status error';
+    return;
+  }
+
+  showToast('식당이 바로 등록되었습니다.');
+
+  suggestModal.classList.remove('open');
+  suggestModal.setAttribute('aria-hidden','true');
+
+  // 새 식당의 위치를 바로 확인할 수 있게 선택 상태로 연다.
   setTimeout(()=>{
-    suggestModal.classList.remove('open');
-    suggestModal.setAttribute('aria-hidden','true');
+    selectRow(tempRow,false);
     resetSuggestForm();
-  },220);
+  },120);
+
+  // 서버 저장 완료 후 실제 시트 행번호와 목록을 조용히 동기화한다.
+  setTimeout(()=>{
+    loadLiveDb().catch(()=>false);
+  },1800);
 });
 
 function isAppsScriptMessageOrigin(origin){
@@ -2852,11 +2907,32 @@ window.addEventListener('message',e=>{
   if(!isAppsScriptMessageOrigin(e.origin))return;
   if(d.source!=='lunch-map-suggest')return;
 
-  // 제안 등록은 이미 즉시 완료 처리한다.
-  // 서버가 뒤늦게 오류를 반환하는 경우에만 사용자에게 알린다.
-  if(!d.ok){
-    showToast(d.message||'제안 저장 중 오류가 발생했습니다.');
+  if(d.ok){
+    if(pendingSuggestionTemp&&d.row){
+      const item=allData.find(x=>
+        x._optimistic &&
+        x.name===pendingSuggestionTemp.name &&
+        x.address===pendingSuggestionTemp.address
+      );
+      if(item){
+        item.row=Number(d.row);
+        delete item._optimistic;
+      }
+    }
+    pendingSuggestionTemp=null;
+    return;
   }
+
+  if(pendingSuggestionTemp){
+    allData=allData.filter(x=>!(
+      x._optimistic &&
+      x.name===pendingSuggestionTemp.name &&
+      x.address===pendingSuggestionTemp.address
+    ));
+    pendingSuggestionTemp=null;
+    render(true);
+  }
+  showToast(d.message||'식당 등록 중 오류가 발생했습니다.');
 });
 
 const sidebar=document.getElementById('sidebar');
