@@ -1970,16 +1970,24 @@ function postCommentFields(fields){
     mode:'no-cors',
     cache:'no-store',
     redirect:'follow',
+    keepalive:true,
     headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},
     body:body.toString()
   });
 }
 
-function refreshCommentsSoon(restaurant,delay=900){
+function refreshCommentsSoon(restaurant,delay=3000){
   const key=restaurantCommentKey(restaurant);
-  setTimeout(()=>{
+  setTimeout(async()=>{
     if(!commentRestaurant||restaurantCommentKey(commentRestaurant)!==key)return;
-    loadComments(restaurant);
+    try{
+      const rows=await fetchComments(restaurant,5000);
+      if(commentRestaurant&&restaurantCommentKey(commentRestaurant)===key){
+        renderComments(rows);
+      }
+    }catch(err){
+      // Silent background sync: keep the current optimistic UI on failure.
+    }
   },delay);
 }
 
@@ -2000,14 +2008,13 @@ function deleteComment(commentId,button){
     key:restaurantKey,
     commentId:commentId,
     owner:getCommentOwnerKey()
-  }).then(()=>{
-    showToast('댓글이 삭제되었습니다.');
-    refreshCommentsSoon(restaurant,900);
   }).catch(()=>{
     commentStatus.textContent='댓글 삭제 전송에 실패했습니다.';
     commentStatus.className='comment-status error';
-    loadComments(restaurant);
   });
+
+  showToast('댓글이 삭제되었습니다.');
+  refreshCommentsSoon(restaurant,3000);
 }
 
 function openComments(restaurant){
@@ -2066,22 +2073,18 @@ commentForm.addEventListener('submit',e=>{
     commentId:commentId,
     comment:textValue,
     website:''
-  }).then(()=>{
-    commentSubmitting=false;
-    commentSubmit.disabled=false;
-    commentSubmit.textContent='등록';
-    commentStatus.textContent=nickname+'로 등록했습니다.';
-    commentStatus.className='comment-status';
-    showToast('댓글이 등록되었습니다.');
-    refreshCommentsSoon(restaurant,900);
   }).catch(()=>{
-    commentSubmitting=false;
-    commentSubmit.disabled=false;
-    commentSubmit.textContent='등록';
     commentStatus.textContent='댓글 등록 전송에 실패했습니다.';
     commentStatus.className='comment-status error';
-    loadComments(restaurant);
   });
+
+  commentSubmitting=false;
+  commentSubmit.disabled=false;
+  commentSubmit.textContent='등록';
+  commentStatus.textContent=nickname+'로 등록했습니다.';
+  commentStatus.className='comment-status';
+  showToast('댓글이 등록되었습니다.');
+  refreshCommentsSoon(restaurant,3000);
 });
 
 const rouletteModal=document.getElementById('rouletteModal');
