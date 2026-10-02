@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>막냉이 합정 점심 뭐먹지</title>\n<meta name="lunch-map-build" content="2026-10-02-multiselect-marker-v3">
+<title>막냉이 합정 점심 뭐먹지</title>\n<meta name="lunch-map-build" content="2026-10-02-category-multiselect-v4">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -1492,7 +1492,7 @@ button,input,select{font:inherit}
         <span id="selectionCount">선택 0곳</span>
         <button id="selectionClear" class="selection-clear" type="button">전체 해제</button>
       </div>
-      <div id="mapHint" class="map-hint">마커는 여러 곳을 동시에 선택할 수 있습니다.</div>
+      <div id="mapHint" class="map-hint">상단 분류는 여러 개를 동시에 선택할 수 있습니다.</div>
 
       <section id="commentPanel" class="comment-panel" aria-live="polite">
         <div class="comment-head">
@@ -1640,9 +1640,9 @@ const COLORS={'한식':'#d97706','일식':'#2563eb','중식':'#dc2626','양식':
 const ORDER=['전체','한식','일식','중식','양식','아시아','분식','카페','회식'];
 const HOME_LAT=37.5515,HOME_LNG=126.9125;
 const SUGGEST_URL='https://script.google.com/a/seah.co.kr/macros/s/AKfycbzpCuw9c6Y8K6_4tnqZzwMBoKGIiW3pv-DheDHYD6XpbT1tEqDlZUFFkPgn-7w_q1L7tA/exec';
-let allData=[],activeCategory='전체',searchKeyword='',sortMode='default';
+let allData=[],selectedCategories=new Set(),searchKeyword='',sortMode='default';
 let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all';
-let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,selectedKeys=new Set(),searchTimer=null;
+let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',searchTimer=null;
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,pendingSuggestionTemp=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
 let currentAccount=null,lastAuthRetry=0;
@@ -1767,8 +1767,6 @@ function selectionKeyFor(x){
   if(!x)return '';
   const name=String(x.name||'').trim().toLowerCase().replace(/\s+/g,'');
   const address=String(x.address||'').trim().toLowerCase().replace(/\s+/g,'');
-  // Name+address is deliberately primary: static JSON and live DB may expose
-  // different row/place IDs, but the same restaurant must keep its selection.
   if(name||address)return 'name:'+name+'||addr:'+address;
   const placeId=String(x._placeId||x.placeId||'').trim();
   return placeId?'place:'+placeId:'';
@@ -1779,12 +1777,15 @@ function dataForRow(row){
 }
 function isRowSelected(row){
   const data=dataForRow(row);
-  return !!data&&selectedKeys.has(selectionKeyFor(data));
+  return !!data&&selectedRestaurantKey===selectionKeyFor(data);
 }
-function reconcileSelectedKeys(){
-  if(!selectedKeys.size)return;
-  const valid=new Set(allData.map(selectionKeyFor).filter(Boolean));
-  selectedKeys=new Set([...selectedKeys].filter(key=>valid.has(key)));
+function reconcileSelectedRestaurant(){
+  if(!selectedRestaurantKey)return;
+  const exists=allData.some(x=>selectionKeyFor(x)===selectedRestaurantKey);
+  if(!exists){
+    selectedRestaurantKey='';
+    selectedRow=null;
+  }
 }
 function syncSelectedRowsUI(){
   document.querySelectorAll('.marker-label').forEach(el=>{
@@ -1802,21 +1803,14 @@ function syncSelectedRowsUI(){
   document.querySelectorAll('.card').forEach(el=>{
     el.classList.toggle('active',isRowSelected(Number(el.dataset.row)));
   });
-
-  const bar=document.getElementById('selectionBar');
-  const count=document.getElementById('selectionCount');
-  if(count)count.textContent='선택 '+selectedKeys.size+'곳';
-  if(bar)bar.classList.toggle('hidden',selectedKeys.size===0);
 }
-
 function clearSelectedRows(){
-  selectedKeys.clear();
+  selectedRestaurantKey='';
   selectedRow=null;
   syncSelectedRowsUI();
   if(infoOverlay)infoOverlay.setMap(null);
   closeComments();
 }
-
 function selectRow(row,pan=true){
   row=Number(row);
   if(!Number.isFinite(row))return;
@@ -1826,20 +1820,13 @@ function selectRow(row,pan=true){
   const key=selectionKeyFor(data);
   if(!key)return;
 
-  if(selectedKeys.has(key)){
-    selectedKeys.delete(key);
-    if(selectedRow===row){
-      selectedRow=null;
-      if(infoOverlay)infoOverlay.setMap(null);
-      closeComments();
-    }
-    syncSelectedRowsUI();
+  // Restaurant selection is single-select. Clicking the same restaurant toggles it off.
+  if(selectedRestaurantKey===key){
+    clearSelectedRows();
     return;
   }
 
-  // Multi-select is additive by default: selecting another restaurant must
-  // never clear restaurants that were already selected.
-  selectedKeys.add(key);
+  selectedRestaurantKey=key;
   selectedRow=row;
   syncSelectedRowsUI();
   openComments(data);
@@ -2004,20 +1991,46 @@ function renderMap(rows,fit=true){
 }
 function buildFilters(){
   const cats=[...new Set(allData.map(x=>x.category).filter(Boolean))];
+  const validCats=new Set(cats);
+
+  // Live/static DB refreshes can change available categories. Keep only valid selections.
+  selectedCategories=new Set([...selectedCategories].filter(c=>validCats.has(c)));
+
   const items=['전체',...cats].sort((a,b)=>(ORDER.indexOf(a)<0?99:ORDER.indexOf(a))-(ORDER.indexOf(b)<0?99:ORDER.indexOf(b)));
   const el=document.getElementById('filters');
-  el.innerHTML=items.map(c=>'<button class="filter-btn '+(c===activeCategory?'active':'')+'" data-category="'+esc(c)+'">'+esc(c)+'</button>').join('');
+  const allActive=selectedCategories.size===0;
+
+  el.innerHTML=items.map(c=>{
+    const active=c==='전체'?allActive:selectedCategories.has(c);
+    return '<button class="filter-btn '+(active?'active':'')+'" data-category="'+esc(c)+'" aria-pressed="'+(active?'true':'false')+'">'+esc(c)+'</button>';
+  }).join('');
+
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>{
-  activeCategory=b.dataset.category;
-  buildFilters();
-  render(false);
-});
+    const category=b.dataset.category;
+
+    if(category==='전체'){
+      // "전체" means no category restriction.
+      selectedCategories.clear();
+    }else if(selectedCategories.size===0){
+      // First category click from "전체": narrow to that category.
+      selectedCategories.add(category);
+    }else if(selectedCategories.has(category)){
+      selectedCategories.delete(category);
+      // If the last category is turned off, naturally return to "전체".
+    }else{
+      // Add another category: 한식 + 중식 + ... can be selected together.
+      selectedCategories.add(category);
+    }
+
+    buildFilters();
+    render(false);
+  });
 }
 function getRows(){
   const q=searchKeyword.trim().toLowerCase();
 
   let rows=allData.filter(x=>{
-    if(activeCategory!=='전체'&&x.category!==activeCategory)return false;
+    if(selectedCategories.size&& !selectedCategories.has(x.category))return false;
 
     if(q){
       const hay=[x.name,x.note,x.feature,x.locationHint,x.address,x.capacity]
@@ -2068,7 +2081,7 @@ function render(fit=true){
   renderMap(rows.filter(hasValidCoords),fit);
 }
 function showAll(){
-  activeCategory='전체';
+  selectedCategories.clear();
   searchKeyword='';
   sortMode='default';
   resetMultiFilters();
@@ -2253,8 +2266,8 @@ function applyDbRows(rows){
     lat:x.lat==null?null:Number(x.lat),
     lng:x.lng==null?null:Number(x.lng)
   }));
-  // Preserve multi-selection across static/live DB refreshes by stable place key.
-  reconcileSelectedKeys();
+  // Preserve the currently selected restaurant across static/live DB refreshes.
+  reconcileSelectedRestaurant();
   buildFilters();
   renderList(getRows());
   document.getElementById('count').textContent=allData.length+'곳';
@@ -2807,9 +2820,10 @@ function goRouletteWinner(){
   const row=rouletteWinner.row;
   closeRoulette();
 
-  // 현재 필터가 결과와 맞지 않는 경우 결과 카테고리로 전환
-  if(activeCategory!=='전체'&&activeCategory!==rouletteWinner.category){
-    activeCategory=rouletteWinner.category;
+  // If category filters are active and the winner is outside them,
+  // add its category without clearing the user's existing multi-selection.
+  if(selectedCategories.size&& !selectedCategories.has(rouletteWinner.category)){
+    selectedCategories.add(rouletteWinner.category);
     buildFilters();
     render(true);
   }
@@ -3040,7 +3054,7 @@ suggestForm.addEventListener('submit',e=>{
   pendingSuggestionTemp={name,address,row:tempRow};
   allData.push(item);
 
-  activeCategory='전체';
+  selectedCategories.clear();
   searchKeyword='';
   sortMode='default';
   resetMultiFilters();
@@ -3187,7 +3201,7 @@ document.getElementById('multiFilterReset').addEventListener('click',()=>{
 
 document.getElementById('showAll').onclick=showAll;
 document.getElementById('myLocation').onclick=locateMe;
-document.getElementById('selectionClear').onclick=clearSelectedRows;
+
 
 updateMultiFilterUI();
 loadDashboardData();
