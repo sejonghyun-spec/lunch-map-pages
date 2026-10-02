@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-unified-hover-popup-v17">
+<meta name="lunch-map-build" content="2026-10-03-visibility-refine-v18">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -323,11 +323,11 @@ button,input,select{font:inherit}
 }
 .card:hover{background:#fafbfc}
 .card.active{
-  background:#f8f7f6;
-  box-shadow:inset 2px 0 0 var(--brand);
+  background:color-mix(in srgb,var(--card-color,#64748b) 8%,#fff);
+  box-shadow:inset 3px 0 0 var(--card-color,#64748b);
 }
 .card.active .name{
-  color:#4f382e;
+  color:#24292d;
 }
 .card-head{
   display:flex;
@@ -503,6 +503,14 @@ button,input,select{font:inherit}
   transform:translateX(-50%) translateY(0);
   pointer-events:auto;
 }
+.comment-panel.collapsed{
+  width:min(520px,calc(100% - 36px));
+  max-height:62px;
+}
+.comment-panel.collapsed .comment-list,
+.comment-panel.collapsed .comment-compose{
+  display:none;
+}
 .comment-head{
   display:flex;
   align-items:center;
@@ -548,6 +556,19 @@ button,input,select{font:inherit}
   font-size:19px;
   cursor:pointer;
 }
+.comment-toggle{
+  flex:0 0 auto;
+  height:30px;
+  border:1px solid #e3ddd8;
+  border-radius:9px;
+  padding:0 10px;
+  background:#fff;
+  color:#5d554f;
+  font-size:11.5px;
+  font-weight:700;
+  cursor:pointer;
+}
+.comment-toggle:hover{background:#f8f5f3}
 .comment-list{
   max-height:165px;
   overflow:auto;
@@ -748,24 +769,32 @@ button,input,select{font:inherit}
 .marker-label:hover{
   transform:translateY(-4px);
 }
-.marker-label.selected .marker-caption,
-.map-wrap.show-marker-labels .marker-caption{
+.marker-label.selected .marker-caption{
   display:flex;
 }
+.map-wrap.has-selection .marker-label:not(.selected){
+  opacity:.62;
+}
+.map-wrap.has-selection .marker-label:not(.selected):hover{
+  opacity:1;
+}
 .marker-label:hover .marker-pin{
-  transform:scale(1.06);
-  box-shadow:0 2px 6px rgba(24,34,40,.24);
+  transform:scale(1.08);
+  box-shadow:0 2px 7px rgba(24,34,40,.24);
 }
 .marker-label.selected{
-  transform:translateY(-5px);
+  transform:translateY(-6px);
   z-index:30;
+  opacity:1;
 }
 .marker-label.selected .marker-pin{
-  width:27px;
-  height:27px;
-  font-size:15px;
+  width:30px;
+  height:30px;
+  font-size:16px;
   border-width:0;
-  box-shadow:0 3px 7px rgba(24,34,40,.24);
+  box-shadow:
+    0 0 0 6px color-mix(in srgb,var(--marker-color) 18%,transparent),
+    0 4px 11px rgba(24,34,40,.30);
 }
 .marker-label.selected .marker-name{
   max-width:185px;
@@ -790,33 +819,56 @@ button,input,select{font:inherit}
 /* INFO POPUP */
 .kakao-info{
   position:relative;
-  min-width:245px;
-  max-width:340px;
-  margin-bottom:16px;
-  padding:14px 15px;
+  min-width:185px;
+  max-width:275px;
+  margin-bottom:12px;
+  padding:10px 12px 9px;
   border:1px solid #e0e5e8;
-  border-radius:14px;
+  border-radius:12px;
   background:#fff;
-  box-shadow:0 7px 20px rgba(40,49,54,.16);
+  box-shadow:0 5px 16px rgba(40,49,54,.15);
 }
 .popup-name{
+  overflow:hidden;
   margin-bottom:5px;
-  font-size:17px;
+  color:#1769e0;
+  font-size:15px;
   font-weight:700;
+  line-height:1.3;
   letter-spacing:-.25px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.popup-meta{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:#6d757a;
+  font-size:11.5px;
+  font-weight:500;
+  line-height:1.3;
+}
+.popup-dot{
+  width:7px;
+  height:7px;
+  flex:0 0 auto;
+  border-radius:50%;
+  background:var(--popup-color,#64748b);
 }
 .popup-rating{
-  margin-bottom:7px;
   color:#e9821d;
-  font-size:14px;
-  font-weight:700;
+  font-weight:650;
 }
 .popup-line{
-  margin-top:4px;
-  color:#514b46;
-  font-size:13px;
-  font-weight:500;
-  line-height:1.55;
+  overflow:hidden;
+  max-width:250px;
+  margin-top:5px;
+  color:#737b80;
+  font-size:11.5px;
+  font-weight:450;
+  line-height:1.4;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
 
@@ -1358,10 +1410,10 @@ button,input,select{font:inherit}
     box-shadow:none;
   }
   .marker-label.selected .marker-pin{
-    width:25px;
-    height:25px;
+    width:28px;
+    height:28px;
     border-width:0;
-    font-size:14px;
+    font-size:15px;
   }
   .marker-label.selected .marker-name{
     display:inline-block;
@@ -1389,6 +1441,9 @@ button,input,select{font:inherit}
     border-radius:16px;
   }
   .comment-panel.open{transform:translateY(0)}
+  .comment-panel.collapsed{
+    max-height:58px;
+  }
   .comment-head{padding:11px 12px 9px}
   .comment-name{font-size:16px}
   .comment-sub{font-size:11px}
@@ -1516,6 +1571,7 @@ button,input,select{font:inherit}
             <div id="commentSub" class="comment-sub"></div>
           </div>
           <div id="commentCount" class="comment-count">댓글 0</div>
+          <button id="commentToggle" class="comment-toggle" type="button" aria-expanded="false">댓글 보기</button>
           <button id="commentClose" class="comment-close" type="button" aria-label="댓글 닫기">×</button>
         </div>
         <div id="commentList" class="comment-list">
@@ -1787,12 +1843,8 @@ function resetMultiFilters(){
 
 function loadKakao(){return new Promise((resolve,reject)=>{if(window.kakao&&kakao.maps)return resolve();const s=document.createElement('script');s.src='https://dapi.kakao.com/v2/maps/sdk.js?appkey='+KAKAO_KEY+'&autoload=false&libraries=services';s.async=true;s.onload=()=>window.kakao&&kakao.maps?resolve():reject(new Error('SDK init failed'));s.onerror=()=>reject(new Error('SDK load failed'));document.head.appendChild(s);});}
 function syncMarkerLabelVisibility(){
-  if(!mapReady||!map)return;
   const wrap=document.querySelector('.map-wrap');
-  if(!wrap)return;
-  // Kakao map levels get smaller as the user zooms in.
-  // Keep labels hidden longer; reveal all names only at very close zoom.
-  wrap.classList.toggle('show-marker-labels',map.getLevel()<=2);
+  if(wrap)wrap.classList.remove('show-marker-labels');
 }
 
 function initMap(){
@@ -1806,7 +1858,6 @@ function initMap(){
     mapReady=true;
     document.getElementById('mapStatus').classList.add('hidden');
     syncMarkerLabelVisibility();
-    kakao.maps.event.addListener(map,'zoom_changed',syncMarkerLabelVisibility);
 
     requestAnimationFrame(()=>{
       map.relayout();
@@ -1846,7 +1897,17 @@ function markerHtml(x){
   '</div>';
 }
 function clearMarkers(){overlays.forEach(o=>o.overlay.setMap(null));overlays=[];markerByRow.clear();hoveredMarkerRow=null;if(infoOverlay)infoOverlay.setMap(null);}
-function popupHtml(x){return '<div class="kakao-info"><div class="popup-name">'+esc(x.name)+'</div>'+(ratingText(x)?'<div class="popup-rating">'+esc(ratingText(x))+'</div>':'')+(x.feature?'<div class="popup-line"><b>특징</b> · '+esc(x.feature)+'</div>':'')+(x.capacity?'<div class="popup-line"><b>인원</b> · '+esc(x.capacity)+'</div>':'')+'<div class="popup-line"><b>주소</b> · '+esc(x.address)+'</div></div>';}
+function popupHtml(x){
+  const rating=ratingText(x);
+  const detail=String(x.feature||x.locationHint||'').trim();
+  return '<div class="kakao-info" style="--popup-color:'+colorFor(x.category)+'">'+
+    '<div class="popup-name">'+esc(x.name)+'</div>'+
+    '<div class="popup-meta"><span class="popup-dot"></span><span>'+esc(x.category||'기타')+'</span>'+
+      (rating?'<span class="popup-rating">'+esc(rating)+'</span>':'')+
+    '</div>'+
+    (detail?'<div class="popup-line">'+esc(detail)+'</div>':'')+
+  '</div>';
+}
 function showMarkerInfo(item){
   if(!item||!infoOverlay||!mapReady)return;
   hoveredMarkerRow=Number(item.data&&item.data.row);
@@ -1906,6 +1967,8 @@ function syncSelectedRowsUI(){
   document.querySelectorAll('.card').forEach(el=>{
     el.classList.toggle('active',isRowSelected(Number(el.dataset.row)));
   });
+  const mapWrap=document.querySelector('.map-wrap');
+  if(mapWrap)mapWrap.classList.toggle('has-selection',!!selectedRestaurantKey);
 }
 function clearSelectedRows(){
   selectedRestaurantKey='';
@@ -2174,7 +2237,7 @@ function renderList(rows){
   const el=document.getElementById('list');
   document.getElementById('listSub').textContent='현재 '+rows.length+'곳';
   if(!rows.length){el.innerHTML='<div class="empty">조건에 맞는 식당이 없습니다.</div>';return;}
-  el.innerHTML=rows.map(x=>'<div class="card" data-row="'+x.row+'">'+
+  el.innerHTML=rows.map(x=>'<div class="card" data-row="'+x.row+'" style="--card-color:'+colorFor(x.category)+'">'+
     '<div class="card-head"><div class="name">'+esc(x.name)+'</div><div class="badge"><span class="badge-dot" style="background:'+colorFor(x.category)+'"></span>'+esc(x.category)+'</div></div>'+
     '<div class="rating">'+esc(ratingText(x))+'</div>'+
     (x.feature?'<div class="desc">'+esc(x.feature)+'</div>':'')+
@@ -2522,6 +2585,7 @@ async function loadDashboardData(){
 }
 
 const commentPanel=document.getElementById('commentPanel');
+const commentToggle=document.getElementById('commentToggle');
 const commentName=document.getElementById('commentName');
 const commentSub=document.getElementById('commentSub');
 const commentCount=document.getElementById('commentCount');
@@ -2545,8 +2609,16 @@ function restaurantCommentKey(x){
 function getCommentNickname(){
   return currentAccount ? (currentAccount.name||currentAccount.email) : '회사 계정';
 }
+function setCommentsCollapsed(collapsed){
+  commentPanel.classList.toggle('collapsed',!!collapsed);
+  if(commentToggle){
+    commentToggle.textContent=collapsed?'댓글 보기':'댓글 접기';
+    commentToggle.setAttribute('aria-expanded',collapsed?'false':'true');
+  }
+}
 function closeComments(){
   commentPanel.classList.remove('open');
+  commentPanel.classList.remove('collapsed');
   if(mapHint)mapHint.style.display='';
 }
 function isCommentAdmin(){
@@ -2784,8 +2856,14 @@ function openComments(restaurant){
   commentStatus.className='comment-status';
   commentInput.value='';
   commentPanel.classList.add('open');
+  setCommentsCollapsed(true);
   if(mapHint)mapHint.style.display='none';
   loadComments(restaurant);
+}
+if(commentToggle){
+  commentToggle.addEventListener('click',()=>{
+    setCommentsCollapsed(!commentPanel.classList.contains('collapsed'));
+  });
 }
 document.getElementById('commentClose').addEventListener('click',closeComments);
 
