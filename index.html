@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-category-color-legend-v12">
+<meta name="lunch-map-build" content="2026-10-03-category-active-color-v13">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -81,30 +81,37 @@ button,input,select{font:inherit}
 .filter-btn{
   flex:0 0 auto;
   min-height:38px;
-  border:1px solid color-mix(in srgb,var(--filter-color,#64748b) 82%,#000);
-  background:var(--filter-color,#64748b);
-  color:#fff;
+  border:1px solid #e2e6e9;
+  background:#fff;
+  color:#3f4549;
   border-radius:999px;
   padding:8px 14px;
   font-size:14px;
   font-weight:700;
   cursor:pointer;
-  opacity:.64;
-  box-shadow:0 1px 2px rgba(25,31,35,.10);
-  text-shadow:0 1px 1px rgba(0,0,0,.16);
-  transition:opacity .14s,filter .14s,transform .14s,box-shadow .14s;
+  box-shadow:none;
+  text-shadow:none;
+  transition:border-color .14s,background .14s,color .14s,filter .14s,transform .14s,box-shadow .14s;
 }
 .filter-btn:hover{
-  opacity:.88;
-  filter:saturate(1.05);
+  border-color:#cfd5d9;
+  background:#f7f9fa;
 }
 .filter-btn.active{
-  opacity:1;
-  filter:saturate(1.08) brightness(.96);
+  border-color:color-mix(in srgb,var(--filter-color,#64748b) 82%,#000);
+  background:var(--filter-color,#64748b);
+  color:#fff;
+  filter:saturate(1.05) brightness(.98);
   transform:translateY(-1px);
+  text-shadow:0 1px 1px rgba(0,0,0,.16);
   box-shadow:
     0 2px 5px rgba(25,31,35,.18),
-    inset 0 0 0 1px rgba(255,255,255,.28);
+    inset 0 0 0 1px rgba(255,255,255,.22);
+}
+.filter-btn.active:hover{
+  background:var(--filter-color,#64748b);
+  color:#fff;
+  filter:saturate(1.08) brightness(.94);
 }
 .filter-btn[data-category="전체"]{
   --filter-color:#5f676d;
