@@ -1765,11 +1765,13 @@ function clearMarkers(){overlays.forEach(o=>o.overlay.setMap(null));overlays=[];
 function popupHtml(x){return '<div class="kakao-info"><div class="popup-name">'+esc(x.name)+'</div><div class="popup-rating">'+esc(x.rating||'')+'</div>'+(x.feature?'<div class="popup-line"><b>특징</b> · '+esc(x.feature)+'</div>':'')+(x.capacity?'<div class="popup-line"><b>인원</b> · '+esc(x.capacity)+'</div>':'')+'<div class="popup-line"><b>주소</b> · '+esc(x.address)+'</div></div>';}
 function selectionKeyFor(x){
   if(!x)return '';
+  const name=String(x.name||'').trim().toLowerCase().replace(/\s+/g,'');
+  const address=String(x.address||'').trim().toLowerCase().replace(/\s+/g,'');
+  // Name+address is deliberately primary: static JSON and live DB may expose
+  // different row/place IDs, but the same restaurant must keep its selection.
+  if(name||address)return 'name:'+name+'||addr:'+address;
   const placeId=String(x._placeId||x.placeId||'').trim();
-  if(placeId)return 'place:'+placeId;
-  const name=String(x.name||'').trim().toLowerCase();
-  const address=String(x.address||'').trim().toLowerCase();
-  return 'name:'+name+'||addr:'+address;
+  return placeId?'place:'+placeId:'';
 }
 function dataForRow(row){
   row=Number(row);
@@ -1790,6 +1792,10 @@ function syncSelectedRowsUI(){
     const selected=isRowSelected(row);
     el.classList.toggle('selected',selected);
     el.setAttribute('aria-pressed',selected?'true':'false');
+    const markerItem=markerByRow.get(row);
+    if(markerItem&&markerItem.overlay&&typeof markerItem.overlay.setZIndex==='function'){
+      markerItem.overlay.setZIndex(selected?60:markerItem.baseZIndex);
+    }
     const pin=el.querySelector('.marker-pin');
     if(pin)pin.textContent=selected?'✓':'★';
   });
@@ -1972,7 +1978,7 @@ function renderMap(rows,fit=true){
       zIndex:placement?placement.zIndex:5
     });
 
-    const item={overlay,position,data:x,content};
+    const item={overlay,position,data:x,content,baseZIndex:placement?placement.zIndex:5};
     // Kakao map drag/click handlers must not consume marker interaction.
     content.addEventListener('pointerdown',e=>e.stopPropagation());
     content.addEventListener('mousedown',e=>e.stopPropagation());
