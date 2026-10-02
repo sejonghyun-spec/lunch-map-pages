@@ -204,6 +204,49 @@ button,input,select{font:inherit}
   border-color:#bd8c77;
   box-shadow:0 0 0 3px rgba(154,79,49,.08);
 }
+.multi-filter-wrap{padding:0 16px 11px}
+.multi-filter-scroll{
+  display:flex;
+  gap:7px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  padding-bottom:1px;
+}
+.multi-filter-scroll::-webkit-scrollbar{display:none}
+.multi-filter-select{
+  flex:0 0 auto;
+  height:38px;
+  min-width:94px;
+  max-width:132px;
+  border:1px solid #ddd5cf;
+  border-radius:999px;
+  padding:0 30px 0 12px;
+  background:#fff;
+  color:#4c4540;
+  font-size:13px;
+  font-weight:800;
+  outline:none;
+  cursor:pointer;
+}
+.multi-filter-select.active{
+  border-color:#b97859;
+  background:#fff4ee;
+  color:var(--brand-dark);
+}
+.multi-filter-select:disabled{opacity:.52;cursor:not-allowed}
+.multi-filter-reset{
+  flex:0 0 auto;
+  height:38px;
+  border:0;
+  border-radius:999px;
+  padding:0 12px;
+  background:#f2efec;
+  color:#6b625c;
+  font-size:12.5px;
+  font-weight:850;
+  cursor:pointer;
+}
+.multi-filter-reset:hover{background:#e9e4e0}
 .quick-row{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -1110,6 +1153,16 @@ button,input,select{font:inherit}
     border-radius:13px;
     font-size:16px;
   }
+  .multi-filter-wrap{padding:0 12px 8px}
+  .multi-filter-scroll{gap:6px}
+  .multi-filter-select{
+    height:36px;
+    min-width:88px;
+    max-width:120px;
+    padding-left:11px;
+    font-size:12.5px;
+  }
+  .multi-filter-reset{height:36px;font-size:12px}
   .quick-row{
     gap:8px;
     padding:0 12px 8px;
@@ -1300,6 +1353,35 @@ button,input,select{font:inherit}
     <aside class="sidebar" id="sidebar">
       <div class="sheet-handle" id="sheetHandle" aria-label="식당 목록 열기/닫기"></div>
       <div class="search-wrap"><input id="search" class="search" type="search" placeholder="식당 이름 · 특징 · 주소 검색"></div>
+      <div class="multi-filter-wrap">
+        <div class="multi-filter-scroll">
+          <select id="ratingFilter" class="multi-filter-select" aria-label="평점 필터">
+            <option value="all">평점 전체</option>
+            <option value="5">★ 5점</option>
+            <option value="4">★ 4점 이상</option>
+            <option value="3">★ 3점 이상</option>
+          </select>
+          <select id="capacityFilter" class="multi-filter-select" aria-label="인원 필터">
+            <option value="all">인원 전체</option>
+            <option value="4">4명+</option>
+            <option value="8">8명+</option>
+            <option value="group">단체 가능</option>
+          </select>
+          <select id="commentFilter" class="multi-filter-select" aria-label="댓글 필터" disabled title="댓글 데이터 로딩 후 사용할 수 있습니다.">
+            <option value="all">댓글 전체</option>
+            <option value="has">댓글 있음</option>
+          </select>
+          <select id="featureFilter" class="multi-filter-select" aria-label="특징 필터">
+            <option value="all">특징 전체</option>
+            <option value="waiting">웨이팅</option>
+            <option value="reservation">예약</option>
+            <option value="room">룸</option>
+            <option value="group">단체</option>
+            <option value="fast">빠른 식사</option>
+          </select>
+          <button id="multiFilterReset" class="multi-filter-reset" type="button">초기화</button>
+        </div>
+      </div>
       <div class="quick-row">
         <button id="myLocation" class="quick-btn">◎ 내 위치</button>
         <button id="showAll" class="quick-btn">⌂ 전체 보기</button>
@@ -1463,6 +1545,7 @@ const ORDER=['전체','한식','일식','중식','양식','아시아','분식','
 const HOME_LAT=37.5515,HOME_LNG=126.9125;
 const SUGGEST_URL='https://script.google.com/a/seah.co.kr/macros/s/AKfycbzpCuw9c6Y8K6_4tnqZzwMBoKGIiW3pv-DheDHYD6XpbT1tEqDlZUFFkPgn-7w_q1L7tA/exec';
 let allData=[],activeCategory='전체',searchKeyword='',sortMode='default';
+let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,searchTimer=null;
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,suggestTimeout=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
@@ -1474,6 +1557,61 @@ let rouletteCandidates=[],rouletteWinner=null,rouletteSpinning=false,rouletteRot
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
 const colorFor=c=>COLORS[c]||'#64748b';
 const ratingScore=x=>(String(x.rating||'').match(/★/g)||[]).length;
+
+function filterText(x){
+  return [x&&x.note,x&&x.feature,x&&x.locationHint,x&&x.capacity,x&&x.address]
+    .filter(Boolean).join(' ').toLowerCase();
+}
+function capacityMax(x){
+  const nums=(String((x&&x.capacity)||'').match(/\d+(?:\.\d+)?/g)||[])
+    .map(Number).filter(Number.isFinite);
+  return nums.length?Math.max(...nums):0;
+}
+function isGroupFriendly(x){
+  const text=filterText(x);
+  return /단체|넓음/.test(text)||capacityMax(x)>=8;
+}
+function matchesFeature(x,kind){
+  if(kind==='all')return true;
+  const text=filterText(x);
+  if(kind==='waiting')return /웨이팅|줄서|줄 섬|줄섬|기다|일찍 가야/.test(text);
+  if(kind==='reservation')return /예약|캐치테이블|전화시 가능|전화 시 가능/.test(text);
+  if(kind==='room')return /룸|별실|개별실/.test(text);
+  if(kind==='group')return isGroupFriendly(x);
+  if(kind==='fast')return /빠른|빨리|회전 빠|금방/.test(text);
+  return true;
+}
+function commentCountFor(x){
+  const key=String((x&&x.name)||'').trim()+'||'+String((x&&x.address)||'').trim();
+  const rows=preloadedComments.get(key);
+  return Array.isArray(rows)?rows.length:0;
+}
+function updateMultiFilterUI(){
+  const pairs=[
+    ['ratingFilter',ratingFilter],
+    ['capacityFilter',capacityFilter],
+    ['commentFilter',commentFilter],
+    ['featureFilter',featureFilter]
+  ];
+  pairs.forEach(([id,value])=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.value=value;
+    el.classList.toggle('active',value!=='all');
+  });
+  const commentEl=document.getElementById('commentFilter');
+  if(commentEl){
+    commentEl.disabled=!commentsPreloaded;
+    commentEl.title=commentsPreloaded?'':'댓글 데이터 로딩 후 사용할 수 있습니다.';
+  }
+}
+function resetMultiFilters(){
+  ratingFilter='all';
+  capacityFilter='all';
+  commentFilter='all';
+  featureFilter='all';
+  updateMultiFilterUI();
+}
 
 function loadKakao(){return new Promise((resolve,reject)=>{if(window.kakao&&kakao.maps)return resolve();const s=document.createElement('script');s.src='https://dapi.kakao.com/v2/maps/sdk.js?appkey='+KAKAO_KEY+'&autoload=false&libraries=services';s.async=true;s.onload=()=>window.kakao&&kakao.maps?resolve():reject(new Error('SDK init failed'));s.onerror=()=>reject(new Error('SDK load failed'));document.head.appendChild(s);});}
 function initMap(){
@@ -1690,7 +1828,32 @@ function buildFilters(){
 }
 function getRows(){
   const q=searchKeyword.trim().toLowerCase();
-  let rows=allData.filter(x=>(activeCategory==='전체'||x.category===activeCategory)&&(!q||[x.name,x.feature,x.address,x.capacity].join(' ').toLowerCase().includes(q)));
+
+  let rows=allData.filter(x=>{
+    if(activeCategory!=='전체'&&x.category!==activeCategory)return false;
+
+    if(q){
+      const hay=[x.name,x.note,x.feature,x.locationHint,x.address,x.capacity]
+        .filter(Boolean).join(' ').toLowerCase();
+      if(!hay.includes(q))return false;
+    }
+
+    const score=ratingScore(x);
+    if(ratingFilter==='5'&&score!==5)return false;
+    if(ratingFilter==='4'&&score<4)return false;
+    if(ratingFilter==='3'&&score<3)return false;
+
+    const maxPeople=capacityMax(x);
+    if(capacityFilter==='4'&&maxPeople<4&&!isGroupFriendly(x))return false;
+    if(capacityFilter==='8'&&maxPeople<8&&!isGroupFriendly(x))return false;
+    if(capacityFilter==='group'&&!isGroupFriendly(x))return false;
+
+    if(commentFilter==='has'&&(!commentsPreloaded||commentCountFor(x)<1))return false;
+    if(!matchesFeature(x,featureFilter))return false;
+
+    return true;
+  });
+
   if(sortMode==='rating')rows=[...rows].sort((a,b)=>ratingScore(b)-ratingScore(a)||a.name.localeCompare(b.name,'ko'));
   else if(sortMode==='name')rows=[...rows].sort((a,b)=>a.name.localeCompare(b.name,'ko'));
   return rows;
@@ -1716,7 +1879,17 @@ function render(fit=true){
   renderList(rows);
   renderMap(rows.filter(hasValidCoords),fit);
 }
-function showAll(){activeCategory='전체';searchKeyword='';sortMode='default';document.getElementById('search').value='';document.getElementById('sort').value='default';buildFilters();render(true);if(isMobile())setSheetState('mid');}
+function showAll(){
+  activeCategory='전체';
+  searchKeyword='';
+  sortMode='default';
+  resetMultiFilters();
+  document.getElementById('search').value='';
+  document.getElementById('sort').value='default';
+  buildFilters();
+  render(true);
+  if(isMobile())setSheetState('mid');
+}
 function locateMe(){
   if(!navigator.geolocation){alert('현재 위치 기능을 사용할 수 없습니다.');return;}
   navigator.geolocation.getCurrentPosition(pos=>{
@@ -1963,12 +2136,14 @@ function applyCommentBundle(bundle){
     });
   }
   commentsPreloaded=true;
+  updateMultiFilterUI();
 
   if(commentRestaurant){
     const key=restaurantCommentKey(commentRestaurant);
     const rows=preloadedComments.get(key)||[];
     renderComments(rows);
   }
+  if(commentFilter==='has')render(false);
 }
 
 function loadLiveDb(){
@@ -2722,9 +2897,30 @@ window.addEventListener('resize',()=>{
 
 document.getElementById('search').addEventListener('input',e=>{searchKeyword=e.target.value||'';clearTimeout(searchTimer);searchTimer=setTimeout(()=>render(true),120);});
 document.getElementById('sort').addEventListener('change',e=>{sortMode=e.target.value;render(false);});
+
+[
+  ['ratingFilter',v=>ratingFilter=v],
+  ['capacityFilter',v=>capacityFilter=v],
+  ['commentFilter',v=>commentFilter=v],
+  ['featureFilter',v=>featureFilter=v]
+].forEach(([id,setter])=>{
+  const el=document.getElementById(id);
+  el.addEventListener('change',e=>{
+    setter(e.target.value);
+    updateMultiFilterUI();
+    render(true);
+  });
+});
+
+document.getElementById('multiFilterReset').addEventListener('click',()=>{
+  resetMultiFilters();
+  render(true);
+});
+
 document.getElementById('showAll').onclick=showAll;
 document.getElementById('myLocation').onclick=locateMe;
 
+updateMultiFilterUI();
 loadDashboardData();
 setTimeout(initMap,0);
 </script>
