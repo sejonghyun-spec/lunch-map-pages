@@ -632,7 +632,7 @@ button,input,select{font:inherit}
   align-items:center;
   justify-content:center;
   border-radius:50%;
-  background:#0b658d;
+  background:var(--marker-color);
   border:2px solid #fff;
   color:#fff;
   font-size:11px;
@@ -671,14 +671,15 @@ button,input,select{font:inherit}
 .marker-label.selected .marker-pin{
   width:29px;
   height:29px;
-  background:var(--brand);
+  background:var(--marker-color);
   font-size:13px;
-  box-shadow:0 4px 10px rgba(75,43,30,.34);
+  border-width:3px;
+  box-shadow:0 4px 10px rgba(35,45,50,.34),0 0 0 2px rgba(255,255,255,.88);
 }
 .marker-label.selected .marker-name{
   font-size:12.5px;
   font-weight:800;
-  color:#5c2f1d;
+  color:#263137;
 }
 .marker-label.nearby-split{
   position:relative;
@@ -1657,7 +1658,7 @@ function initMap(){
 }
 
 function markerHtml(x){
-  return '<div class="marker-label" data-row="'+x.row+'">'+
+  return '<div class="marker-label" data-row="'+x.row+'" style="--marker-color:'+colorFor(x.category)+'">'+
     '<div class="marker-main">'+
       '<span class="marker-pin">★</span>'+
       '<span class="marker-name">'+esc(x.name)+'</span>'+
@@ -1826,7 +1827,11 @@ function buildFilters(){
   const items=['전체',...cats].sort((a,b)=>(ORDER.indexOf(a)<0?99:ORDER.indexOf(a))-(ORDER.indexOf(b)<0?99:ORDER.indexOf(b)));
   const el=document.getElementById('filters');
   el.innerHTML=items.map(c=>'<button class="filter-btn '+(c===activeCategory?'active':'')+'" data-category="'+esc(c)+'">'+esc(c)+'</button>').join('');
-  el.querySelectorAll('button').forEach(b=>b.onclick=()=>{activeCategory=b.dataset.category;buildFilters();render(true);});
+  el.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  activeCategory=b.dataset.category;
+  buildFilters();
+  render(false);
+});
 }
 function getRows(){
   const q=searchKeyword.trim().toLowerCase();
