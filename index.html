@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-rating-average-poi-mask-v6">
+<meta name="lunch-map-build" content="2026-10-03-no-poi-mask-v7">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -668,8 +668,6 @@ button,input,select{font:inherit}
   max-width:190px;
 }
 .marker-pin{
-  position:relative;
-  z-index:2;
   width:21px;
   height:21px;
   display:flex;
@@ -685,20 +683,6 @@ button,input,select{font:inherit}
   line-height:1;
   box-shadow:0 1px 4px rgba(24,34,40,.30);
   transition:transform .12s,box-shadow .12s,width .12s,height .12s;
-}
-.marker-pin::before{
-  content:'';
-  position:absolute;
-  z-index:-1;
-  left:50%;
-  top:50%;
-  width:31px;
-  height:31px;
-  transform:translate(-50%,-50%);
-  border-radius:50%;
-  background:rgba(255,255,255,.98);
-  box-shadow:0 0 0 1px rgba(255,255,255,.9);
-  pointer-events:none;
 }
 .marker-caption{
   display:flex;
