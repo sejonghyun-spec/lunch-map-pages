@@ -1416,7 +1416,6 @@ let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,p
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,suggestTimeout=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false;
 let commentRestaurant=null,commentRequestSeq=0,commentSubmitting=false,currentCommentRows=[];
-const commentFrameRequests=new Map();
 let rouletteCandidates=[],rouletteWinner=null,rouletteSpinning=false,rouletteRotation=0,rouletteTicker=null,rouletteCategory='전체';
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
 const colorFor=c=>COLORS[c]||'#64748b';
@@ -1886,74 +1885,36 @@ function makeClientCommentId(){
   return 'c-'+Date.now()+'-'+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
 }
 
-function fetchCommentsFrame(restaurant,timeoutMs=7000){
+function fetchComments(restaurant,timeoutMs=5000){
   return new Promise((resolve,reject)=>{
     if(!restaurant)return reject(new Error('restaurant required'));
 
-    const requestId='comments-'+Date.now()+'-'+Math.random().toString(36).slice(2);
-    const key=restaurantCommentKey(restaurant);
-    const frame=document.createElement('iframe');
-    frame.style.display='none';
-    frame.title='댓글 조회';
-
-    const timer=setTimeout(()=>{
-      const pending=commentFrameRequests.get(requestId);
-      if(!pending)return;
-      commentFrameRequests.delete(requestId);
-      frame.remove();
-      reject(new Error('comments timeout'));
-    },timeoutMs);
-
-    commentFrameRequests.set(requestId,{
-      frame:frame,
-      resolve:(rows)=>{
-        clearTimeout(timer);
-        commentFrameRequests.delete(requestId);
-        frame.remove();
-        resolve(Array.isArray(rows)?rows:[]);
-      },
-      reject:(err)=>{
-        clearTimeout(timer);
-        commentFrameRequests.delete(requestId);
-        frame.remove();
-        reject(err||new Error('comments load failed'));
-      }
-    });
-
-    frame.src=SUGGEST_URL+
-      '?mode=commentsFrame'+
-      '&key='+encodeURIComponent(key)+
-      '&owner='+encodeURIComponent(getCommentOwnerKey())+
-      '&requestId='+encodeURIComponent(requestId)+
-      '&t='+Date.now();
-
-    document.body.appendChild(frame);
-  });
-}
-
-function fetchCommentsJsonpFallback(restaurant,timeoutMs=5000){
-  return new Promise((resolve,reject)=>{
-    if(!restaurant)return reject(new Error('restaurant required'));
-
-    const callback='__lunchCommentsFallback_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const callback='__lunchComments'+Date.now()+Math.random().toString(36).slice(2);
     const key=restaurantCommentKey(restaurant);
     const script=document.createElement('script');
     let done=false;
 
+    const cleanup=()=>{
+      try{delete window[callback];}catch(e){window[callback]=undefined;}
+      script.remove();
+    };
+
     const timer=setTimeout(()=>{
       if(done)return;
       done=true;
-      try{delete window[callback];}catch(e){window[callback]=undefined;}
-      script.remove();
-      reject(new Error('comments jsonp timeout'));
+      cleanup();
+      reject(new Error('comments timeout'));
     },timeoutMs);
 
     window[callback]=payload=>{
       if(done)return;
       done=true;
       clearTimeout(timer);
-      try{delete window[callback];}catch(e){window[callback]=undefined;}
-      script.remove();
+      cleanup();
+      if(payload&&payload.ok===false){
+        reject(new Error(payload.message||'comments failed'));
+        return;
+      }
       resolve(payload&&Array.isArray(payload.comments)?payload.comments:[]);
     };
 
@@ -1961,9 +1922,8 @@ function fetchCommentsJsonpFallback(restaurant,timeoutMs=5000){
       if(done)return;
       done=true;
       clearTimeout(timer);
-      try{delete window[callback];}catch(e){window[callback]=undefined;}
-      script.remove();
-      reject(new Error('comments jsonp failed'));
+      cleanup();
+      reject(new Error('comments load failed'));
     };
 
     script.src=SUGGEST_URL+
@@ -1977,14 +1937,6 @@ function fetchCommentsJsonpFallback(restaurant,timeoutMs=5000){
   });
 }
 
-async function fetchCommentsStable(restaurant){
-  try{
-    return await fetchCommentsFrame(restaurant,2500);
-  }catch(frameErr){
-    return await fetchCommentsJsonpFallback(restaurant,5000);
-  }
-}
-
 async function loadComments(restaurant){
   if(!restaurant)return [];
   const seq=++commentRequestSeq;
@@ -1992,7 +1944,7 @@ async function loadComments(restaurant){
   commentList.innerHTML='<div class="comment-loading">댓글을 불러오는 중입니다.</div>';
 
   try{
-    const rows=await fetchCommentsStable(restaurant);
+    const rows=await fetchComments(restaurant,5000);
     if(seq===commentRequestSeq)renderComments(rows);
     return rows;
   }catch(err){
@@ -2010,42 +1962,25 @@ async function loadComments(restaurant){
 }
 
 function postCommentFields(fields){
-  const form=document.createElement('form');
-  form.method='POST';
-  form.action=SUGGEST_URL;
-  form.target='commentSink';
-  form.style.display='none';
+  const body=new URLSearchParams();
+  Object.entries(fields).forEach(([name,value])=>body.set(name,String(value??'')));
 
-  Object.entries(fields).forEach(([name,value])=>{
-    const input=document.createElement('input');
-    input.type='hidden';
-    input.name=name;
-    input.value=value;
-    form.appendChild(input);
+  return fetch(SUGGEST_URL,{
+    method:'POST',
+    mode:'no-cors',
+    cache:'no-store',
+    redirect:'follow',
+    headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},
+    body:body.toString()
   });
-
-  document.body.appendChild(form);
-  HTMLFormElement.prototype.submit.call(form);
-  setTimeout(()=>form.remove(),1000);
 }
 
-async function reconcileCommentState(restaurant,commentId,shouldExist){
-  const restaurantKey=restaurantCommentKey(restaurant);
-  const delays=[700,1100];
-
-  for(const delay of delays){
-    await new Promise(r=>setTimeout(r,delay));
-    try{
-      const rows=await fetchCommentsStable(restaurant);
-      const exists=rows.some(x=>String(x.id||'')===String(commentId));
-      if(commentRestaurant&&restaurantCommentKey(commentRestaurant)===restaurantKey){
-        renderComments(rows);
-      }
-      if(exists===shouldExist)return true;
-    }catch(err){}
-  }
-
-  return false;
+function refreshCommentsSoon(restaurant,delay=900){
+  const key=restaurantCommentKey(restaurant);
+  setTimeout(()=>{
+    if(!commentRestaurant||restaurantCommentKey(commentRestaurant)!==key)return;
+    loadComments(restaurant);
+  },delay);
 }
 
 function deleteComment(commentId,button){
@@ -2055,13 +1990,8 @@ function deleteComment(commentId,button){
   const restaurant=commentRestaurant;
   const restaurantKey=restaurantCommentKey(restaurant);
 
-  // 화면에서는 즉시 삭제
+  // 즉시 화면에서 제거
   renderComments(currentCommentRows.filter(x=>String(x.id||'')!==String(commentId)));
-
-  if(button){
-    button.disabled=true;
-    button.textContent='삭제 중';
-  }
   commentStatus.textContent='댓글을 삭제했습니다.';
   commentStatus.className='comment-status';
 
@@ -2070,22 +2000,13 @@ function deleteComment(commentId,button){
     key:restaurantKey,
     commentId:commentId,
     owner:getCommentOwnerKey()
-  });
-
-  showToast('댓글 삭제 요청을 보냈습니다.');
-
-  // 사용자는 기다리지 않고, 실제 시트 상태만 뒤에서 확인한다.
-  reconcileCommentState(restaurant,commentId,false).then(ok=>{
-    if(commentRestaurant&&restaurantCommentKey(commentRestaurant)===restaurantKey){
-      if(ok){
-        commentStatus.textContent='댓글이 삭제되었습니다.';
-        commentStatus.className='comment-status';
-      }else{
-        commentStatus.textContent='삭제 확인이 지연되어 댓글 목록을 다시 불러왔습니다.';
-        commentStatus.className='comment-status error';
-        loadComments(restaurant);
-      }
-    }
+  }).then(()=>{
+    showToast('댓글이 삭제되었습니다.');
+    refreshCommentsSoon(restaurant,900);
+  }).catch(()=>{
+    commentStatus.textContent='댓글 삭제 전송에 실패했습니다.';
+    commentStatus.className='comment-status error';
+    loadComments(restaurant);
   });
 }
 
@@ -2126,13 +2047,13 @@ commentForm.addEventListener('submit',e=>{
     canDelete:true
   };
 
-  // 입력 즉시 화면에 표시한다.
+  // 즉시 화면에 표시
   renderComments([optimisticRow,...currentCommentRows]);
   commentInput.value='';
   commentSubmitting=true;
   commentSubmit.disabled=true;
   commentSubmit.textContent='등록 중';
-  commentStatus.textContent=nickname+'로 댓글을 표시했습니다.';
+  commentStatus.textContent=nickname+'로 등록 중입니다.';
   commentStatus.className='comment-status';
 
   postCommentFields({
@@ -2145,28 +2066,21 @@ commentForm.addEventListener('submit',e=>{
     commentId:commentId,
     comment:textValue,
     website:''
-  });
-
-  // 버튼은 서버 재조회를 기다리지 않는다.
-  setTimeout(()=>{
+  }).then(()=>{
     commentSubmitting=false;
     commentSubmit.disabled=false;
     commentSubmit.textContent='등록';
-  },500);
-
-  // 실제 시트 반영은 뒤에서 검증하고 최신 목록으로 동기화한다.
-  reconcileCommentState(restaurant,commentId,true).then(ok=>{
-    if(commentRestaurant&&restaurantCommentKey(commentRestaurant)===restaurantKey){
-      if(ok){
-        commentStatus.textContent=nickname+'로 등록되었습니다.';
-        commentStatus.className='comment-status';
-        showToast('댓글이 등록되었습니다.');
-      }else{
-        commentStatus.textContent='등록 확인이 지연되어 댓글 목록을 다시 불러왔습니다.';
-        commentStatus.className='comment-status error';
-        loadComments(restaurant);
-      }
-    }
+    commentStatus.textContent=nickname+'로 등록했습니다.';
+    commentStatus.className='comment-status';
+    showToast('댓글이 등록되었습니다.');
+    refreshCommentsSoon(restaurant,900);
+  }).catch(()=>{
+    commentSubmitting=false;
+    commentSubmit.disabled=false;
+    commentSubmit.textContent='등록';
+    commentStatus.textContent='댓글 등록 전송에 실패했습니다.';
+    commentStatus.className='comment-status error';
+    loadComments(restaurant);
   });
 });
 
@@ -2493,21 +2407,6 @@ function isAppsScriptMessageOrigin(origin){
 window.addEventListener('message',e=>{
   const d=e.data||{};
 
-  if(d.source==='lunch-map-comments-data'){
-    const requestId=String(d.requestId||'');
-    const pending=commentFrameRequests.get(requestId);
-    if(!pending)return;
-
-    // Apps Script can emit the message from an inner sandboxed frame, so
-    // e.source may not equal the outer iframe window. The random one-time
-    // requestId is used to match this response to the active request.
-    if(d.ok===false){
-      pending.reject(new Error(d.message||'comments load failed'));
-    }else{
-      pending.resolve(Array.isArray(d.comments)?d.comments:[]);
-    }
-    return;
-  }
 
   // Other Apps Script messages still require the expected Google origin.
   if(!isAppsScriptMessageOrigin(e.origin))return;
