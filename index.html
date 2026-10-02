@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-no-poi-mask-v7">
+<meta name="lunch-map-build" content="2026-10-03-comment-admin-v8">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -1631,6 +1631,7 @@ let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,p
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,pendingSuggestionTemp=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
 let currentAccount=null,lastAuthRetry=0;
+const COMMENT_ADMIN_EMAILS=new Set(['sejong.hyun@seah.co.kr']);
 let commentRestaurant=null,commentRequestSeq=0,commentSubmitting=false,currentCommentRows=[];
 let commentsPreloaded=false;
 const preloadedComments=new Map();
@@ -2348,6 +2349,9 @@ function updateAccountUI(user,needsAuth=false){
     accountButton.classList.remove('connected');
     if(needsAuth)accountButton.classList.add('needs-auth');
   }
+  if(commentPanel&&commentPanel.classList.contains('open')){
+    renderComments(currentCommentRows);
+  }
 }
 
 function openAccountConnection(){
@@ -2476,6 +2480,20 @@ function closeComments(){
   commentPanel.classList.remove('open');
   if(mapHint)mapHint.style.display='';
 }
+function isCommentAdmin(){
+  const email=String(currentAccount&&currentAccount.email||'').trim().toLowerCase();
+  return COMMENT_ADMIN_EMAILS.has(email);
+}
+function isAnonymousComment(row){
+  const nickname=String(row&&row.nickname||'').trim();
+  return !nickname||/^익명/i.test(nickname);
+}
+function canDeleteComment(row){
+  if(!row||!row.id)return false;
+  if(row.canDelete)return true;
+  // Separate admin privilege: the designated admin may delete anonymous comments.
+  return isCommentAdmin()&&isAnonymousComment(row);
+}
 function renderComments(comments){
   const rows=Array.isArray(comments)?comments:[];
   currentCommentRows=rows.slice();
@@ -2490,7 +2508,7 @@ function renderComments(comments){
         '<div class="comment-nick">'+esc(x.nickname||'익명')+'</div>'+
         '<div class="comment-meta-right">'+
           '<div class="comment-date">'+esc(x.createdAt||'')+'</div>'+
-          (x.canDelete&&x.id?'<button type="button" class="comment-delete" data-comment-id="'+esc(x.id)+'">삭제</button>':'')+
+          (canDeleteComment(x)?'<button type="button" class="comment-delete" data-comment-id="'+esc(x.id)+'">삭제</button>':'')+
         '</div>'+
       '</div>'+
       '<div class="comment-text">'+esc(x.comment||'')+'</div>'+
@@ -2654,6 +2672,12 @@ function refreshCommentsSoon(restaurant,delay=3000){
 function deleteComment(commentId,button){
   if(!commentRestaurant||!commentId)return;
   if(!ensureCompanyAccount())return;
+
+  const target=currentCommentRows.find(x=>String(x.id||'')===String(commentId));
+  if(!canDeleteComment(target)){
+    showToast('이 댓글을 삭제할 권한이 없습니다.');
+    return;
+  }
   if(!window.confirm('이 댓글을 삭제하시겠습니까?'))return;
 
   const restaurant=commentRestaurant;
@@ -2669,7 +2693,9 @@ function deleteComment(commentId,button){
   postCommentFields({
     mode:'commentDelete',
     key:restaurantKey,
-    commentId:commentId
+    commentId:commentId,
+    adminOverride:isCommentAdmin()&&isAnonymousComment(target)?'1':'0',
+    requesterEmail:String(currentAccount&&currentAccount.email||'')
   }).catch(()=>{
     commentStatus.textContent='댓글 삭제 전송에 실패했습니다.';
     commentStatus.className='comment-status error';
