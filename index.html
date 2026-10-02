@@ -1905,6 +1905,7 @@ function fetchCommentsFrame(restaurant,timeoutMs=7000){
     },timeoutMs);
 
     commentFrameRequests.set(requestId,{
+      frame:frame,
       resolve:(rows)=>{
         clearTimeout(timer);
         commentFrameRequests.delete(requestId);
@@ -2436,13 +2437,18 @@ function isAppsScriptMessageOrigin(origin){
 }
 
 window.addEventListener('message',e=>{
-  if(!isAppsScriptMessageOrigin(e.origin))return;
   const d=e.data||{};
 
   if(d.source==='lunch-map-comments-data'){
     const requestId=String(d.requestId||'');
     const pending=commentFrameRequests.get(requestId);
     if(!pending)return;
+
+    // Apps Script HtmlService can post from a sandboxed opaque origin ("null").
+    // Authenticate this response by both its one-time requestId and the exact
+    // iframe window that we created for this request.
+    if(!pending.frame||e.source!==pending.frame.contentWindow)return;
+
     if(d.ok===false){
       pending.reject(new Error(d.message||'comments load failed'));
     }else{
@@ -2451,6 +2457,8 @@ window.addEventListener('message',e=>{
     return;
   }
 
+  // Other Apps Script messages still require the expected Google origin.
+  if(!isAppsScriptMessageOrigin(e.origin))return;
   if(d.source!=='lunch-map-suggest')return;
   clearTimeout(suggestTimeout);
   suggestPending=false;
