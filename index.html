@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-mobile-hamburger-v30">
+<meta name="lunch-map-build" content="2026-10-03-mobile-layout-v31">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -176,17 +176,6 @@ button,input,select{font:inherit}
   background:#fff5f0;
   color:#a1492b;
 }
-.header-count{
-  margin-right:0;
-  padding:9px 13px;
-  border-radius:999px;
-  background:#f4e8e2;
-  color:var(--brand-dark);
-  font-size:14px;
-  font-weight:700;
-  white-space:nowrap;
-}
-
 /* MAIN LAYOUT */
 .main{
   min-height:0;
@@ -1279,36 +1268,49 @@ button,input,select{font:inherit}
 .roulette-action:disabled{opacity:.5;cursor:not-allowed}
 
 /* MOBILE */
-@media(max-width:800px){
-  :root{--sidebar:100%;--header:106px}
-  body{overflow:hidden}
+@media(max-width:900px){
+  :root{
+    --sidebar:100%;
+    --mobile-safe-top:env(safe-area-inset-top,0px);
+    --mobile-safe-bottom:env(safe-area-inset-bottom,0px);
+    --header:calc(104px + var(--mobile-safe-top));
+  }
+  html,body{overscroll-behavior:none}
+  body{
+    overflow:hidden;
+    touch-action:manipulation;
+  }
   .app{
     height:100dvh;
-    grid-template-rows:var(--header) 1fr;
+    min-height:100dvh;
+    grid-template-rows:var(--header) minmax(0,1fr);
   }
   .topbar{
     position:relative;
-    grid-template-columns:minmax(0,1fr) 48px;
-    grid-template-rows:54px 52px;
+    grid-template-columns:minmax(0,1fr) 52px;
+    grid-template-rows:52px 52px;
+    padding-top:var(--mobile-safe-top);
   }
   .brand{
     grid-column:1;
     grid-row:1;
     border-right:0;
-    padding:0 10px 0 14px;
+    padding:0 6px 0 14px;
     overflow:hidden;
   }
   .brand-title{
     overflow:hidden;
     font-size:18px;
-    line-height:1.15;
+    line-height:1.12;
+    letter-spacing:-.55px;
     text-overflow:ellipsis;
     white-space:nowrap;
   }
   .brand-sub{
     overflow:hidden;
     margin-top:3px;
-    font-size:11.5px;
+    font-size:11px;
+    line-height:1.2;
     text-overflow:ellipsis;
     white-space:nowrap;
   }
@@ -1325,11 +1327,12 @@ button,input,select{font:inherit}
     justify-content:center;
     gap:5px;
     border:1px solid #dfe4e7;
-    border-radius:11px;
+    border-radius:12px;
     background:#fff;
     color:#444c50;
     cursor:pointer;
-    box-shadow:0 1px 4px rgba(34,44,50,.05);
+    box-shadow:0 1px 4px rgba(34,44,50,.06);
+    -webkit-tap-highlight-color:transparent;
   }
   .mobile-menu-btn span{
     display:block;
@@ -1346,21 +1349,25 @@ button,input,select{font:inherit}
     grid-column:1/3;
     grid-row:2;
     gap:7px;
-    padding:0 10px;
+    padding:6px 10px 7px;
     border-top:1px solid var(--line);
+    scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;
   }
   .filter-btn{
     min-height:38px;
-    padding:9px 13px;
+    padding:8px 13px;
     font-size:13px;
+    scroll-snap-align:start;
+    -webkit-tap-highlight-color:transparent;
   }
   .header-actions{
     position:absolute;
-    top:48px;
+    top:calc(var(--mobile-safe-top) + 48px);
     right:8px;
     z-index:80;
     display:none;
-    width:min(244px,calc(100vw - 16px));
+    width:min(238px,calc(100vw - 16px));
     margin-right:0;
     padding:8px;
     grid-template-columns:1fr;
@@ -1368,28 +1375,20 @@ button,input,select{font:inherit}
     border:1px solid #dfe4e7;
     border-radius:14px;
     background:#fff;
-    box-shadow:0 10px 30px rgba(28,38,44,.18);
+    box-shadow:0 12px 32px rgba(28,38,44,.20);
   }
-  .header-actions.mobile-open{
-    display:grid;
-  }
+  .header-actions.mobile-open{display:grid}
   .suggest-btn,
   .roulette-btn,
   .account-btn{
     width:100%;
-    height:42px;
+    height:44px;
     max-width:none;
-    padding:0 12px;
+    padding:0 13px;
+    border-radius:10px;
     font-size:13px;
     text-align:left;
-  }
-  .header-count{
-    width:100%;
-    margin-right:0;
-    padding:9px 11px;
-    border-radius:10px;
-    font-size:12.5px;
-    text-align:center;
+    -webkit-tap-highlight-color:transparent;
   }
 
   .main{
@@ -1397,6 +1396,7 @@ button,input,select{font:inherit}
     display:block;
     min-height:0;
     overflow:hidden;
+    overscroll-behavior:none;
   }
   .map-wrap{
     position:absolute;
@@ -1405,7 +1405,8 @@ button,input,select{font:inherit}
   }
   .map-hint{
     left:10px;
-    bottom:128px;
+    bottom:calc(128px + var(--mobile-safe-bottom));
+    max-width:calc(100% - 20px);
     padding:8px 10px;
     font-size:11px;
   }
@@ -1415,22 +1416,23 @@ button,input,select{font:inherit}
     position:absolute;
     left:8px;
     right:8px;
-    bottom:8px;
+    bottom:calc(8px + var(--mobile-safe-bottom));
     z-index:25;
-    height:min(58dvh,620px);
+    height:calc(100% - 16px - var(--mobile-safe-bottom));
     min-height:0;
     border:1px solid var(--line);
     border-radius:20px 20px 16px 16px;
     box-shadow:0 -8px 28px rgba(30,24,20,.20);
     overflow:hidden;
+    overscroll-behavior:contain;
     transition:transform .22s ease;
-    transform:translateY(calc(100% - 132px));
-    grid-template-rows:24px auto auto auto auto 1fr;
-    background:rgba(255,255,255,.98);
+    transform:translateY(calc(100% - 126px));
+    grid-template-rows:24px auto auto auto auto minmax(0,1fr);
+    background:rgba(255,255,255,.985);
     backdrop-filter:blur(10px);
   }
-  .sidebar.sheet-mid{transform:translateY(42%)}
-  .sidebar.sheet-full{transform:translateY(8px)}
+  .sidebar.sheet-mid{transform:translateY(46%)}
+  .sidebar.sheet-full{transform:translateY(0)}
 
   .sheet-handle{
     display:flex;
@@ -1490,7 +1492,11 @@ button,input,select{font:inherit}
   .list-title{font-size:16.5px;font-weight:700}
   .list-sub{font-size:11.5px;font-weight:500}
   .sort-btn{height:32px;font-size:12px}
-  .list{padding:0 8px 14px}
+  .list{
+    padding:0 8px calc(14px + var(--mobile-safe-bottom));
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+  }
   .card{padding:12px 10px 13px}
   .name{font-size:15.5px;font-weight:700}
   .badge{
@@ -1600,9 +1606,9 @@ button,input,select{font:inherit}
   .comment-panel{
     left:8px;
     right:8px;
-    bottom:144px;
+    bottom:calc(140px + var(--mobile-safe-bottom));
     width:auto;
-    max-height:300px;
+    max-height:min(42dvh,330px);
     transform:translateY(16px);
     border-radius:16px;
   }
@@ -1617,11 +1623,15 @@ button,input,select{font:inherit}
   .comment-input{height:44px;font-size:16px}
   .comment-submit{height:44px;min-width:68px;font-size:13px}
 
-  .modal-backdrop{padding:8px;align-items:flex-end}
+  .modal-backdrop{
+    padding:8px 8px calc(8px + var(--mobile-safe-bottom));
+    align-items:flex-end;
+  }
   .suggest-modal{
     width:100%;
-    max-height:92dvh;
+    max-height:calc(100dvh - var(--mobile-safe-top) - 12px);
     border-radius:20px 20px 12px 12px;
+    overscroll-behavior:contain;
   }
   .modal-head{padding:17px 16px 13px}
   .modal-title{font-size:20px}
@@ -1635,12 +1645,22 @@ button,input,select{font:inherit}
   .form-input,.form-select{height:48px;font-size:16px}
   .form-textarea{font-size:16px}
   .place-results{top:54px;max-height:240px}
-  .modal-actions{position:sticky;bottom:0;background:#fff;padding-top:10px}
+  .modal-actions{
+    position:sticky;
+    bottom:0;
+    z-index:4;
+    margin-left:-2px;
+    margin-right:-2px;
+    padding:10px 2px var(--mobile-safe-bottom);
+    background:linear-gradient(to bottom,rgba(255,255,255,.92),#fff 28%);
+  }
   .modal-btn{height:46px;flex:1}
 
   .roulette-modal{
     width:100%;
+    max-height:calc(100dvh - var(--mobile-safe-top) - 12px);
     border-radius:20px 20px 12px 12px;
+    overscroll-behavior:contain;
   }
   .roulette-body{padding:18px 16px 20px}
   .roulette-category-title{text-align:left;font-size:13px}
@@ -1661,6 +1681,30 @@ button,input,select{font:inherit}
   .roulette-result-name{font-size:23px}
   .roulette-actions{position:sticky;bottom:0;background:#fff;padding-top:10px}
   .roulette-action{flex:1;min-width:0}
+
+  @media(max-width:430px){
+    .brand-title{font-size:17px}
+    .brand-sub{display:none}
+    .top-filters{padding-left:8px;padding-right:8px}
+    .filter-btn{padding-left:12px;padding-right:12px}
+    .sidebar{left:6px;right:6px;border-radius:18px 18px 14px 14px}
+    .search-wrap{padding-left:10px;padding-right:10px}
+    .multi-filter-wrap{padding-left:10px;padding-right:10px}
+    .quick-row{padding-left:10px;padding-right:10px}
+    .card{padding-left:8px;padding-right:8px}
+  }
+
+  @media(max-height:620px){
+    :root{--header:calc(96px + var(--mobile-safe-top))}
+    .topbar{grid-template-rows:48px 48px}
+    .brand-title{font-size:17px}
+    .brand-sub{display:none}
+    .mobile-menu-btn{width:38px;height:38px}
+    .top-filters{padding-top:4px;padding-bottom:5px}
+    .sidebar{transform:translateY(calc(100% - 116px))}
+    .sidebar.sheet-mid{transform:translateY(52%)}
+    .comment-panel{max-height:48dvh}
+  }
 }
 
 </style>
@@ -1679,7 +1723,6 @@ button,input,select{font:inherit}
       <button id="accountButton" class="account-btn needs-auth" type="button">👤 회사 계정 연결</button>
       <button id="rouletteOpen" class="roulette-btn" type="button">🎲 점심 룰렛</button>
       <button id="suggestOpen" class="suggest-btn" type="button">＋ 제안하기</button>
-      <div id="count" class="header-count">불러오는 중…</div>
     </div>
   </header>
 
@@ -2461,7 +2504,6 @@ function hasValidCoords(x){
 }
 function render(fit=true){
   const rows=getRows();
-  document.getElementById('count').textContent=rows.length+'곳';
   renderList(rows);
   renderMap(rows.filter(hasValidCoords),fit);
 }
@@ -2670,7 +2712,6 @@ function applyDbRows(rows){
   reconcileSelectedRestaurant();
   buildFilters();
   renderList(getRows());
-  document.getElementById('count').textContent=displayRestaurants().length+'곳';
   if(mapReady)render(false);
   if(suggestMode==='edit'&&suggestModal&&suggestModal.classList.contains('open'))populateEditRestaurantSelect();
   hydrateMissingRows();
@@ -3389,7 +3430,7 @@ function populateEditRestaurantSelect(){
   const rows=displayRestaurants()
     .slice()
     .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ko'));
-  editRestaurantSelect.innerHTML='<option value="">등록된 식당 선택 · '+rows.length+'곳</option>'+
+  editRestaurantSelect.innerHTML='<option value="">등록된 식당 선택</option>'+
     rows.map(x=>{
       const label=[x.name,x.category].filter(Boolean).join(' · ');
       return '<option value="'+Number(x.row)+'">'+esc(label)+'</option>';
@@ -3795,7 +3836,7 @@ document.addEventListener('click',()=>closeMobileMenu());
 });
 let sheetState='peek',sheetStartY=null;
 
-function isMobile(){return window.matchMedia('(max-width:800px)').matches;}
+function isMobile(){return window.matchMedia('(max-width:900px)').matches;}
 function setSheetState(state){
   if(!sidebar)return;
   sheetState=state;
