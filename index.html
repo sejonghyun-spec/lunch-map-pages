@@ -1931,6 +1931,60 @@ function fetchCommentsFrame(restaurant,timeoutMs=7000){
   });
 }
 
+function fetchCommentsJsonpFallback(restaurant,timeoutMs=5000){
+  return new Promise((resolve,reject)=>{
+    if(!restaurant)return reject(new Error('restaurant required'));
+
+    const callback='__lunchCommentsFallback_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const key=restaurantCommentKey(restaurant);
+    const script=document.createElement('script');
+    let done=false;
+
+    const timer=setTimeout(()=>{
+      if(done)return;
+      done=true;
+      try{delete window[callback];}catch(e){window[callback]=undefined;}
+      script.remove();
+      reject(new Error('comments jsonp timeout'));
+    },timeoutMs);
+
+    window[callback]=payload=>{
+      if(done)return;
+      done=true;
+      clearTimeout(timer);
+      try{delete window[callback];}catch(e){window[callback]=undefined;}
+      script.remove();
+      resolve(payload&&Array.isArray(payload.comments)?payload.comments:[]);
+    };
+
+    script.onerror=()=>{
+      if(done)return;
+      done=true;
+      clearTimeout(timer);
+      try{delete window[callback];}catch(e){window[callback]=undefined;}
+      script.remove();
+      reject(new Error('comments jsonp failed'));
+    };
+
+    script.src=SUGGEST_URL+
+      '?mode=comments'+
+      '&key='+encodeURIComponent(key)+
+      '&owner='+encodeURIComponent(getCommentOwnerKey())+
+      '&callback='+encodeURIComponent(callback)+
+      '&t='+Date.now();
+
+    document.head.appendChild(script);
+  });
+}
+
+async function fetchCommentsStable(restaurant){
+  try{
+    return await fetchCommentsFrame(restaurant,2500);
+  }catch(frameErr){
+    return await fetchCommentsJsonpFallback(restaurant,5000);
+  }
+}
+
 async function loadComments(restaurant){
   if(!restaurant)return [];
   const seq=++commentRequestSeq;
@@ -1938,7 +1992,7 @@ async function loadComments(restaurant){
   commentList.innerHTML='<div class="comment-loading">댓글을 불러오는 중입니다.</div>';
 
   try{
-    const rows=await fetchCommentsFrame(restaurant,7000);
+    const rows=await fetchCommentsStable(restaurant);
     if(seq===commentRequestSeq)renderComments(rows);
     return rows;
   }catch(err){
@@ -1982,7 +2036,7 @@ async function reconcileCommentState(restaurant,commentId,shouldExist){
   for(const delay of delays){
     await new Promise(r=>setTimeout(r,delay));
     try{
-      const rows=await fetchCommentsFrame(restaurant,7000);
+      const rows=await fetchCommentsStable(restaurant);
       const exists=rows.some(x=>String(x.id||'')===String(commentId));
       if(commentRestaurant&&restaurantCommentKey(commentRestaurant)===restaurantKey){
         renderComments(rows);
@@ -2444,11 +2498,9 @@ window.addEventListener('message',e=>{
     const pending=commentFrameRequests.get(requestId);
     if(!pending)return;
 
-    // Apps Script HtmlService can post from a sandboxed opaque origin ("null").
-    // Authenticate this response by both its one-time requestId and the exact
-    // iframe window that we created for this request.
-    if(!pending.frame||e.source!==pending.frame.contentWindow)return;
-
+    // Apps Script can emit the message from an inner sandboxed frame, so
+    // e.source may not equal the outer iframe window. The random one-time
+    // requestId is used to match this response to the active request.
     if(d.ok===false){
       pending.reject(new Error(d.message||'comments load failed'));
     }else{
