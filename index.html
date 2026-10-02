@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-hapjeong-initial-view-v23">
+<meta name="lunch-map-build" content="2026-10-03-suggest-submit-fix-v24">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -3354,7 +3354,8 @@ suggestForm.addEventListener('submit',e=>{
   sortMode='default';
   resetMultiFilters();
   document.getElementById('search').value='';
-  document.getElementById('sort').value='default';
+  syncSortUI();
+  closeSortMenu();
   buildFilters();
   render(true);
 
