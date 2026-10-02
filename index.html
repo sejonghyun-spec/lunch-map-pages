@@ -1414,8 +1414,10 @@ const SUGGEST_URL='https://script.google.com/macros/s/AKfycbzpCuw9c6Y8K6_4tnqZzw
 let allData=[],activeCategory='전체',searchKeyword='',sortMode='default';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,searchTimer=null;
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,suggestTimeout=null;
-let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false;
+let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
 let commentRestaurant=null,commentRequestSeq=0,commentSubmitting=false,currentCommentRows=[];
+let commentsPreloaded=false;
+const preloadedComments=new Map();
 let rouletteCandidates=[],rouletteWinner=null,rouletteSpinning=false,rouletteRotation=0,rouletteTicker=null,rouletteCategory='전체';
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
 const colorFor=c=>COLORS[c]||'#64748b';
@@ -1745,12 +1747,28 @@ function loadStaticData(){
     .then(p=>{
       const rows=Array.isArray(p)?p:(Array.isArray(p.rows)?p.rows:[]);
       if(rows.length){
-        applyDbRows(rows);
+        if(!dbLoadDone)applyDbRows(rows);
         return true;
       }
       return false;
     })
     .catch(()=>false);
+}
+
+function applyCommentBundle(bundle){
+  preloadedComments.clear();
+  if(bundle&&typeof bundle==='object'){
+    Object.entries(bundle).forEach(([key,rows])=>{
+      preloadedComments.set(key,Array.isArray(rows)?rows:[]);
+    });
+  }
+  commentsPreloaded=true;
+
+  if(commentRestaurant){
+    const key=restaurantCommentKey(commentRestaurant);
+    const rows=preloadedComments.get(key)||[];
+    renderComments(rows);
+  }
 }
 
 function loadLiveDb(){
@@ -1770,6 +1788,7 @@ function loadLiveDb(){
 
     window[callback]=payload=>{
       const rows=payload&&Array.isArray(payload.rows)?payload.rows:[];
+      if(payload&&payload.commentsByKey)applyCommentBundle(payload.commentsByKey);
       if(rows.length){
         dbLoadDone=true;
         applyDbRows(rows);
@@ -1780,26 +1799,27 @@ function loadLiveDb(){
     };
 
     script=document.createElement('script');
-    script.src=SUGGEST_URL+'?mode=data&callback='+callback+'&t='+Date.now();
+    script.src=SUGGEST_URL+
+      '?mode=data'+
+      '&owner='+encodeURIComponent(getCommentOwnerKey())+
+      '&callback='+callback+
+      '&t='+Date.now();
     script.async=true;
     script.onerror=()=>done(false);
     document.head.appendChild(script);
 
-    dbLoadTimer=setTimeout(()=>done(false),3000);
+    dbLoadTimer=setTimeout(()=>done(false),12000);
   });
 }
 
 async function loadDashboardData(){
-  const staticLoaded=await loadStaticData();
-  if(!staticLoaded){
-    document.getElementById('list').innerHTML='<div class="empty">식당 정보를 불러오는 중입니다.</div>';
-  }
+  // Start the live DB/comments request immediately, but never block the fast
+  // static restaurant list on it.
+  liveDbPromise=loadLiveDb().catch(()=>false);
 
-  const refreshLive=()=>loadLiveDb().catch(()=>false);
-  if('requestIdleCallback' in window){
-    requestIdleCallback(refreshLive,{timeout:1200});
-  }else{
-    setTimeout(refreshLive,350);
+  const staticLoaded=await loadStaticData();
+  if(!staticLoaded&&!dbLoadDone){
+    document.getElementById('list').innerHTML='<div class="empty">식당 정보를 불러오는 중입니다.</div>';
   }
 }
 
@@ -1940,11 +1960,43 @@ function fetchComments(restaurant,timeoutMs=5000){
 async function loadComments(restaurant){
   if(!restaurant)return [];
   const seq=++commentRequestSeq;
-  commentCount.textContent='댓글 -';
-  commentList.innerHTML='<div class="comment-loading">댓글을 불러오는 중입니다.</div>';
+  const key=restaurantCommentKey(restaurant);
 
+  // Preferred path: comments were already delivered together with the live DB.
+  if(commentsPreloaded){
+    const rows=preloadedComments.get(key)||[];
+    if(seq===commentRequestSeq)renderComments(rows);
+
+    // Refresh quietly; a temporary Apps Script delay must not replace visible
+    // comments with an error state.
+    fetchComments(restaurant,7000).then(fresh=>{
+      preloadedComments.set(key,fresh);
+      if(seq===commentRequestSeq&&commentRestaurant&&restaurantCommentKey(commentRestaurant)===key){
+        renderComments(fresh);
+      }
+    }).catch(()=>{});
+    return rows;
+  }
+
+  commentCount.textContent='댓글 -';
+  commentList.innerHTML='<div class="comment-loading">댓글 데이터를 준비하는 중입니다.</div>';
+
+  // Reuse the single page-start live request rather than waking Apps Script
+  // again for the first restaurant click.
+  if(liveDbPromise){
+    try{await liveDbPromise;}catch(err){}
+    if(seq!==commentRequestSeq)return [];
+    if(commentsPreloaded){
+      const rows=preloadedComments.get(key)||[];
+      renderComments(rows);
+      return rows;
+    }
+  }
+
+  // Last-resort fallback only when the preload itself failed.
   try{
-    const rows=await fetchComments(restaurant,5000);
+    const rows=await fetchComments(restaurant,10000);
+    preloadedComments.set(key,rows);
     if(seq===commentRequestSeq)renderComments(rows);
     return rows;
   }catch(err){
@@ -1981,7 +2033,8 @@ function refreshCommentsSoon(restaurant,delay=3000){
   setTimeout(async()=>{
     if(!commentRestaurant||restaurantCommentKey(commentRestaurant)!==key)return;
     try{
-      const rows=await fetchComments(restaurant,5000);
+      const rows=await fetchComments(restaurant,7000);
+      preloadedComments.set(key,rows);
       if(commentRestaurant&&restaurantCommentKey(commentRestaurant)===key){
         renderComments(rows);
       }
@@ -1999,7 +2052,9 @@ function deleteComment(commentId,button){
   const restaurantKey=restaurantCommentKey(restaurant);
 
   // 즉시 화면에서 제거
-  renderComments(currentCommentRows.filter(x=>String(x.id||'')!==String(commentId)));
+  const afterDelete=currentCommentRows.filter(x=>String(x.id||'')!==String(commentId));
+  renderComments(afterDelete);
+  preloadedComments.set(restaurantKey,afterDelete);
   commentStatus.textContent='댓글을 삭제했습니다.';
   commentStatus.className='comment-status';
 
@@ -2055,7 +2110,9 @@ commentForm.addEventListener('submit',e=>{
   };
 
   // 즉시 화면에 표시
-  renderComments([optimisticRow,...currentCommentRows]);
+  const afterAdd=[optimisticRow,...currentCommentRows];
+  renderComments(afterAdd);
+  preloadedComments.set(restaurantKey,afterAdd);
   commentInput.value='';
   commentSubmitting=true;
   commentSubmit.disabled=true;
