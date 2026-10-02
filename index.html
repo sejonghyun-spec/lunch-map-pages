@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-naver-hover-card-v16">
+<meta name="lunch-map-build" content="2026-10-03-unified-hover-popup-v17">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -745,89 +745,12 @@ button,input,select{font:inherit}
     0 1px 1px rgba(255,255,255,.72),
     0 0 2px rgba(255,255,255,.48);
 }
-.marker-hover-card{
-  position:absolute;
-  left:50%;
-  bottom:calc(100% + 10px);
-  transform:translateX(-50%);
-  display:none;
-  width:max-content;
-  min-width:190px;
-  max-width:250px;
-  padding:12px 14px 11px;
-  border:1px solid #e1e5e8;
-  border-radius:13px;
-  background:#fff;
-  box-shadow:0 5px 18px rgba(27,35,40,.18);
-  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","맑은 고딕",Arial,sans-serif;
-  text-align:left;
-  pointer-events:none;
-}
-.marker-hover-card::after{
-  content:'';
-  position:absolute;
-  left:50%;
-  bottom:-6px;
-  width:10px;
-  height:10px;
-  transform:translateX(-50%) rotate(45deg);
-  border-right:1px solid #e1e5e8;
-  border-bottom:1px solid #e1e5e8;
-  background:#fff;
-}
-.marker-hover-title{
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  color:#1769e0;
-  font-size:15px;
-  font-weight:700;
-  line-height:1.28;
-  letter-spacing:-.28px;
-}
-.marker-hover-meta{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  margin-top:6px;
-  color:#697177;
-  font-size:12px;
-  font-weight:500;
-  line-height:1.35;
-  white-space:nowrap;
-}
-.marker-hover-dot{
-  width:7px;
-  height:7px;
-  flex:0 0 auto;
-  border-radius:50%;
-  background:var(--marker-color);
-}
-.marker-hover-rating{
-  color:#e77b18;
-  font-weight:650;
-}
-.marker-hover-detail{
-  overflow:hidden;
-  max-width:220px;
-  margin-top:4px;
-  color:#858c91;
-  font-size:11.5px;
-  font-weight:450;
-  line-height:1.35;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
 .marker-label:hover{
   transform:translateY(-4px);
 }
 .marker-label.selected .marker-caption,
 .map-wrap.show-marker-labels .marker-caption{
   display:flex;
-}
-@media(hover:hover) and (pointer:fine){
-  .marker-label:hover .marker-hover-card{display:block}
-  .marker-label:hover .marker-caption{display:none}
 }
 .marker-label:hover .marker-pin{
   transform:scale(1.06);
@@ -1734,7 +1657,7 @@ const HOME_LAT=37.5515,HOME_LNG=126.9125;
 const SUGGEST_URL='https://script.google.com/a/seah.co.kr/macros/s/AKfycbzpCuw9c6Y8K6_4tnqZzwMBoKGIiW3pv-DheDHYD6XpbT1tEqDlZUFFkPgn-7w_q1L7tA/exec';
 let allData=[],selectedCategories=new Set(),searchKeyword='',sortMode='default';
 let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all';
-let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',searchTimer=null;
+let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',hoveredMarkerRow=null,searchTimer=null;
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,pendingSuggestionTemp=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
 let currentAccount=null,lastAuthRetry=0;
@@ -1913,19 +1836,8 @@ function initMap(){
 }
 
 function markerHtml(x){
-  const rating=ratingText(x);
-  const detail=String(x.feature||x.locationHint||x.address||'').trim();
   return '<div class="marker-label" data-row="'+x.row+'" style="--marker-color:'+colorFor(x.category)+'">'+
     '<div class="marker-main">'+
-      '<div class="marker-hover-card">'+
-        '<div class="marker-hover-title">'+esc(x.name)+'</div>'+
-        '<div class="marker-hover-meta">'+
-          '<span class="marker-hover-dot"></span>'+
-          '<span>'+esc(x.category||'기타')+'</span>'+
-          (rating?'<span class="marker-hover-rating">'+esc(rating)+'</span>':'')+
-        '</div>'+
-        (detail?'<div class="marker-hover-detail">'+esc(detail)+'</div>':'')+
-      '</div>'+
       '<span class="marker-pin">★</span>'+
       '<span class="marker-caption">'+
         '<span class="marker-name">'+esc(x.name)+'</span>'+
@@ -1933,8 +1845,27 @@ function markerHtml(x){
     '</div>'+
   '</div>';
 }
-function clearMarkers(){overlays.forEach(o=>o.overlay.setMap(null));overlays=[];markerByRow.clear();if(infoOverlay)infoOverlay.setMap(null);}
+function clearMarkers(){overlays.forEach(o=>o.overlay.setMap(null));overlays=[];markerByRow.clear();hoveredMarkerRow=null;if(infoOverlay)infoOverlay.setMap(null);}
 function popupHtml(x){return '<div class="kakao-info"><div class="popup-name">'+esc(x.name)+'</div>'+(ratingText(x)?'<div class="popup-rating">'+esc(ratingText(x))+'</div>':'')+(x.feature?'<div class="popup-line"><b>특징</b> · '+esc(x.feature)+'</div>':'')+(x.capacity?'<div class="popup-line"><b>인원</b> · '+esc(x.capacity)+'</div>':'')+'<div class="popup-line"><b>주소</b> · '+esc(x.address)+'</div></div>';}
+function showMarkerInfo(item){
+  if(!item||!infoOverlay||!mapReady)return;
+  hoveredMarkerRow=Number(item.data&&item.data.row);
+  infoOverlay.setContent(popupHtml(item.data));
+  infoOverlay.setPosition(item.position);
+  infoOverlay.setMap(map);
+}
+function hideMarkerInfo(row){
+  if(Number(row)!==Number(hoveredMarkerRow))return;
+  hoveredMarkerRow=null;
+  if(infoOverlay)infoOverlay.setMap(null);
+}
+function focusRestaurantInList(row){
+  const card=document.querySelector('.card[data-row="'+Number(row)+'"]');
+  if(card){
+    requestAnimationFrame(()=>card.scrollIntoView({behavior:'smooth',block:'center'}));
+  }
+  if(isMobile())setSheetState('mid');
+}
 function selectionKeyFor(x){
   if(!x)return '';
   const name=String(x.name||'').trim().toLowerCase().replace(/\s+/g,'');
@@ -1983,7 +1914,7 @@ function clearSelectedRows(){
   if(infoOverlay)infoOverlay.setMap(null);
   closeComments();
 }
-function selectRow(row,pan=true){
+function selectRow(row,pan=true,toggle=true){
   row=Number(row);
   if(!Number.isFinite(row))return;
 
@@ -1992,8 +1923,8 @@ function selectRow(row,pan=true){
   const key=selectionKeyFor(data);
   if(!key)return;
 
-  // Restaurant selection is single-select. Clicking the same restaurant toggles it off.
-  if(selectedRestaurantKey===key){
+  // List clicks keep the existing toggle behavior; map-marker clicks always focus the restaurant.
+  if(selectedRestaurantKey===key&&toggle){
     clearSelectedRows();
     return;
   }
@@ -2004,11 +1935,7 @@ function selectRow(row,pan=true){
   openComments(data);
 
   const item=markerByRow.get(row);
-  if(!item||!mapReady)return;
-  if(pan){map.setLevel(3);map.panTo(item.position);}
-  infoOverlay.setContent(popupHtml(item.data));
-  infoOverlay.setPosition(item.position);
-  infoOverlay.setMap(map);
+  if(item&&mapReady&&pan){map.setLevel(3);map.panTo(item.position);}
   if(isMobile()&&pan)setSheetState('peek');
 }
 function distanceMeters(a,b){
@@ -2144,8 +2071,10 @@ function renderMap(rows,fit=true){
     content.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
     content.addEventListener('mouseenter',()=>{
       if(overlay&&typeof overlay.setZIndex==='function')overlay.setZIndex(55);
+      showMarkerInfo(item);
     });
     content.addEventListener('mouseleave',()=>{
+      hideMarkerInfo(x.row);
       if(overlay&&typeof overlay.setZIndex==='function'){
         overlay.setZIndex(isRowSelected(x.row)?60:(placement?placement.zIndex:5));
       }
@@ -2153,7 +2082,8 @@ function renderMap(rows,fit=true){
     content.addEventListener('click',e=>{
       e.preventDefault();
       e.stopPropagation();
-      selectRow(x.row,false);
+      selectRow(x.row,false,false);
+      focusRestaurantInList(x.row);
     });
     overlays.push(item);
     markerByRow.set(x.row,item);
