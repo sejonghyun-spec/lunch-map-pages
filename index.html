@@ -607,6 +607,19 @@ button,input,select{font:inherit}
   background:#fff;
   color:var(--marker-color);
 }
+.marker-label.nearby-split .marker-main{
+  box-shadow:0 5px 14px rgba(0,0,0,.36);
+}
+.marker-label.nearby-split::after{
+  content:'';
+  width:7px;
+  height:7px;
+  margin-right:calc(50% - 3px);
+  border:2px solid #fff;
+  border-radius:50%;
+  background:var(--marker-color);
+  box-shadow:0 1px 4px rgba(0,0,0,.28);
+}
 
 /* INFO POPUP */
 .kakao-info{
@@ -1488,6 +1501,83 @@ function selectRow(row,pan=true){
   infoOverlay.setContent(popupHtml(item.data));infoOverlay.setPosition(item.position);infoOverlay.setMap(map);
   if(isMobile()&&pan)setSheetState('peek');
 }
+function distanceMeters(a,b){
+  const R=6371000;
+  const toRad=v=>v*Math.PI/180;
+  const lat1=Number(a.lat),lat2=Number(b.lat);
+  const dLat=toRad(lat2-lat1);
+  const dLng=toRad(Number(b.lng)-Number(a.lng));
+  const q=Math.sin(dLat/2)**2+
+    Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(q));
+}
+
+function nearbyPlacements(rows,thresholdMeters=20){
+  const n=rows.length;
+  const parent=Array.from({length:n},(_,i)=>i);
+  const find=i=>{
+    while(parent[i]!==i){
+      parent[i]=parent[parent[i]];
+      i=parent[i];
+    }
+    return i;
+  };
+  const join=(a,b)=>{
+    const ra=find(a),rb=find(b);
+    if(ra!==rb)parent[rb]=ra;
+  };
+
+  for(let i=0;i<n;i++){
+    for(let j=i+1;j<n;j++){
+      if(distanceMeters(rows[i],rows[j])<=thresholdMeters)join(i,j);
+    }
+  }
+
+  const groups=new Map();
+  rows.forEach((row,i)=>{
+    const root=find(i);
+    if(!groups.has(root))groups.set(root,[]);
+    groups.get(root).push(row);
+  });
+
+  const result=new Map();
+  const patterns={
+    2:[
+      {xAnchor:.5,yAnchor:1.35,zIndex:9},
+      {xAnchor:.5,yAnchor:-.28,zIndex:8}
+    ],
+    3:[
+      {xAnchor:.5,yAnchor:1.35,zIndex:10},
+      {xAnchor:.5,yAnchor:-.28,zIndex:9},
+      {xAnchor:1.05,yAnchor:.55,zIndex:8}
+    ],
+    4:[
+      {xAnchor:.5,yAnchor:1.35,zIndex:11},
+      {xAnchor:.5,yAnchor:-.28,zIndex:10},
+      {xAnchor:1.05,yAnchor:.55,zIndex:9},
+      {xAnchor:-.05,yAnchor:.55,zIndex:8}
+    ]
+  };
+
+  groups.forEach(group=>{
+    if(group.length<2)return;
+    const sorted=[...group].sort((a,b)=>Number(a.row)-Number(b.row));
+    const pattern=patterns[Math.min(sorted.length,4)]||patterns[4];
+
+    sorted.forEach((row,index)=>{
+      const p=pattern[index%pattern.length];
+      result.set(Number(row.row),{
+        xAnchor:p.xAnchor,
+        yAnchor:p.yAnchor,
+        zIndex:p.zIndex-index,
+        nearby:true
+      });
+    });
+  });
+
+  return result;
+}
+
 function renderMap(rows,fit=true){
   const validRows=(Array.isArray(rows)?rows:[]).filter(hasValidCoords);
   if(!mapReady){pendingRows=validRows;return;}
@@ -1502,12 +1592,28 @@ function renderMap(rows,fit=true){
   }
 
   const bounds=new kakao.maps.LatLngBounds();
+  const placements=nearbyPlacements(validRows,20);
+
   validRows.forEach(x=>{
     const position=new kakao.maps.LatLng(Number(x.lat),Number(x.lng));
     const wrap=document.createElement('div');
     wrap.innerHTML=markerHtml(x);
     const content=wrap.firstElementChild;
-    const overlay=new kakao.maps.CustomOverlay({map,position,content,xAnchor:.5,yAnchor:1,zIndex:5});
+    const placement=placements.get(Number(x.row));
+
+    if(placement&&placement.nearby){
+      content.classList.add('nearby-split');
+    }
+
+    const overlay=new kakao.maps.CustomOverlay({
+      map,
+      position,
+      content,
+      xAnchor:placement?placement.xAnchor:.5,
+      yAnchor:placement?placement.yAnchor:1,
+      zIndex:placement?placement.zIndex:5
+    });
+
     const item={overlay,position,data:x,content};
     content.addEventListener('click',()=>selectRow(x.row,false));
     overlays.push(item);
