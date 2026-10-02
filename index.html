@@ -2302,11 +2302,20 @@ suggestForm.addEventListener('submit',e=>{
   HTMLFormElement.prototype.submit.call(suggestForm);
 });
 
+function isAppsScriptMessageOrigin(origin){
+  try{
+    const host=new URL(origin).hostname;
+    return host==='script.google.com'||host.endsWith('.script.googleusercontent.com');
+  }catch(err){
+    return false;
+  }
+}
+
 window.addEventListener('message',e=>{
+  if(!isAppsScriptMessageOrigin(e.origin))return;
   const d=e.data||{};
 
   if(d.source==='lunch-map-comment-delete'){
-    if(e.source!==commentSink.contentWindow)return;
     clearTimeout(commentSubmitTimer);
     commentSubmitting=false;
     if(d.ok){
@@ -2323,7 +2332,6 @@ window.addEventListener('message',e=>{
   }
 
   if(d.source==='lunch-map-comment'){
-    if(e.source!==commentSink.contentWindow)return;
     clearTimeout(commentSubmitTimer);
     commentSubmitting=false;
     commentSubmit.disabled=false;
@@ -2342,7 +2350,6 @@ window.addEventListener('message',e=>{
   }
 
   if(d.source!=='lunch-map-suggest')return;
-  if(e.source!==suggestSink.contentWindow)return;
   clearTimeout(suggestTimeout);
   suggestPending=false;
   suggestSubmit.disabled=false;
