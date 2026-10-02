@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>막냉이 합정 점심 뭐먹지</title>\n<meta name="lunch-map-build" content="2026-10-02-naver-label-v5">
+<title>막냉이 합정 점심 뭐먹지</title>
+<meta name="lunch-map-build" content="2026-10-03-rating-average-poi-mask-v6">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -658,6 +659,7 @@ button,input,select{font:inherit}
   transition:transform .12s,filter .12s;
 }
 .marker-main{
+  position:relative;
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -666,6 +668,8 @@ button,input,select{font:inherit}
   max-width:190px;
 }
 .marker-pin{
+  position:relative;
+  z-index:2;
   width:21px;
   height:21px;
   display:flex;
@@ -681,6 +685,20 @@ button,input,select{font:inherit}
   line-height:1;
   box-shadow:0 1px 4px rgba(24,34,40,.30);
   transition:transform .12s,box-shadow .12s,width .12s,height .12s;
+}
+.marker-pin::before{
+  content:'';
+  position:absolute;
+  z-index:-1;
+  left:50%;
+  top:50%;
+  width:31px;
+  height:31px;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:rgba(255,255,255,.98);
+  box-shadow:0 0 0 1px rgba(255,255,255,.9);
+  pointer-events:none;
 }
 .marker-caption{
   display:flex;
@@ -702,10 +720,10 @@ button,input,select{font:inherit}
   box-shadow:none;
   color:#111;
   font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic","맑은 고딕",Arial,sans-serif;
-  font-size:14px;
-  font-weight:800;
-  line-height:1.12;
-  letter-spacing:-.45px;
+  font-size:13.5px;
+  font-weight:650;
+  line-height:1.15;
+  letter-spacing:-.32px;
   text-align:center;
   -webkit-font-smoothing:antialiased;
   text-rendering:geometricPrecision;
@@ -744,9 +762,9 @@ button,input,select{font:inherit}
 .marker-label.selected .marker-name{
   max-width:185px;
   color:#0b0f12;
-  font-size:15px;
-  font-weight:900;
-  letter-spacing:-.5px;
+  font-size:14.5px;
+  font-weight:750;
+  letter-spacing:-.36px;
 }
 .marker-label.nearby-split{position:relative}
 .marker-label.nearby-left::after,
@@ -1306,8 +1324,8 @@ button,input,select{font:inherit}
     display:inline-block;
     max-width:145px;
     font-size:13px;
-    font-weight:800;
-    letter-spacing:-.4px;
+    font-weight:650;
+    letter-spacing:-.3px;
   }
   .marker-label.selected{
     width:max-content;
@@ -1335,7 +1353,7 @@ button,input,select{font:inherit}
     display:inline-block;
     max-width:155px;
     font-size:14px;
-    font-weight:900;
+    font-weight:750;
   }
 
   .kakao-info{
@@ -1635,7 +1653,65 @@ const preloadedComments=new Map();
 let rouletteCandidates=[],rouletteWinner=null,rouletteSpinning=false,rouletteRotation=0,rouletteTicker=null,rouletteCategory='전체';
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
 const colorFor=c=>COLORS[c]||'#64748b';
-const ratingScore=x=>(String(x.rating||'').match(/★/g)||[]).length;
+
+function rawRatingValue(value){
+  if(value==null||value==='')return 0;
+  if(typeof value==='number')return Number.isFinite(value)?Math.max(0,Math.min(5,value)):0;
+  const text=String(value).trim();
+  const numeric=Number(text.replace(/[^0-9.]/g,''));
+  if(Number.isFinite(numeric)&&numeric>0)return Math.max(0,Math.min(5,numeric));
+  const stars=(text.match(/★/g)||[]).length;
+  return Math.max(0,Math.min(5,stars));
+}
+function restaurantIdentityKey(x){
+  if(!x)return '';
+  const placeId=String(x._placeId||x.placeId||'').trim();
+  if(placeId)return 'place:'+placeId;
+  const name=String(x.name||'').trim().toLowerCase().replace(/\s+/g,'');
+  const address=String(x.address||'').trim().toLowerCase().replace(/\s+/g,'');
+  return 'name:'+name+'||addr:'+address;
+}
+function aggregateRestaurantRows(rows){
+  const groups=new Map();
+  (Array.isArray(rows)?rows:[]).forEach((row,index)=>{
+    if(!row)return;
+    const key=restaurantIdentityKey(row)||('row:'+String(row.row??index));
+    if(!groups.has(key))groups.set(key,[]);
+    groups.get(key).push(row);
+  });
+
+  return [...groups.values()].map(group=>{
+    const base={...group[0]};
+    const ratings=group.map(x=>rawRatingValue(x.rating)).filter(v=>v>0);
+    const avg=ratings.length?ratings.reduce((a,b)=>a+b,0)/ratings.length:0;
+
+    // Prefer the most complete values while keeping the first row id stable.
+    [...group].reverse().forEach(x=>{
+      ['category','feature','capacity','address','lat','lng','note','locationHint','_placeId'].forEach(k=>{
+        if((base[k]==null||base[k]==='')&&x[k]!=null&&x[k]!=='')base[k]=x[k];
+      });
+    });
+
+    base._ratingAvg=avg;
+    base._ratingCount=ratings.length;
+    base._registrationCount=group.length;
+    base._sourceRows=group.map(x=>x.row);
+    return base;
+  });
+}
+function displayRestaurants(){
+  return aggregateRestaurantRows(allData);
+}
+const ratingScore=x=>{
+  const avg=Number(x&&x._ratingAvg);
+  return Number.isFinite(avg)&&avg>0?avg:rawRatingValue(x&&x.rating);
+};
+function ratingText(x){
+  const score=ratingScore(x);
+  if(!score)return '';
+  const count=Number(x&&x._ratingCount)||1;
+  return '★ '+score.toFixed(1)+(count>1?' · '+count+'명':'');
+}
 
 function filterText(x){
   return [x&&x.note,x&&x.feature,x&&x.locationHint,x&&x.capacity,x&&x.address]
@@ -1742,7 +1818,7 @@ function markerHtml(x){
   '</div>';
 }
 function clearMarkers(){overlays.forEach(o=>o.overlay.setMap(null));overlays=[];markerByRow.clear();if(infoOverlay)infoOverlay.setMap(null);}
-function popupHtml(x){return '<div class="kakao-info"><div class="popup-name">'+esc(x.name)+'</div><div class="popup-rating">'+esc(x.rating||'')+'</div>'+(x.feature?'<div class="popup-line"><b>특징</b> · '+esc(x.feature)+'</div>':'')+(x.capacity?'<div class="popup-line"><b>인원</b> · '+esc(x.capacity)+'</div>':'')+'<div class="popup-line"><b>주소</b> · '+esc(x.address)+'</div></div>';}
+function popupHtml(x){return '<div class="kakao-info"><div class="popup-name">'+esc(x.name)+'</div>'+(ratingText(x)?'<div class="popup-rating">'+esc(ratingText(x))+'</div>':'')+(x.feature?'<div class="popup-line"><b>특징</b> · '+esc(x.feature)+'</div>':'')+(x.capacity?'<div class="popup-line"><b>인원</b> · '+esc(x.capacity)+'</div>':'')+'<div class="popup-line"><b>주소</b> · '+esc(x.address)+'</div></div>';}
 function selectionKeyFor(x){
   if(!x)return '';
   const name=String(x.name||'').trim().toLowerCase().replace(/\s+/g,'');
@@ -1753,7 +1829,7 @@ function selectionKeyFor(x){
 }
 function dataForRow(row){
   row=Number(row);
-  return allData.find(x=>Number(x.row)===row)||null;
+  return displayRestaurants().find(x=>Number(x.row)===row)||null;
 }
 function isRowSelected(row){
   const data=dataForRow(row);
@@ -1761,7 +1837,7 @@ function isRowSelected(row){
 }
 function reconcileSelectedRestaurant(){
   if(!selectedRestaurantKey)return;
-  const exists=allData.some(x=>selectionKeyFor(x)===selectedRestaurantKey);
+  const exists=displayRestaurants().some(x=>selectionKeyFor(x)===selectedRestaurantKey);
   if(!exists){
     selectedRestaurantKey='';
     selectedRow=null;
@@ -2009,7 +2085,7 @@ function buildFilters(){
 function getRows(){
   const q=searchKeyword.trim().toLowerCase();
 
-  let rows=allData.filter(x=>{
+  let rows=displayRestaurants().filter(x=>{
     if(selectedCategories.size&& !selectedCategories.has(x.category))return false;
 
     if(q){
@@ -2019,7 +2095,7 @@ function getRows(){
     }
 
     const score=ratingScore(x);
-    if(ratingFilter==='5'&&score!==5)return false;
+    if(ratingFilter==='5'&&score<4.999)return false;
     if(ratingFilter==='4'&&score<4)return false;
     if(ratingFilter==='3'&&score<3)return false;
 
@@ -2044,7 +2120,7 @@ function renderList(rows){
   if(!rows.length){el.innerHTML='<div class="empty">조건에 맞는 식당이 없습니다.</div>';return;}
   el.innerHTML=rows.map(x=>'<div class="card" data-row="'+x.row+'">'+
     '<div class="card-head"><div class="name">'+esc(x.name)+'</div><div class="badge"><span class="badge-dot" style="background:'+colorFor(x.category)+'"></span>'+esc(x.category)+'</div></div>'+
-    '<div class="rating">'+esc(x.rating||'')+'</div>'+
+    '<div class="rating">'+esc(ratingText(x))+'</div>'+
     (x.feature?'<div class="desc">'+esc(x.feature)+'</div>':'')+
     '<div class="meta">'+(x.capacity?'<div>👥 '+esc(x.capacity)+'</div>':'')+'<div>📍 '+esc(x.address)+'</div></div></div>').join('');
   el.querySelectorAll('.card').forEach(card=>card.onclick=()=>selectRow(Number(card.dataset.row),true));
@@ -2250,7 +2326,7 @@ function applyDbRows(rows){
   reconcileSelectedRestaurant();
   buildFilters();
   renderList(getRows());
-  document.getElementById('count').textContent=allData.length+'곳';
+  document.getElementById('count').textContent=displayRestaurants().length+'곳';
   if(mapReady)render(true);
   hydrateMissingRows();
   return true;
@@ -2706,13 +2782,14 @@ const rouletteAgain=document.getElementById('rouletteAgain');
 const rouletteGo=document.getElementById('rouletteGo');
 
 function getRouletteCandidates(){
-  return allData.filter(x=>rouletteCategory==='전체'||x.category===rouletteCategory);
+  return displayRestaurants().filter(x=>rouletteCategory==='전체'||x.category===rouletteCategory);
 }
 function buildRouletteCategories(){
-  const available=new Set(allData.map(x=>x.category).filter(Boolean));
+  const displayRows=displayRestaurants();
+  const available=new Set(displayRows.map(x=>x.category).filter(Boolean));
   const items=ORDER.filter(c=>c==='전체'||available.has(c));
   rouletteCategories.innerHTML=items.map(c=>{
-    const count=c==='전체'?allData.length:allData.filter(x=>x.category===c).length;
+    const count=c==='전체'?displayRows.length:displayRows.filter(x=>x.category===c).length;
     return '<button type="button" class="roulette-category '+(c===rouletteCategory?'active':'')+'" data-category="'+esc(c)+'">'+esc(c)+' <span>'+count+'</span></button>';
   }).join('');
   rouletteCategories.querySelectorAll('.roulette-category').forEach(btn=>{
