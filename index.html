@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-mobile-menu-search-list-v33">
+<meta name="lunch-map-build" content="2026-10-03-mobile-separated-search-list-v34">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -1457,6 +1457,17 @@ button,input,select{font:inherit}
     transform:translateY(0);
     pointer-events:auto;
   }
+  .sidebar.mobile-list-mode .search-wrap,
+  .sidebar.mobile-list-mode .multi-filter-wrap,
+  .sidebar.mobile-list-mode .quick-row{
+    display:none;
+  }
+  .sidebar.mobile-list-mode{
+    grid-template-rows:24px auto minmax(0,1fr);
+  }
+  .sidebar.mobile-search-mode{
+    grid-template-rows:24px auto auto auto auto minmax(0,1fr);
+  }
 
   .sheet-handle{
     display:flex;
@@ -1746,8 +1757,8 @@ button,input,select{font:inherit}
       <span></span><span></span><span></span>
     </button>
     <div id="headerActions" class="header-actions">
-      <button id="mobileSearchOpen" class="mobile-nav-action" type="button">🔎 식당 검색</button>
-      <button id="mobileListOpen" class="mobile-nav-action" type="button">☰ 식당 목록</button>
+      <button id="mobileSearchOpen" class="mobile-nav-action" type="button">🔎 식당 찾기</button>
+      <button id="mobileListOpen" class="mobile-nav-action" type="button">📋 식당 목록</button>
       <button id="accountButton" class="account-btn needs-auth" type="button">👤 회사 계정 연결</button>
       <button id="rouletteOpen" class="roulette-btn" type="button">🎲 점심 룰렛</button>
       <button id="suggestOpen" class="suggest-btn" type="button">＋ 제안하기</button>
@@ -1792,7 +1803,7 @@ button,input,select{font:inherit}
         <button id="showAll" class="quick-btn">⌂ 전체 보기</button>
       </div>
       <div class="list-head">
-        <div><div class="list-title">식당 목록</div><div id="listSub" class="list-sub">지도에 표시된 식당</div></div>
+        <div><div id="listTitle" class="list-title">식당 목록</div><div id="listSub" class="list-sub">지도에 표시된 식당</div></div>
         <div id="sortWrap" class="sort-wrap">
           <button id="sortButton" class="sort-btn" type="button" aria-haspopup="menu" aria-expanded="false">
             <span id="sortLabel">기본순</span><span class="sort-chevron" aria-hidden="true"></span>
@@ -3834,6 +3845,8 @@ const mobileMenuButton=document.getElementById('mobileMenuButton');
 const headerActions=document.getElementById('headerActions');
 const mobileSearchOpen=document.getElementById('mobileSearchOpen');
 const mobileListOpen=document.getElementById('mobileListOpen');
+const mobileListTitle=document.getElementById('listTitle');
+const mobileListSub=document.getElementById('listSub');
 
 function closeMobileMenu(){
   if(!mobileMenuButton||!headerActions)return;
@@ -3874,6 +3887,14 @@ function setSheetState(state){
   sidebar.classList.toggle('sheet-mid',state==='mid');
   sidebar.classList.toggle('sheet-full',state==='full');
 }
+function setMobilePanelMode(mode){
+  if(!sidebar)return;
+  const searchMode=mode==='search';
+  sidebar.classList.toggle('mobile-search-mode',searchMode);
+  sidebar.classList.toggle('mobile-list-mode',!searchMode);
+  if(mobileListTitle)mobileListTitle.textContent=searchMode?'검색 결과':'식당 목록';
+  if(mobileListSub)mobileListSub.textContent=searchMode?'검색어와 조건에 맞는 식당':'현재 분류에 해당하는 식당';
+}
 function nextSheetState(){
   if(sheetState==='hidden'||sheetState==='peek')setSheetState('mid');
   else if(sheetState==='mid')setSheetState('full');
@@ -3882,6 +3903,7 @@ function nextSheetState(){
 if(mobileSearchOpen){
   mobileSearchOpen.addEventListener('click',()=>{
     closeMobileMenu();
+    setMobilePanelMode('search');
     setSheetState('full');
     requestAnimationFrame(()=>document.getElementById('search')?.focus());
   });
@@ -3889,6 +3911,12 @@ if(mobileSearchOpen){
 if(mobileListOpen){
   mobileListOpen.addEventListener('click',()=>{
     closeMobileMenu();
+    searchKeyword='';
+    document.getElementById('search').value='';
+    resetMultiFilters();
+    updateMultiFilterUI();
+    setMobilePanelMode('list');
+    render(false);
     setSheetState('full');
     requestAnimationFrame(()=>{
       const list=document.getElementById('list');
@@ -3977,7 +4005,10 @@ document.getElementById('myLocation').onclick=locateMe;
 
 updateMultiFilterUI();
 syncSortUI();
-if(isMobile())setSheetState('hidden');
+if(isMobile()){
+  setMobilePanelMode('list');
+  setSheetState('hidden');
+}
 loadDashboardData();
 setTimeout(initMap,0);
 </script>
