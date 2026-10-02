@@ -1547,7 +1547,7 @@ const SUGGEST_URL='https://script.google.com/a/seah.co.kr/macros/s/AKfycbzpCuw9c
 let allData=[],activeCategory='전체',searchKeyword='',sortMode='default';
 let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,searchTimer=null;
-let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false,suggestTimeout=null;
+let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,suggestPending=false;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
 let currentAccount=null,lastAuthRetry=0;
 let commentRestaurant=null,commentRequestSeq=0,commentSubmitting=false,currentCommentRows=[];
@@ -2792,6 +2792,7 @@ suggestSearch.addEventListener('focus',()=>{
 suggestForm.addEventListener('submit',e=>{
   e.preventDefault();
   if(suggestPending)return;
+
   const category=document.getElementById('suggestCategory').value;
   if(!selectedSuggestPlace||!document.getElementById('suggestPlaceId').value){
     suggestStatus.textContent='카카오 검색 결과에서 식당을 먼저 선택해 주세요.';
@@ -2805,21 +2806,33 @@ suggestForm.addEventListener('submit',e=>{
     document.getElementById('suggestCategory').focus();
     return;
   }
+
+  // DB에는 기존 hidden form POST 한 번만 보낸다.
+  // 화면에서는 서버 응답을 기다리지 않고 즉시 완료 처리한다.
   suggestPending=true;
   suggestSubmit.disabled=true;
   suggestSubmit.textContent='접수 중…';
-  suggestStatus.textContent='제안을 접수하고 있습니다.';
-  suggestStatus.className='form-status';
-  clearTimeout(suggestTimeout);
-  suggestTimeout=setTimeout(()=>{
-    if(!suggestPending)return;
+  suggestStatus.textContent='제안 내용을 저장했습니다.';
+  suggestStatus.className='form-status success';
+
+  try{
+    HTMLFormElement.prototype.submit.call(suggestForm);
+  }catch(err){
     suggestPending=false;
     suggestSubmit.disabled=false;
     suggestSubmit.textContent='제안 접수';
-    suggestStatus.textContent='응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.';
+    suggestStatus.textContent='제안 전송을 시작하지 못했습니다.';
     suggestStatus.className='form-status error';
-  },12000);
-  HTMLFormElement.prototype.submit.call(suggestForm);
+    return;
+  }
+
+  showToast('식당 제안이 접수되었습니다.');
+
+  setTimeout(()=>{
+    suggestModal.classList.remove('open');
+    suggestModal.setAttribute('aria-hidden','true');
+    resetSuggestForm();
+  },220);
 });
 
 function isAppsScriptMessageOrigin(origin){
@@ -2838,22 +2851,11 @@ window.addEventListener('message',e=>{
   // Other Apps Script messages still require the expected Google origin.
   if(!isAppsScriptMessageOrigin(e.origin))return;
   if(d.source!=='lunch-map-suggest')return;
-  clearTimeout(suggestTimeout);
-  suggestPending=false;
-  suggestSubmit.disabled=false;
-  suggestSubmit.textContent='제안 접수';
-  if(d.ok){
-    suggestStatus.textContent=d.message||'식당 제안이 접수되었습니다.';
-    suggestStatus.className='form-status success';
-    showToast(d.message||'식당 제안이 접수되었습니다.');
-    setTimeout(()=>{
-      suggestModal.classList.remove('open');
-      suggestModal.setAttribute('aria-hidden','true');
-      resetSuggestForm();
-    },650);
-  }else{
-    suggestStatus.textContent=d.message||'제안 접수에 실패했습니다.';
-    suggestStatus.className='form-status error';
+
+  // 제안 등록은 이미 즉시 완료 처리한다.
+  // 서버가 뒤늦게 오류를 반환하는 경우에만 사용자에게 알린다.
+  if(!d.ok){
+    showToast(d.message||'제안 저장 중 오류가 발생했습니다.');
   }
 });
 
