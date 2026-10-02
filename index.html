@@ -1665,11 +1665,13 @@ function rawRatingValue(value){
 }
 function restaurantIdentityKey(x){
   if(!x)return '';
-  const placeId=String(x._placeId||x.placeId||'').trim();
-  if(placeId)return 'place:'+placeId;
   const name=String(x.name||'').trim().toLowerCase().replace(/\s+/g,'');
   const address=String(x.address||'').trim().toLowerCase().replace(/\s+/g,'');
-  return 'name:'+name+'||addr:'+address;
+  // Same visible restaurant is grouped by name + address first.
+  // placeId is only a fallback because legacy/live rows may not all carry it.
+  if(name||address)return 'name:'+name+'||addr:'+address;
+  const placeId=String(x._placeId||x.placeId||'').trim();
+  return placeId?'place:'+placeId:'';
 }
 function aggregateRestaurantRows(rows){
   const groups=new Map();
