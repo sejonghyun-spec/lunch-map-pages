@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-suggest-submit-fix-v24">
+<meta name="lunch-map-build" content="2026-10-03-marker-toggle-v25">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -2224,8 +2224,9 @@ function renderMap(rows,fit=true){
     content.addEventListener('click',e=>{
       e.preventDefault();
       e.stopPropagation();
-      selectRow(x.row,false,false);
-      focusRestaurantInList(x.row);
+      const wasSelected=isRowSelected(x.row);
+      selectRow(x.row,false,true);
+      if(!wasSelected)focusRestaurantInList(x.row);
     });
     overlays.push(item);
     markerByRow.set(x.row,item);
