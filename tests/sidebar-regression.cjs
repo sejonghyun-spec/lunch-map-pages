@@ -136,6 +136,11 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(await state(()=>{const list=document.getElementById('list');const cards=[...list.querySelectorAll('.card')];const current=cards.reduce((a,b)=>Math.abs(a.offsetTop-list.scrollTop)<Math.abs(b.offsetTop-list.scrollTop)?a:b);return Math.abs(current.getBoundingClientRect().height-list.getBoundingClientRect().height)<=1}));
    await state(()=>document.getElementById('list').scrollTo({top:0,behavior:'instant'}));await page.waitForTimeout(350);
    if(width===390)await shot('mobile-list');
+   await page.click('#sortButton');await page.waitForTimeout(250);
+   assert.ok(await state(()=>{const s=sidebar.getBoundingClientRect(),m=document.getElementById('sortMenu').getBoundingClientRect();return sheetState==='full'&&m.top>=s.top&&m.bottom<=s.bottom}));
+   await page.click('[data-sort="distance"]');assert.equal(await state(()=>sortMode),'distance');
+   await state(()=>{sortMode='default';syncSortUI();render(false);setSheetState('mid');});await page.waitForTimeout(250);
+
    await page.click('#sheetHandle');assert.ok(await state(()=>sheetState==='full'));await state(()=>setSheetState('mid'));
    await page.locator('.card-open').first().click();await page.waitForTimeout(250);assert.ok(await state(()=>commentPanel.classList.contains('open')&&sheetState==='hidden'));
    const p=await page.locator('#commentPanel').boundingBox();assert.ok(p.x>=-1&&p.x+p.width<=width+1);
