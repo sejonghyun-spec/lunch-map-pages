@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-mobile-sheet-v60">
+<meta name="lunch-map-build" content="2026-10-04-mobile-detail-v61">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
@@ -1840,29 +1840,50 @@ button,input,select,textarea{font:inherit}
   .popup-rating{font-size:13px}
   .popup-line{font-size:13px}
 
+  body.detail-mobile-open .map-wrap{z-index:100}
   .comment-panel{
-    top:0;
-    right:0;
-    bottom:0;
-    left:0;
-    z-index:45;
-    width:100%;
+    position:fixed;
+    inset:0;
+    z-index:120;
+    width:100vw;
     min-width:0;
+    max-width:none;
     max-height:none;
-    height:100%;
+    height:100dvh;
     transform:translateX(104%);
     border:0;
     border-radius:0;
     box-shadow:none;
+    background:#fff;
   }
   .comment-panel.open{transform:translateX(0)}
-  .detail-topbar{min-height:52px;padding:8px 10px 8px 14px}
-  .comment-close{font-size:0}
-  .comment-close::before{content:'←';font-size:22px}
+  .detail-topbar{
+    min-height:58px;
+    padding:8px 10px;
+    border-bottom:1px solid #e8ecee;
+  }
+  .detail-topbar-title{
+    font-size:16px;
+    font-weight:850;
+    text-align:left;
+  }
+  .comment-close{
+    order:-1;
+    width:40px;
+    height:40px;
+    margin-right:4px;
+    font-size:0;
+    background:transparent;
+  }
+  .comment-close::before{content:'←';font-size:24px}
   .detail-resizer{display:none}
-  .detail-nav-mobile{display:flex;align-items:center;gap:5px;margin-right:7px}
-  .detail-nav-mobile button{width:34px;height:34px;border:1px solid #dde3e6;border-radius:9px;background:#fff;color:#5f686d;font-size:17px;cursor:pointer}
-  .detail-hero{padding:20px 16px 18px}
+  .detail-nav-mobile{display:flex;align-items:center;gap:5px;margin-right:0}
+  .detail-nav-mobile button{
+    width:36px;height:36px;border:1px solid #dde3e6;border-radius:10px;
+    background:#fff;color:#5f686d;font-size:18px;cursor:pointer
+  }
+  .detail-scroll{background:#fff}
+  .detail-hero{padding:18px 16px 17px}
   .detail-tab{height:50px;font-size:15px}
   .detail-section-title{font-size:17px}
   .detail-info-label{font-size:12.5px}
@@ -1870,11 +1891,13 @@ button,input,select,textarea{font:inherit}
   .comment-score-inputs{grid-template-columns:repeat(2,minmax(0,1fr))}
   .comment-score-inputs select{height:40px;font-size:13px}
   .review-summary{grid-template-columns:repeat(2,1fr)}
-  .comment-name{font-size:23px}
+  .comment-name{font-size:24px}
   .detail-rating{font-size:14px}
-  .comment-sub{font-size:12.5px}
+  .comment-sub{font-size:13.5px}
+  .detail-actions{gap:8px;margin-top:14px}
+  .comment-photo-btn,.detail-kakao-link{height:40px;font-size:13.5px}
   .detail-section{padding:18px 16px}
-  .detail-info-row{grid-template-columns:68px minmax(0,1fr);gap:8px}
+  .detail-info-row{grid-template-columns:88px minmax(0,1fr);gap:10px}
   .comment-item{padding:12px 1px 11px}
   .comment-text{font-size:13px}
   .comment-compose{padding:9px 10px calc(10px + var(--mobile-safe-bottom))}
@@ -3732,6 +3755,7 @@ function getCommentNickname(){
 function closeComments(){
   commentPanel.classList.remove('open');
   commentPanel.setAttribute('aria-hidden','true');
+  document.body.classList.remove('detail-mobile-open');
   commentRestaurant=null;
   if(mapHint)mapHint.style.display='';
 }
@@ -4146,6 +4170,7 @@ function openComments(restaurant){
   commentPanel.classList.add('open');
   commentPanel.setAttribute('aria-hidden','false');
   if(isMobile()){
+    document.body.classList.add('detail-mobile-open');
     setSheetState('hidden');
     if(!detailHistoryPushed){
       history.pushState({lunchMapDetail:true},'');
