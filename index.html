@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-mobile-one-card-list-v36">
+<meta name="lunch-map-build" content="2026-10-03-mobile-single-card-viewport-v37">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -1466,7 +1466,21 @@ button,input,select{font:inherit}
     grid-template-rows:24px auto minmax(0,1fr);
   }
   .sidebar.mobile-list-mode.sheet-mid{
-    transform:translateY(calc(100% - var(--mobile-list-visible,220px)));
+    height:var(--mobile-list-visible,220px);
+    transform:translateY(0);
+    grid-template-rows:24px auto minmax(0,1fr);
+  }
+  .sidebar.mobile-list-mode.sheet-mid .list{
+    height:var(--mobile-list-card-height,140px);
+    max-height:var(--mobile-list-card-height,140px);
+    padding-bottom:0;
+    scroll-snap-type:y mandatory;
+    scroll-behavior:smooth;
+    overflow-y:auto;
+  }
+  .sidebar.mobile-list-mode.sheet-mid .card{
+    scroll-snap-align:start;
+    scroll-snap-stop:always;
   }
   .sidebar.mobile-search-mode{
     grid-template-rows:24px auto auto auto auto minmax(0,1fr);
@@ -1743,7 +1757,7 @@ button,input,select{font:inherit}
   .top-filters{padding-top:4px;padding-bottom:5px}
   .sidebar{transform:translateY(calc(100% + 18px))}
   .sidebar.sheet-mid{transform:translateY(52%);pointer-events:auto}
-  .sidebar.mobile-list-mode.sheet-mid{transform:translateY(calc(100% - var(--mobile-list-visible,190px)))}
+  .sidebar.mobile-list-mode.sheet-mid{height:var(--mobile-list-visible,190px);transform:translateY(0)}
   .sidebar.sheet-full{transform:translateY(0);pointer-events:auto}
   .comment-panel{max-height:48dvh}
 }
@@ -3907,7 +3921,7 @@ function setMobilePanelMode(mode){
   sidebar.classList.toggle('mobile-search-mode',searchMode);
   sidebar.classList.toggle('mobile-list-mode',!searchMode);
   if(mobileListTitle)mobileListTitle.textContent=searchMode?'검색 결과':'식당 목록';
-  if(mobileListSub)mobileListSub.textContent=searchMode?'검색어와 조건에 맞는 식당':'한 번에 한 식당씩 · 스크롤해서 더 보기';
+  if(mobileListSub)mobileListSub.textContent=searchMode?'검색어와 조건에 맞는 식당':'선택한 식당 1곳 표시 · 스크롤해서 다른 식당 보기';
 }
 function sizeMobileListToOneCard(row){
   if(!isMobile()||!sidebar||!sidebar.classList.contains('mobile-list-mode'))return;
@@ -3922,8 +3936,9 @@ function sizeMobileListToOneCard(row){
     if(!card)return;
     const handleH=sheetHandle?sheetHandle.getBoundingClientRect().height:24;
     const headH=head.getBoundingClientRect().height;
-    const cardH=card.getBoundingClientRect().height;
-    const visible=Math.max(170,Math.min(300,Math.ceil(handleH+headH+cardH+2)));
+    const cardH=Math.ceil(card.getBoundingClientRect().height);
+    const visible=Math.max(170,Math.min(330,Math.ceil(handleH+headH+cardH+2)));
+    sidebar.style.setProperty('--mobile-list-card-height',cardH+'px');
     sidebar.style.setProperty('--mobile-list-visible',visible+'px');
   });
 }
