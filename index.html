@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-pretendard-variable-v44">
+<meta name="lunch-map-build" content="2026-10-03-explore-ui-v45">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
@@ -281,6 +281,31 @@ button,input,select,textarea{font:inherit}
   background:#f5f6f7;
   color:#50575b;
 }
+.filter-chip-row{
+  display:flex;
+  gap:6px;
+  overflow-x:auto;
+  padding:0 16px 9px;
+  scrollbar-width:none;
+}
+.filter-chip-row::-webkit-scrollbar{display:none}
+.filter-chip{
+  flex:0 0 auto;
+  height:31px;
+  border:1px solid #dfe4e7;
+  border-radius:999px;
+  padding:0 10px;
+  background:#fff;
+  color:#596267;
+  font-size:11.5px;
+  font-weight:700;
+  cursor:pointer;
+}
+.filter-chip.active{
+  border-color:#566269;
+  background:#566269;
+  color:#fff;
+}
 .quick-row{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -407,12 +432,42 @@ button,input,select,textarea{font:inherit}
   font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",Arial,sans-serif;
 }
 .card{
-  padding:12px 10px 13px;
+  padding:10px 8px 11px;
   border-bottom:1px solid #edf0f2;
   cursor:pointer;
-  transition:background .12s,border-color .12s;
+  transition:background .12s,border-color .12s,box-shadow .12s;
 }
-.card:hover{background:#fafbfc}
+.card:hover,.card.map-hover{background:#f7f9fa}
+.card.map-hover{box-shadow:inset 3px 0 0 #8a969d}
+.card-row{
+  display:grid;
+  grid-template-columns:58px minmax(0,1fr);
+  gap:10px;
+  align-items:start;
+}
+.card-thumb{
+  width:58px;
+  height:58px;
+  overflow:hidden;
+  border-radius:10px;
+  background:linear-gradient(110deg,#eef1f2 20%,#f8f9f9 40%,#eef1f2 60%);
+  background-size:200% 100%;
+}
+.card-thumb.loading{animation:skeletonSweep 1.2s linear infinite}
+.card-thumb img{width:100%;height:100%;display:block;object-fit:cover}
+.card-main{min-width:0}
+.card-mini-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px 9px;
+  margin-top:5px;
+  color:#7a8388;
+  font-size:11.5px;
+  font-weight:550;
+}
+.card-favorite{color:#d19a00;font-weight:800}
+.search-hit{border-radius:3px;background:#fff0a8;color:inherit}
+@keyframes skeletonSweep{to{background-position:-200% 0}}
 .card.active{
   background:color-mix(in srgb,var(--card-color,#64748b) 8%,#fff);
   box-shadow:inset 3px 0 0 var(--card-color,#64748b);
@@ -558,6 +613,24 @@ button,input,select,textarea{font:inherit}
 }
 .selection-clear:hover{background:#e7ecee}
 
+.map-area-filter{
+  position:absolute;
+  top:14px;
+  left:50%;
+  z-index:17;
+  height:36px;
+  transform:translateX(-50%);
+  border:1px solid #d8e0e4;
+  border-radius:999px;
+  padding:0 14px;
+  background:rgba(255,255,255,.96);
+  color:#3f4a50;
+  font-size:12px;
+  font-weight:750;
+  cursor:pointer;
+  box-shadow:0 4px 14px rgba(35,45,51,.14);
+}
+.map-area-filter.active{border-color:#566269;background:#566269;color:#fff}
 .map-hint{
   position:absolute;
   left:16px;
@@ -583,8 +656,9 @@ button,input,select,textarea{font:inherit}
   z-index:35;
   display:grid;
   grid-template-rows:auto minmax(0,1fr) auto;
-  width:min(400px,42vw);
+  width:var(--detail-width,400px);
   min-width:340px;
+  max-width:42vw;
   height:100%;
   overflow:hidden;
   transform:translateX(-104%);
@@ -694,6 +768,73 @@ button,input,select,textarea{font:inherit}
   background:#f7f9fa;
 }
 .comment-photo-btn:disabled{opacity:.5;cursor:not-allowed}
+.detail-favorite-btn.active{border-color:#e7bd42;background:#fff9df;color:#9a7100}
+.detail-kakao-link{
+  display:inline-flex;align-items:center;justify-content:center;height:38px;border:1px solid #f1cf00;
+  border-radius:10px;padding:0 13px;background:#fee500;color:#2a2419;font-size:12.5px;font-weight:800;text-decoration:none
+}
+.detail-media{
+  display:grid;grid-template-columns:2fr 1fr;grid-template-rows:88px 88px;gap:4px;
+  margin:-24px -22px 18px;overflow:hidden;background:#eef1f2
+}
+.detail-media-item{position:relative;overflow:hidden;background:#eef1f2}
+.detail-media-item:first-child{grid-row:1/3}
+.detail-media-item img{width:100%;height:100%;display:block;object-fit:cover}
+.detail-media-skeleton{
+  width:100%;height:100%;
+  background:linear-gradient(110deg,#e6eaec 20%,#f5f7f8 40%,#e6eaec 60%);
+  background-size:200% 100%;animation:skeletonSweep 1.2s linear infinite
+}
+.detail-media-more{
+  position:absolute;right:8px;bottom:8px;border:0;border-radius:8px;padding:6px 8px;
+  background:rgba(25,29,31,.76);color:#fff;font-size:10.5px;font-weight:750;cursor:pointer
+}
+.detail-tabs{
+  position:sticky;top:0;z-index:3;display:grid;grid-template-columns:repeat(3,1fr);
+  border-bottom:1px solid #e8ecee;background:#fff
+}
+.detail-tab{
+  height:44px;border:0;border-bottom:2px solid transparent;background:#fff;color:#6d767b;
+  font-size:13px;font-weight:700;cursor:pointer
+}
+.detail-tab.active{border-bottom-color:var(--brand);color:var(--brand-dark);font-weight:800}
+.detail-tab-panel{display:none}
+.detail-tab-panel.active{display:block}
+.detail-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+.detail-tag{
+  display:inline-flex;align-items:center;min-height:28px;border-radius:999px;padding:5px 9px;
+  background:#f2f5f6;color:#566168;font-size:11.5px;font-weight:700
+}
+.detail-photo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.detail-photo-card{display:block;aspect-ratio:1;overflow:hidden;border-radius:11px;background:#eef1f2}
+.detail-photo-card img{width:100%;height:100%;display:block;object-fit:cover}
+.review-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 0 14px}
+.review-score{padding:9px 5px;border-radius:10px;background:#f7f8f9;text-align:center}
+.review-score b{display:block;color:#3f484d;font-size:13px}
+.review-score span{display:block;margin-top:2px;color:#929a9e;font-size:10.5px}
+.review-sort{display:flex;gap:5px}
+.review-sort button{
+  border:0;border-radius:999px;padding:5px 8px;background:#f1f4f5;color:#697278;
+  font-size:10.5px;font-weight:700;cursor:pointer
+}
+.review-sort button.active{background:#5f6a70;color:#fff}
+.comment-scores{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.comment-score-chip{padding:4px 6px;border-radius:6px;background:#fff8ea;color:#9a6816;font-size:10.5px;font-weight:700}
+.comment-actions{display:flex;align-items:center;gap:6px;margin-top:8px}
+.comment-helpful{
+  border:1px solid #dce2e5;border-radius:999px;padding:5px 8px;background:#fff;color:#667177;
+  font-size:10.5px;font-weight:700;cursor:pointer
+}
+.comment-helpful.active{border-color:#e3b94a;background:#fff9df;color:#906900}
+.comment-score-inputs{
+  grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px
+}
+.comment-score-inputs select{
+  min-width:0;height:34px;border:1px solid #d8dfe3;border-radius:8px;padding:0 6px;
+  background:#fff;color:#5c666b;font-size:11px
+}
+.detail-nav-mobile{display:none}
+.detail-resizer{position:absolute;top:0;right:-4px;z-index:5;width:9px;height:100%;cursor:ew-resize}
 .detail-section{
   padding:20px 22px;
   border-bottom:8px solid #f4f6f7;
@@ -1292,6 +1433,11 @@ button,input,select,textarea{font:inherit}
   padding:22px 24px 24px;
   text-align:center;
 }
+.roulette-conditions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:0 0 12px;text-align:left}
+.roulette-conditions select{
+  height:38px;border:1px solid #ddd4ce;border-radius:10px;padding:0 9px;background:#fff;color:#504944;font-size:12px
+}
+.roulette-check{grid-column:1/-1;display:flex;align-items:center;gap:7px;color:#6a625d;font-size:12px;font-weight:650}
 .roulette-context{
   display:inline-flex;
   align-items:center;
@@ -1712,6 +1858,7 @@ button,input,select,textarea{font:inherit}
     font-size:16px;
   }
   .multi-filter-wrap{padding:0 12px 8px}
+  .filter-chip-row{padding:0 12px 8px}
   .multi-filter-scroll{
     grid-template-columns:repeat(2,minmax(0,1fr));
     gap:6px;
@@ -1873,7 +2020,15 @@ button,input,select,textarea{font:inherit}
   }
   .comment-panel.open{transform:translateX(0)}
   .detail-topbar{min-height:52px;padding:8px 10px 8px 14px}
+  .comment-close{font-size:0}
+  .comment-close::before{content:'←';font-size:22px}
+  .detail-resizer{display:none}
+  .detail-nav-mobile{display:flex;align-items:center;gap:5px;margin-right:7px}
+  .detail-nav-mobile button{width:34px;height:34px;border:1px solid #dde3e6;border-radius:9px;background:#fff;color:#5f686d;font-size:17px;cursor:pointer}
   .detail-hero{padding:20px 16px 18px}
+  .detail-media{margin:-20px -16px 16px;grid-template-rows:78px 78px}
+  .comment-score-inputs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .review-summary{grid-template-columns:repeat(2,1fr)}
   .comment-name{font-size:23px}
   .detail-rating{font-size:14px}
   .comment-sub{font-size:12.5px}
@@ -2034,8 +2189,22 @@ button,input,select,textarea{font:inherit}
             <option value="group">단체</option>
             <option value="fast">빠른 식사</option>
           </select>
+          <select id="distanceFilter" class="multi-filter-select" aria-label="거리 필터">
+            <option value="all">거리 전체</option>
+            <option value="300">300m 이내</option>
+            <option value="500">500m 이내</option>
+            <option value="700">700m 이내</option>
+            <option value="1000">1km 이내</option>
+          </select>
           <button id="multiFilterReset" class="multi-filter-reset" type="button">↻ 초기화</button>
         </div>
+      </div>
+      <div id="filterChipRow" class="filter-chip-row">
+        <button class="filter-chip" type="button" data-chip="rating4">★ 4점↑</button>
+        <button class="filter-chip" type="button" data-chip="comments">댓글 있음</button>
+        <button class="filter-chip" type="button" data-chip="favorites">♡ 즐겨찾기</button>
+        <button class="filter-chip" type="button" data-chip="recent">최근 본</button>
+        <button class="filter-chip" type="button" data-chip="map">현재 지도</button>
       </div>
       <div class="quick-row">
         <button id="myLocation" class="quick-btn">◎ 내 위치</button>
@@ -2061,47 +2230,82 @@ button,input,select,textarea{font:inherit}
     <section class="map-wrap">
       <div id="map"></div>
       <div id="mapStatus" class="map-status">카카오 지도를 준비하는 중입니다.</div>
+      <button id="mapBoundsButton" class="map-area-filter" type="button">이 지역에서 보기</button>
       <div id="mapHint" class="map-hint">상단 분류는 여러 개를 동시에 선택할 수 있습니다.</div>
 
       <section id="commentPanel" class="comment-panel" aria-live="polite" aria-hidden="true">
+        <div id="detailResizer" class="detail-resizer" aria-hidden="true"></div>
         <div class="detail-topbar">
           <div class="detail-topbar-title">식당 상세</div>
+          <div class="detail-nav-mobile">
+            <button id="detailPrev" type="button" aria-label="이전 식당">‹</button>
+            <button id="detailNext" type="button" aria-label="다음 식당">›</button>
+          </div>
           <button id="commentClose" class="comment-close" type="button" aria-label="상세 페이지 닫기">×</button>
         </div>
         <div class="detail-scroll">
           <div class="detail-hero">
+            <div id="detailMedia" class="detail-media">
+              <div class="detail-media-item"><div class="detail-media-skeleton"></div></div>
+              <div class="detail-media-item"><div class="detail-media-skeleton"></div></div>
+              <div class="detail-media-item"><div class="detail-media-skeleton"></div></div>
+            </div>
             <div id="detailCategory" class="detail-category">식당</div>
             <div id="commentName" class="comment-name">식당을 선택해 주세요.</div>
             <div id="detailRating" class="detail-rating"></div>
             <div id="commentSub" class="comment-sub"></div>
+            <div id="detailTags" class="detail-tags"></div>
             <div class="detail-actions">
-              <button id="menuPhotoButton" class="comment-photo-btn" type="button">📷 메뉴사진 보기</button>
+              <button id="detailFavoriteButton" class="comment-photo-btn detail-favorite-btn" type="button">♡ 즐겨찾기</button>
+              <button id="menuPhotoButton" class="comment-photo-btn" type="button">📷 사진 더보기</button>
+              <a id="kakaoMapLink" class="detail-kakao-link" href="https://map.kakao.com/" target="_blank" rel="noopener noreferrer">카카오맵</a>
             </div>
           </div>
-
-          <section class="detail-section">
-            <div class="detail-section-head">
-              <div class="detail-section-title">식당 정보</div>
-            </div>
-            <div id="detailInfo" class="detail-info"></div>
-          </section>
-
-          <section class="detail-section">
-            <div class="detail-section-head">
-              <div class="detail-section-title">댓글 · 후기</div>
-              <div id="commentCount" class="comment-count">댓글 0</div>
-            </div>
-            <div id="commentList" class="comment-list">
-              <div class="comment-empty">식당을 선택하면 댓글을 볼 수 있습니다.</div>
-            </div>
-          </section>
+          <div class="detail-tabs" role="tablist">
+            <button class="detail-tab active" type="button" data-detail-tab="home">홈</button>
+            <button class="detail-tab" type="button" data-detail-tab="photos">사진</button>
+            <button class="detail-tab" type="button" data-detail-tab="reviews">후기</button>
+          </div>
+          <div class="detail-tab-panel active" data-detail-panel="home">
+            <section class="detail-section">
+              <div class="detail-section-head"><div class="detail-section-title">식당 정보</div></div>
+              <div id="detailInfo" class="detail-info"></div>
+            </section>
+          </div>
+          <div class="detail-tab-panel" data-detail-panel="photos">
+            <section class="detail-section">
+              <div class="detail-section-head"><div class="detail-section-title">메뉴 · 식당 사진</div></div>
+              <div id="detailPhotoState" class="comment-loading">사진을 불러오는 중입니다.</div>
+              <div id="detailPhotoGrid" class="detail-photo-grid"></div>
+            </section>
+          </div>
+          <div class="detail-tab-panel" data-detail-panel="reviews">
+            <section class="detail-section">
+              <div id="reviewSummary" class="review-summary"></div>
+              <div class="detail-section-head">
+                <div class="detail-section-title">댓글 · 후기 <span id="commentCount" class="comment-count">댓글 0</span></div>
+                <div class="review-sort">
+                  <button id="reviewSortLatest" class="active" type="button">최신순</button>
+                  <button id="reviewSortHelpful" type="button">도움순</button>
+                </div>
+              </div>
+              <div id="commentList" class="comment-list">
+                <div class="comment-empty">식당을 선택하면 댓글을 볼 수 있습니다.</div>
+              </div>
+            </section>
+            <form id="commentForm" class="comment-compose" autocomplete="off">
+              <div class="comment-score-inputs">
+                <select id="commentTaste"><option value="">맛</option><option value="5">맛 5</option><option value="4">맛 4</option><option value="3">맛 3</option><option value="2">맛 2</option><option value="1">맛 1</option></select>
+                <select id="commentAmount"><option value="">양</option><option value="5">양 5</option><option value="4">양 4</option><option value="3">양 3</option><option value="2">양 2</option><option value="1">양 1</option></select>
+                <select id="commentPrice"><option value="">가격</option><option value="5">가격 5</option><option value="4">가격 4</option><option value="3">가격 3</option><option value="2">가격 2</option><option value="1">가격 1</option></select>
+                <select id="commentWait"><option value="">대기</option><option value="5">대기 5</option><option value="4">대기 4</option><option value="3">대기 3</option><option value="2">대기 2</option><option value="1">대기 1</option></select>
+              </div>
+              <textarea id="commentInput" class="comment-input" maxlength="400" placeholder="이 식당에 대한 댓글을 남겨보세요."></textarea>
+              <button id="commentSubmit" class="comment-submit" type="submit">등록</button>
+              <div id="commentStatus" class="comment-status"></div>
+            </form>
+          </div>
         </div>
-
-        <form id="commentForm" class="comment-compose" autocomplete="off">
-          <textarea id="commentInput" class="comment-input" maxlength="400" placeholder="이 식당에 대한 댓글을 남겨보세요."></textarea>
-          <button id="commentSubmit" class="comment-submit" type="submit">등록</button>
-          <div id="commentStatus" class="comment-status"></div>
-        </form>
       </section>
     </section>
   </main>
@@ -2137,6 +2341,12 @@ button,input,select,textarea{font:inherit}
     <div class="roulette-body">
       <div class="roulette-category-title">분류 선택</div>
       <div id="rouletteCategories" class="roulette-categories"></div>
+      <div class="roulette-category-title">조건</div>
+      <div class="roulette-conditions">
+        <select id="rouletteDistance"><option value="all">거리 전체</option><option value="300">300m 이내</option><option value="500">500m 이내</option><option value="700">700m 이내</option><option value="1000">1km 이내</option></select>
+        <select id="rouletteMinRating"><option value="0">평점 전체</option><option value="4">4점 이상</option><option value="4.5">4.5점 이상</option><option value="5">5점</option></select>
+        <label class="roulette-check"><input id="rouletteExcludeRecent" type="checkbox" checked> 최근 당첨 제외</label>
+      </div>
       <div id="rouletteContext" class="roulette-context">전체 · 0곳</div>
       <div class="roulette-stage">
         <div class="roulette-pointer"></div>
