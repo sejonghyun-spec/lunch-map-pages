@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-explore-behavior-v46">
+<meta name="lunch-map-build" content="2026-10-03-explore-complete-v47">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
@@ -197,7 +197,7 @@ button,input,select,textarea{font:inherit}
   background:#fff;
   border-right:1px solid #e7ebee;
   display:grid;
-  grid-template-rows:auto auto auto auto 1fr;
+  grid-template-rows:auto auto auto auto auto 1fr;
   z-index:20;
   box-shadow:5px 0 18px rgba(36,30,25,.06);
   overflow:hidden;
@@ -1792,7 +1792,7 @@ button,input,select,textarea{font:inherit}
     transition:transform .22s ease;
     transform:translateY(calc(100% + 18px));
     pointer-events:none;
-    grid-template-rows:24px auto auto auto auto minmax(0,1fr);
+    grid-template-rows:24px auto auto auto auto auto minmax(0,1fr);
     background:rgba(255,255,255,.985);
     backdrop-filter:blur(10px);
   }
@@ -1806,6 +1806,7 @@ button,input,select,textarea{font:inherit}
   }
   .sidebar.mobile-list-mode .search-wrap,
   .sidebar.mobile-list-mode .multi-filter-wrap,
+  .sidebar.mobile-list-mode .filter-chip-row,
   .sidebar.mobile-list-mode .quick-row{
     display:none;
   }
@@ -1830,7 +1831,7 @@ button,input,select,textarea{font:inherit}
     scroll-snap-stop:always;
   }
   .sidebar.mobile-search-mode{
-    grid-template-rows:24px auto auto auto auto minmax(0,1fr);
+    grid-template-rows:24px auto auto auto auto auto minmax(0,1fr);
   }
 
   .sheet-handle{
@@ -2224,7 +2225,11 @@ button,input,select,textarea{font:inherit}
           </div>
         </div>
       </div>
-      <div id="list" class="list"><div class="empty">식당 정보를 불러오는 중입니다.</div></div>
+      <div id="list" class="list">
+        <div class="card"><div class="card-row"><div class="card-thumb loading"></div><div class="card-main"><div class="card-thumb loading" style="width:70%;height:16px;margin:4px 0 9px"></div><div class="card-thumb loading" style="width:45%;height:12px"></div></div></div></div>
+        <div class="card"><div class="card-row"><div class="card-thumb loading"></div><div class="card-main"><div class="card-thumb loading" style="width:62%;height:16px;margin:4px 0 9px"></div><div class="card-thumb loading" style="width:52%;height:12px"></div></div></div></div>
+        <div class="card"><div class="card-row"><div class="card-thumb loading"></div><div class="card-main"><div class="card-thumb loading" style="width:76%;height:16px;margin:4px 0 9px"></div><div class="card-thumb loading" style="width:40%;height:12px"></div></div></div></div>
+      </div>
     </aside>
 
     <section class="map-wrap">
@@ -2901,7 +2906,8 @@ function selectRow(row,pan=true,toggle=true){
 
   // List clicks keep the existing toggle behavior; map-marker clicks always focus the restaurant.
   if(selectedRestaurantKey===key&&toggle){
-    clearSelectedRows();
+    if(isMobile()&&detailHistoryPushed)closeDetailByUser();
+    else clearSelectedRows();
     return;
   }
 
@@ -4108,7 +4114,7 @@ detailFavoriteButton.addEventListener('click',()=>{
   toggleFavorite(commentRestaurant);
   updateFavoriteButton();
   updateFilterChipUI();
-  renderList(getRows());
+  render(false);
 });
 reviewSortLatest.addEventListener('click',()=>{reviewSortMode='latest';renderComments(currentCommentRows);});
 reviewSortHelpful.addEventListener('click',()=>{reviewSortMode='helpful';renderComments(currentCommentRows);});
@@ -5185,7 +5191,10 @@ document.querySelectorAll('.filter-chip').forEach(btn=>{
   btn.addEventListener('click',()=>{
     const chip=btn.dataset.chip;
     if(chip==='rating4')ratingFilter=ratingFilter==='4'?'all':'4';
-    else if(chip==='comments')commentFilter=commentFilter==='has'?'all':'has';
+    else if(chip==='comments'){
+      if(!commentsPreloaded){showToast('댓글 데이터를 불러오는 중입니다.');return;}
+      commentFilter=commentFilter==='has'?'all':'has';
+    }
     else if(chip==='favorites')favoritesOnly=!favoritesOnly;
     else if(chip==='recent')recentOnly=!recentOnly;
     else if(chip==='map')mapOnlyMode=!mapOnlyMode;
