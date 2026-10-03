@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-sidebar-polish-v59">
+<meta name="lunch-map-build" content="2026-10-04-mobile-sheet-v60">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
@@ -124,6 +124,7 @@ button,input,select,textarea{font:inherit}
 .mobile-menu-btn{
   display:none;
 }
+.mobile-filter-toggle,.mobile-map-location{display:none}
 .mobile-nav-action{display:none}
 .header-actions{
   display:flex;
@@ -1480,7 +1481,7 @@ button,input,select,textarea{font:inherit}
     --sidebar:100%;
     --mobile-safe-top:env(safe-area-inset-top,0px);
     --mobile-safe-bottom:env(safe-area-inset-bottom,0px);
-    --header:calc(104px + var(--mobile-safe-top));
+    --header:calc(58px + var(--mobile-safe-top));
   }
   html,body{overscroll-behavior:none}
   body{
@@ -1494,8 +1495,9 @@ button,input,select,textarea{font:inherit}
   }
   .topbar{
     position:relative;
+    overflow:visible;
     grid-template-columns:minmax(0,1fr) 52px;
-    grid-template-rows:52px 52px;
+    grid-template-rows:58px;
     padding-top:var(--mobile-safe-top);
   }
   .brand{
@@ -1507,20 +1509,13 @@ button,input,select,textarea{font:inherit}
   }
   .brand-title{
     overflow:hidden;
-    font-size:18px;
+    font-size:17.5px;
     line-height:1.12;
     letter-spacing:-.55px;
     text-overflow:ellipsis;
     white-space:nowrap;
   }
-  .brand-sub{
-    overflow:hidden;
-    margin-top:3px;
-    font-size:11px;
-    line-height:1.2;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-  }
+  .brand-sub{display:none}
   .mobile-menu-btn{
     grid-column:2;
     grid-row:1;
@@ -1553,13 +1548,19 @@ button,input,select,textarea{font:inherit}
   .mobile-menu-btn.open span:nth-child(2){opacity:0}
   .mobile-menu-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
   .top-filters{
-    grid-column:1/3;
-    grid-row:2;
+    position:absolute;
+    top:calc(100% + 7px);
+    left:0;
+    right:0;
+    z-index:35;
+    display:flex;
     gap:7px;
-    padding:6px 10px 7px;
-    border-top:1px solid var(--line);
+    padding:0 10px;
+    border-top:0;
+    overflow-x:auto;
     scroll-snap-type:x proximity;
     -webkit-overflow-scrolling:touch;
+    pointer-events:auto;
   }
   .filter-btn{
     min-height:38px;
@@ -1570,7 +1571,7 @@ button,input,select,textarea{font:inherit}
   }
   .header-actions{
     position:absolute;
-    top:calc(var(--mobile-safe-top) + 48px);
+    top:calc(var(--mobile-safe-top) + 54px);
     right:8px;
     z-index:80;
     display:none;
@@ -1586,7 +1587,7 @@ button,input,select,textarea{font:inherit}
   }
   .header-actions.mobile-open{display:grid}
   .mobile-nav-action{
-    display:block;
+    display:none;
     width:100%;
     height:44px;
     border:1px solid #dfe4e7;
@@ -1626,14 +1627,32 @@ button,input,select,textarea{font:inherit}
     inset:0;
     z-index:1;
   }
-  .map-hint{
-    left:10px;
-    bottom:calc(16px + var(--mobile-safe-bottom));
-    max-width:calc(100% - 20px);
-    padding:8px 10px;
-    font-size:11px;
-  }
+  .map-hint{display:none}
   .map-status{font-size:14px}
+  .map-area-filter{
+    top:58px;
+    height:38px;
+    padding:0 14px;
+    font-size:12.5px;
+  }
+  .mobile-map-location{
+    position:absolute;
+    top:104px;
+    right:10px;
+    z-index:18;
+    display:grid;
+    place-items:center;
+    width:42px;
+    height:42px;
+    border:1px solid #d7dee2;
+    border-radius:13px;
+    background:rgba(255,255,255,.97);
+    color:#4d575c;
+    font-size:20px;
+    font-weight:800;
+    box-shadow:0 4px 14px rgba(35,45,51,.16);
+    cursor:pointer;
+  }
 
   .sidebar{
     position:absolute;
@@ -1641,57 +1660,61 @@ button,input,select,textarea{font:inherit}
     right:8px;
     bottom:calc(8px + var(--mobile-safe-bottom));
     z-index:25;
-    height:calc(100% - 16px - var(--mobile-safe-bottom));
-    min-height:0;
+    height:min(48dvh,460px);
+    min-height:250px;
     border:1px solid var(--line);
     border-radius:20px 20px 16px 16px;
     box-shadow:0 -8px 28px rgba(30,24,20,.20);
     overflow:hidden;
     overscroll-behavior:contain;
-    transition:transform .22s ease;
-    transform:translateY(calc(100% + 18px));
-    pointer-events:none;
-    grid-template-rows:24px auto auto auto auto auto minmax(0,1fr);
+    transition:height .22s ease,transform .22s ease;
+    transform:translateY(0);
+    pointer-events:auto;
+    grid-template-rows:24px auto auto auto minmax(0,1fr);
     background:rgba(255,255,255,.985);
     backdrop-filter:blur(10px);
   }
+  .sidebar.sheet-hidden{
+    transform:translateY(calc(100% + 18px));
+    pointer-events:none;
+  }
+  .sidebar.sheet-peek{
+    height:172px;
+    min-height:172px;
+    grid-template-rows:24px auto minmax(0,1fr);
+  }
+  .sidebar.sheet-peek .search-wrap,
+  .sidebar.sheet-peek .multi-filter-wrap,
+  .sidebar.sheet-peek .filter-chip-row,
+  .sidebar.sheet-peek .quick-row{display:none}
   .sidebar.sheet-mid{
-    transform:translateY(46%);
-    pointer-events:auto;
+    height:min(48dvh,460px);
+    min-height:250px;
   }
   .sidebar.sheet-full{
-    transform:translateY(0);
-    pointer-events:auto;
+    height:calc(100% - 12px - var(--mobile-safe-bottom));
+    min-height:0;
   }
-  .sidebar.mobile-list-mode .search-wrap,
-  .sidebar.mobile-list-mode .multi-filter-wrap,
-  .sidebar.mobile-list-mode .filter-chip-row,
-  .sidebar.mobile-list-mode .quick-row{
-    display:none;
+  .sidebar .multi-filter-wrap,
+  .sidebar .quick-row{display:none}
+  .sidebar.mobile-filters-open .multi-filter-wrap{display:block}
+  .sidebar.mobile-filters-open .quick-row{
+    display:flex;
+    justify-content:flex-end;
+    padding-top:0;
+    border-top:0;
   }
-  .sidebar.mobile-list-mode{
-    grid-template-rows:24px auto minmax(0,1fr);
+  .sidebar.mobile-filters-open #myLocation,
+  .sidebar.mobile-filters-open #showAll,
+  .sidebar.mobile-filters-open .map-tools-label{display:none}
+  .sidebar.mobile-filters-open{
+    grid-template-rows:24px auto auto auto auto minmax(0,1fr);
   }
-  .sidebar.mobile-list-mode.sheet-mid{
-    height:var(--mobile-list-visible,220px);
-    transform:translateY(0);
-    grid-template-rows:24px auto minmax(0,1fr);
-  }
-  .sidebar.mobile-list-mode.sheet-mid .list{
-    height:var(--mobile-list-card-height,140px);
-    max-height:var(--mobile-list-card-height,140px);
-    padding-bottom:0;
-    scroll-snap-type:y mandatory;
-    scroll-behavior:smooth;
-    overflow-y:auto;
-  }
-  .sidebar.mobile-list-mode.sheet-mid .card{
-    scroll-snap-align:start;
-    scroll-snap-stop:always;
-  }
-  .sidebar.mobile-search-mode{
-    grid-template-rows:24px auto auto auto auto auto minmax(0,1fr);
-  }
+  .mobile-filter-toggle{display:block}
+  .filter-chip[data-chip="map"]{display:none}
+  .filter-chip-row{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .mobile-filter-toggle.active{border-color:var(--brand);background:var(--brand);color:#fff}
+  .multi-filter-scroll{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
 
   .sheet-handle{
     display:flex;
@@ -1710,22 +1733,32 @@ button,input,select,textarea{font:inherit}
   }
   .sheet-handle:active{cursor:grabbing}
 
-  .search-wrap{padding:6px 12px 10px}
-  .search{height:48px;padding-left:44px;font-size:16px}
-  .search-icon{left:14px}
-  .multi-filter-wrap{padding:0 12px 10px}
-  .filter-chip-row{margin:0 12px 11px}
-  .compact-filter-label{height:36px;font-size:12.5px;gap:4px}
-  .quick-row{padding:9px 12px 10px;gap:5px}
+  .search-wrap{padding:6px 12px 8px}
+  .search{height:46px;padding-left:42px;font-size:16px;border-radius:13px}
+  .search-icon{left:14px;width:19px;height:19px}
+  .multi-filter-wrap{padding:0 12px 8px}
+  .filter-chip-row{margin:0 12px 8px;padding:4px}
+  .filter-chip{height:34px;font-size:12px}
+  .compact-filter-label{height:38px;font-size:13px;gap:4px}
+  .quick-row{padding:0 12px 8px;gap:5px}
   .quick-btn{padding:0 8px;font-size:12px}
-  .list-head{padding:9px 12px}
+  .list-head{padding:8px 12px 7px}
   .list-title{font-size:16.5px}
   .list-sub{font-size:13px}
   .sort-btn{height:32px;font-size:12.5px}
-  .list{padding:0 8px calc(14px + var(--mobile-safe-bottom));-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-  .card{padding:12px 10px 12px}
+  .list{
+    padding:0 8px calc(12px + var(--mobile-safe-bottom));
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    scroll-snap-type:none;
+    scroll-behavior:auto;
+  }
+  .card{padding:11px 10px 11px}
   .card .name{font-size:16.5px}
-  .card .badge{font-size:11.5px}
+  .card .badge{font-size:11px}
+  .card-tags{margin-top:6px}
+  .card-tag{font-size:11.75px}
+  .card-feature,.card-note{display:none}
 
   .empty{
     padding:26px 12px;
@@ -1910,13 +1943,14 @@ button,input,select,textarea{font:inherit}
 }
 
 @media(max-width:430px){
-  .brand-title{font-size:17px}
-  .brand-sub{display:none}
+  .brand-title{font-size:16.5px}
   .top-filters{padding-left:8px;padding-right:8px}
   .filter-btn{padding-left:12px;padding-right:12px}
   .sidebar{left:6px;right:6px;border-radius:18px 18px 14px 14px}
+  .sidebar.sheet-mid{height:min(50dvh,440px)}
   .search-wrap{padding-left:10px;padding-right:10px}
   .multi-filter-wrap{padding-left:10px;padding-right:10px}
+  .filter-chip-row{margin-left:10px;margin-right:10px}
   .quick-row{padding-left:10px;padding-right:10px}
   .card{padding-left:8px;padding-right:8px}
 }
@@ -2007,6 +2041,7 @@ button,input,select,textarea{font:inherit}
         <button class="filter-chip" type="button" data-chip="favorites">♡ 즐겨찾기</button>
         <button class="filter-chip" type="button" data-chip="recent">최근 본</button>
         <button class="filter-chip" type="button" data-chip="map">현재 지도</button>
+        <button id="mobileFilterToggle" class="filter-chip mobile-filter-toggle" type="button" aria-expanded="false">☰ 필터</button>
       </div>
       <div class="quick-row" role="group" aria-label="위치 및 지도 제어">
         <span class="map-tools-label">지도</span>
@@ -2035,6 +2070,7 @@ button,input,select,textarea{font:inherit}
       <div id="map"></div>
       <div id="mapStatus" class="map-status">카카오 지도를 준비하는 중입니다.</div>
       <button id="mapBoundsButton" class="map-area-filter" type="button">이 지역에서 보기</button>
+      <button id="mobileMyLocation" class="mobile-map-location" type="button" aria-label="내 위치로 이동">◎</button>
       <div id="mapHint" class="map-hint">상단 분류는 여러 개를 동시에 선택할 수 있습니다.</div>
 
       <section id="commentPanel" class="comment-panel" aria-live="polite" aria-hidden="true">
@@ -4881,71 +4917,36 @@ let sheetState='hidden',sheetStartY=null;
 function isMobile(){return window.matchMedia('(max-width:900px)').matches;}
 function setSheetState(state){
   if(!sidebar)return;
-  if(isMobile()&&state==='peek')state='hidden';
   sheetState=state;
-  sidebar.classList.toggle('sheet-mid',state==='mid');
-  sidebar.classList.toggle('sheet-full',state==='full');
+  ['hidden','peek','mid','full'].forEach(name=>sidebar.classList.toggle('sheet-'+name,state===name));
 }
-function setMobilePanelMode(mode){
+function setMobilePanelMode(){
   if(!sidebar)return;
-  const searchMode=mode==='search';
-  sidebar.classList.toggle('mobile-search-mode',searchMode);
-  sidebar.classList.toggle('mobile-list-mode',!searchMode);
+  sidebar.classList.remove('mobile-search-mode','mobile-list-mode');
+  sidebar.classList.add('mobile-unified-mode');
   updateListHeading(getRows().length);
 }
-function sizeMobileListToOneCard(row){
-  if(!isMobile()||!sidebar||!sidebar.classList.contains('mobile-list-mode'))return;
-  requestAnimationFrame(()=>{
-    const list=document.getElementById('list');
-    const head=sidebar.querySelector('.list-head');
-    if(!list||!head)return;
-    let card=null;
-    if(Number.isFinite(Number(row)))card=list.querySelector('.card[data-row="'+Number(row)+'"]');
-    if(!card&&selectedRow!=null)card=list.querySelector('.card[data-row="'+Number(selectedRow)+'"]');
-    if(!card)card=list.querySelector('.card');
-    if(!card)return;
-    const handleH=sheetHandle?sheetHandle.getBoundingClientRect().height:24;
-    const headH=head.getBoundingClientRect().height;
-    const cardH=Math.ceil(card.getBoundingClientRect().height);
-    const visible=Math.max(170,Math.min(330,Math.ceil(handleH+headH+cardH+2)));
-    sidebar.style.setProperty('--mobile-list-card-height',cardH+'px');
-    sidebar.style.setProperty('--mobile-list-visible',visible+'px');
-  });
-}
-// Card content has variable height. Resize the one-card sheet after scrolling
-// settles, without rebuilding the list or changing its scroll position.
-let mobileListScrollTimer=null;
-document.getElementById('list').addEventListener('scroll',()=>{
-  if(!isMobile()||sheetState!=='mid'||!sidebar.classList.contains('mobile-list-mode'))return;
-  clearTimeout(mobileListScrollTimer);
-  mobileListScrollTimer=setTimeout(()=>{
-    if(!isMobile()||sheetState!=='mid'||!sidebar.classList.contains('mobile-list-mode'))return;
-    const list=document.getElementById('list');
-    const cards=[...list.querySelectorAll('.card')];
-    const nearest=cards.reduce((best,card)=>!best||Math.abs(card.offsetTop-list.scrollTop)<Math.abs(best.offsetTop-list.scrollTop)?card:best,null);
-    if(nearest)sizeMobileListToOneCard(Number(nearest.dataset.row));
-  },120);
-},{passive:true});
+function sizeMobileListToOneCard(){/* legacy no-op: unified mobile sheet uses normal scrolling */}
+
 function focusMobileListCard(row){
   if(!isMobile())return;
-  setMobilePanelMode('list');
-  setSheetState('mid');
+  setMobilePanelMode();
+  if(sheetState==='hidden'||sheetState==='peek')setSheetState('mid');
   requestAnimationFrame(()=>{
     const list=document.getElementById('list');
     const card=list?.querySelector('.card[data-row="'+Number(row)+'"]')||list?.querySelector('.card');
-    if(card&&list)list.scrollTop=Math.max(0,card.offsetTop);
-    sizeMobileListToOneCard(row);
+    if(card&&list)list.scrollTop=Math.max(0,card.offsetTop-4);
   });
 }
 function nextSheetState(){
   if(sheetState==='hidden'||sheetState==='peek')setSheetState('mid');
   else if(sheetState==='mid')setSheetState('full');
-  else setSheetState('hidden');
+  else setSheetState('mid');
 }
 if(mobileSearchOpen){
   mobileSearchOpen.addEventListener('click',()=>{
     closeMobileMenu();
-    setMobilePanelMode('search');
+    setMobilePanelMode();
     setSheetState('full');
     requestAnimationFrame(()=>document.getElementById('search')?.focus());
   });
@@ -4953,19 +4954,8 @@ if(mobileSearchOpen){
 if(mobileListOpen){
   mobileListOpen.addEventListener('click',()=>{
     closeMobileMenu();
-    searchKeyword='';
-    document.getElementById('search').value='';
-    resetMultiFilters();
-    updateMultiFilterUI();
-    setMobilePanelMode('list');
-    render(false);
-    setSheetState('mid');
-    requestAnimationFrame(()=>{
-      const list=document.getElementById('list');
-      const selected=list?.querySelector('.card.active');
-      if(list)list.scrollTop=selected?Math.max(0,selected.offsetTop):0;
-      sizeMobileListToOneCard(selected?Number(selected.dataset.row):null);
-    });
+    setMobilePanelMode();
+    if(sheetState==='hidden')setSheetState('mid');
   });
 }
 if(sheetHandle){
@@ -4976,11 +4966,11 @@ if(sheetHandle){
     const dy=e.clientY-sheetStartY;sheetStartY=null;
     if(Math.abs(dy)<24)return;
     if(dy<-35){
-      if(sheetState==='hidden'||sheetState==='peek')setSheetState('mid');
+      if(sheetState==='peek'||sheetState==='hidden')setSheetState('mid');
       else setSheetState('full');
     }else if(dy>35){
       if(sheetState==='full')setSheetState('mid');
-      else setSheetState('hidden');
+      else if(sheetState==='mid')setSheetState('peek');
     }
   });
 }
@@ -4988,11 +4978,11 @@ window.addEventListener('resize',()=>{
   if(!isMobile()){
     setSheetState('peek');
     closeMobileMenu();
-  }else if(sheetState==='peek'){
-    setSheetState('hidden');
+  }else if(!commentPanel.classList.contains('open')&&sheetState==='hidden'){
+    setMobilePanelMode();
+    setSheetState('mid');
   }
   updateListHeading(getRows().length);
-  if(isMobile())sizeMobileListToOneCard(selectedRow);
   if(mapReady&&map){
     requestAnimationFrame(()=>{
       map.relayout();
@@ -5003,14 +4993,26 @@ window.addEventListener('resize',()=>{
 });
 
 document.getElementById('search').addEventListener('input',e=>{searchKeyword=e.target.value||'';clearTimeout(searchTimer);searchTimer=setTimeout(()=>render(true),120);});
+document.getElementById('search').addEventListener('focus',()=>{if(isMobile())setSheetState('full');});
+const mobileFilterToggle=document.getElementById('mobileFilterToggle');
+if(mobileFilterToggle){
+  mobileFilterToggle.addEventListener('click',()=>{
+    const open=!sidebar.classList.contains('mobile-filters-open');
+    sidebar.classList.toggle('mobile-filters-open',open);
+    mobileFilterToggle.classList.toggle('active',open);
+    mobileFilterToggle.setAttribute('aria-expanded',String(open));
+    if(open&&isMobile())setSheetState('full');
+  });
+}
+const mobileMyLocation=document.getElementById('mobileMyLocation');
+if(mobileMyLocation)mobileMyLocation.addEventListener('click',locateMe);
 const sortWrap=document.getElementById('sortWrap');
 const sortButton=document.getElementById('sortButton');
 if(sortButton&&sortWrap){
   sortButton.addEventListener('click',e=>{
     e.stopPropagation();
     const open=!sortWrap.classList.contains('open');
-    // The one-card sheet is shorter than the four-option menu.
-    if(open&&isMobile()&&sheetState==='mid')setSheetState('full');
+    if(open&&isMobile()&&sheetState==='peek')setSheetState('mid');
     sortWrap.classList.toggle('open',open);
     sortButton.setAttribute('aria-expanded',open?'true':'false');
   });
@@ -5070,14 +5072,15 @@ window.addEventListener('popstate',()=>{
   if(commentPanel.classList.contains('open')){
     detailHistoryPushed=false;
     clearSelectedRows();
+    if(isMobile())setSheetState('mid');
   }
 });
 
 updateMultiFilterUI();
 syncSortUI();
 if(isMobile()){
-  setMobilePanelMode('list');
-  setSheetState('hidden');
+  setMobilePanelMode();
+  setSheetState('mid');
 }
 loadDashboardData();
 setTimeout(initMap,0);
