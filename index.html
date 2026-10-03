@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-explore-ui-v45">
+<meta name="lunch-map-build" content="2026-10-03-explore-behavior-v46">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
@@ -2135,7 +2135,7 @@ button,input,select,textarea{font:inherit}
   .sidebar.sheet-mid{transform:translateY(52%);pointer-events:auto}
   .sidebar.mobile-list-mode.sheet-mid{height:var(--mobile-list-visible,190px);transform:translateY(0)}
   .sidebar.sheet-full{transform:translateY(0);pointer-events:auto}
-  .comment-panel{max-height:48dvh}
+  .comment-panel{max-height:none}
 }
 
 </style>
@@ -2735,6 +2735,14 @@ function initMap(){
     mapReady=true;
     document.getElementById('mapStatus').classList.add('hidden');
     syncMarkerLabelVisibility();
+    kakao.maps.event.addListener(map,'idle',()=>{
+      const btn=document.getElementById('mapBoundsButton');
+      if(btn&&!mapOnlyMode)btn.textContent='이 지역에서 보기';
+      if(mapOnlyMode){
+        renderList(getRows());
+        updateFilterChipUI();
+      }
+    });
 
     requestAnimationFrame(()=>{
       map.relayout();
@@ -2903,7 +2911,8 @@ function selectRow(row,pan=true,toggle=true){
   openComments(data);
 
   const item=markerByRow.get(row);
-  if(item&&mapReady&&pan){map.setLevel(3);map.panTo(item.position);}
+  if(item&&mapReady&&pan)adjustMapForDetail(item.position);
+  if(item&&mapReady&&!pan)adjustMapForDetail(item.position);
   if(isMobile())setSheetState('hidden');
 }
 function distanceMeters(a,b){
@@ -3039,10 +3048,14 @@ function renderMap(rows,fit=true){
     content.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
     content.addEventListener('mouseenter',()=>{
       if(overlay&&typeof overlay.setZIndex==='function')overlay.setZIndex(55);
+      const card=document.querySelector('.card[data-row="'+Number(x.row)+'"]');
+      if(card)card.classList.add('map-hover');
       showMarkerInfo(item);
     });
     content.addEventListener('mouseleave',()=>{
       hideMarkerInfo(x.row);
+      const card=document.querySelector('.card[data-row="'+Number(x.row)+'"]');
+      if(card)card.classList.remove('map-hover');
       if(overlay&&typeof overlay.setZIndex==='function'){
         overlay.setZIndex(isRowSelected(x.row)?60:(placement?placement.zIndex:5));
       }
@@ -5152,7 +5165,8 @@ document.addEventListener('click',e=>{
   ['ratingFilter',v=>ratingFilter=v],
   ['capacityFilter',v=>capacityFilter=v],
   ['commentFilter',v=>commentFilter=v],
-  ['featureFilter',v=>featureFilter=v]
+  ['featureFilter',v=>featureFilter=v],
+  ['distanceFilter',v=>distanceFilter=v]
 ].forEach(([id,setter])=>{
   const el=document.getElementById(id);
   el.addEventListener('change',e=>{
@@ -5167,9 +5181,32 @@ document.getElementById('multiFilterReset').addEventListener('click',()=>{
   render(true);
 });
 
+document.querySelectorAll('.filter-chip').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const chip=btn.dataset.chip;
+    if(chip==='rating4')ratingFilter=ratingFilter==='4'?'all':'4';
+    else if(chip==='comments')commentFilter=commentFilter==='has'?'all':'has';
+    else if(chip==='favorites')favoritesOnly=!favoritesOnly;
+    else if(chip==='recent')recentOnly=!recentOnly;
+    else if(chip==='map')mapOnlyMode=!mapOnlyMode;
+    updateMultiFilterUI();
+    render(false);
+  });
+});
+document.getElementById('mapBoundsButton').addEventListener('click',()=>{
+  mapOnlyMode=true;
+  updateMultiFilterUI();
+  render(false);
+});
 document.getElementById('showAll').onclick=showAll;
 document.getElementById('myLocation').onclick=locateMe;
 
+window.addEventListener('popstate',()=>{
+  if(commentPanel.classList.contains('open')){
+    detailHistoryPushed=false;
+    clearSelectedRows();
+  }
+});
 
 updateMultiFilterUI();
 syncSortUI();
