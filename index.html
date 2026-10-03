@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-no-photos-map-restored-v50">
+<meta name="lunch-map-build" content="2026-10-03-kakao-direct-place-v51">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
@@ -755,6 +755,10 @@ button,input,select,textarea{font:inherit}
 .detail-kakao-link{
   display:inline-flex;align-items:center;justify-content:center;height:38px;border:1px solid #f1cf00;
   border-radius:10px;padding:0 13px;background:#fee500;color:#2a2419;font-size:13.5px;font-weight:800;text-decoration:none
+}
+.detail-kakao-link.is-loading{
+  opacity:.55;
+  pointer-events:none;
 }
 .detail-tabs{
   position:sticky;top:0;z-index:3;display:grid;grid-template-columns:repeat(2,1fr);
@@ -3166,6 +3170,132 @@ function searchPlaceForRow(row){
   });
 }
 
+const kakaoPlaceUrlCache=new Map();
+
+function normalizeKakaoAddress(value){
+  return String(value||'')
+    .toLowerCase()
+    .replace(/서울특별시/g,'서울')
+    .replace(/[\s,().·ㆍ-]+/g,'');
+}
+
+function scoreKakaoPlaceMatch(row,place){
+  if(!row||!place)return -Infinity;
+  let score=0;
+  const targetName=normalizePlaceName(row.name);
+  const placeName=normalizePlaceName(place.place_name);
+  if(targetName&&placeName){
+    if(targetName===placeName)score+=120;
+    else if(placeName.includes(targetName)||targetName.includes(placeName))score+=55;
+    else score-=80;
+  }
+
+  const targetAddr=normalizeKakaoAddress(row.address);
+  const roadAddr=normalizeKakaoAddress(place.road_address_name);
+  const lotAddr=normalizeKakaoAddress(place.address_name);
+  if(targetAddr){
+    if(targetAddr===roadAddr||targetAddr===lotAddr)score+=120;
+    else if((roadAddr&&roadAddr.includes(targetAddr))||(lotAddr&&lotAddr.includes(targetAddr))||
+            (roadAddr&&targetAddr.includes(roadAddr))||(lotAddr&&targetAddr.includes(lotAddr)))score+=65;
+  }
+
+  if(hasValidCoords(row)){
+    const lat=Number(place.y),lng=Number(place.x);
+    if(Number.isFinite(lat)&&Number.isFinite(lng)){
+      const meters=distanceMeters(
+        {lat:Number(row.lat),lng:Number(row.lng)},
+        {lat,lng}
+      );
+      if(meters<=30)score+=90;
+      else if(meters<=80)score+=65;
+      else if(meters<=200)score+=35;
+      else if(meters<=500)score+=10;
+      else if(meters>1200)score-=70;
+    }
+  }
+
+  if(place.category_group_code==='FD6'||place.category_group_code==='CE7')score+=8;
+  return score;
+}
+
+function bestExactKakaoPlace(row,data){
+  const rows=(Array.isArray(data)?data:[]).filter(Boolean);
+  if(!rows.length)return null;
+  return rows
+    .map(place=>({place,score:scoreKakaoPlaceMatch(row,place)}))
+    .sort((a,b)=>b.score-a.score)[0]?.place||null;
+}
+
+function kakaoKeywordSearchPromise(keyword,row){
+  return new Promise(resolve=>{
+    if(!placesService||!String(keyword||'').trim())return resolve(null);
+    const opts={
+      location:new kakao.maps.LatLng(
+        hasValidCoords(row)?Number(row.lat):HOME_LAT,
+        hasValidCoords(row)?Number(row.lng):HOME_LNG
+      ),
+      radius:20000,
+      size:15,
+      sort:kakao.maps.services.SortBy.DISTANCE
+    };
+    placesService.keywordSearch(String(keyword).trim(),(data,status)=>{
+      if(status!==kakao.maps.services.Status.OK)return resolve(null);
+      resolve(bestExactKakaoPlace(row,data));
+    },opts);
+  });
+}
+
+async function resolveKakaoPlaceUrl(row){
+  if(!row||!row.name)return '';
+  const cacheKey=restaurantCommentKey(row);
+  if(kakaoPlaceUrlCache.has(cacheKey))return kakaoPlaceUrlCache.get(cacheKey);
+
+  const knownId=String(row._placeId||row.placeId||'').trim();
+  if(knownId){
+    const direct='https://place.map.kakao.com/'+encodeURIComponent(knownId);
+    kakaoPlaceUrlCache.set(cacheKey,direct);
+    return direct;
+  }
+
+  if(!placesService)return '';
+
+  let place=null;
+  const combined=[row.name,row.address].filter(Boolean).join(' ').trim();
+  if(combined)place=await kakaoKeywordSearchPromise(combined,row);
+  if(!place)place=await kakaoKeywordSearchPromise(row.name,row);
+
+  if(!place)return '';
+
+  const direct=String(place.place_url||'').trim().replace(/^http:/i,'https:')||
+    (place.id?'https://place.map.kakao.com/'+encodeURIComponent(place.id):'');
+  if(!direct)return '';
+
+  row._placeId=place.id||row._placeId||'';
+  row._placeUrl=direct;
+  kakaoPlaceUrlCache.set(cacheKey,direct);
+  return direct;
+}
+
+async function prepareKakaoPlaceLink(row){
+  const targetKey=restaurantCommentKey(row);
+  kakaoMapLink.classList.add('is-loading');
+  kakaoMapLink.removeAttribute('href');
+  kakaoMapLink.textContent='카카오맵 확인 중';
+
+  const url=await resolveKakaoPlaceUrl(row);
+  if(!commentRestaurant||restaurantCommentKey(commentRestaurant)!==targetKey)return;
+
+  kakaoMapLink.classList.remove('is-loading');
+  kakaoMapLink.textContent='카카오맵';
+  if(url){
+    kakaoMapLink.href=url;
+    kakaoMapLink.title='카카오맵에서 '+String(row.name||'식당')+' 상세정보 보기';
+  }else{
+    kakaoMapLink.href='https://map.kakao.com/?q='+encodeURIComponent(String(row.name||'').trim());
+    kakaoMapLink.title='카카오맵에서 '+String(row.name||'식당')+' 검색';
+  }
+}
+
 function geocodeAddress(address){
   return new Promise(resolve=>{
     if(!geocoder||!String(address||'').trim())return resolve(null);
@@ -3845,7 +3975,7 @@ function openComments(restaurant){
     ? infoRows.map(x=>'<div class="detail-info-row"><div class="detail-info-label">'+esc(x[0])+'</div><div class="detail-info-value">'+esc(x[1])+'</div></div>').join('')
     : '<div class="comment-empty">등록된 상세 정보가 없습니다.</div>';
 
-  kakaoMapLink.href='https://map.kakao.com/?q='+encodeURIComponent([restaurant.name,restaurant.address].filter(Boolean).join(' '));
+  prepareKakaoPlaceLink(restaurant);
   updateFavoriteButton();
 
   commentStatus.textContent=currentAccount
