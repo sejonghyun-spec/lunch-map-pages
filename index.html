@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-kakao-detail-fields-v52">
+<meta name="lunch-map-build" content="2026-10-03-public-review-read-fix-v53">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
@@ -3767,13 +3767,12 @@ async function loadComments(restaurant){
   const seq=++commentRequestSeq;
   const key=restaurantCommentKey(restaurant);
 
-  // Preferred path: comments were already delivered together with the live DB.
-  if(commentsPreloaded){
+  // If the authenticated live bundle already has reviews, render immediately.
+  if(commentsPreloaded&&preloadedComments.has(key)){
     const rows=preloadedComments.get(key)||[];
     if(seq===commentRequestSeq)renderComments(rows);
 
-    // Refresh quietly; a temporary Apps Script delay must not replace visible
-    // comments with an error state.
+    // Quiet refresh keeps the list current without replacing visible reviews on failure.
     fetchComments(restaurant,7000).then(fresh=>{
       preloadedComments.set(key,fresh);
       if(seq===commentRequestSeq&&commentRestaurant&&restaurantCommentKey(commentRestaurant)===key){
@@ -3783,22 +3782,10 @@ async function loadComments(restaurant){
     return rows;
   }
 
-  commentCount.textContent='댓글 -';
-  commentList.innerHTML='<div class="comment-loading">댓글 데이터를 준비하는 중입니다.</div>';
+  // Review reading is public, so do not wait for the company-account live DB request.
+  commentCount.textContent='댓글 ·';
+  commentList.innerHTML='<div class="comment-loading">댓글을 불러오는 중입니다.</div>';
 
-  // Reuse the single page-start live request rather than waking Apps Script
-  // again for the first restaurant click.
-  if(liveDbPromise){
-    try{await liveDbPromise;}catch(err){}
-    if(seq!==commentRequestSeq)return [];
-    if(commentsPreloaded){
-      const rows=preloadedComments.get(key)||[];
-      renderComments(rows);
-      return rows;
-    }
-  }
-
-  // Last-resort fallback only when the preload itself failed.
   try{
     const rows=await fetchComments(restaurant,10000);
     preloadedComments.set(key,rows);
