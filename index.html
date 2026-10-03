@@ -3575,9 +3575,22 @@ const commentForm=document.getElementById('commentForm');
 const commentInput=document.getElementById('commentInput');
 const commentSubmit=document.getElementById('commentSubmit');
 const commentStatus=document.getElementById('commentStatus');
+const commentTaste=document.getElementById('commentTaste');
+const commentAmount=document.getElementById('commentAmount');
+const commentPrice=document.getElementById('commentPrice');
+const commentWait=document.getElementById('commentWait');
 const detailCategory=document.getElementById('detailCategory');
 const detailRating=document.getElementById('detailRating');
 const detailInfo=document.getElementById('detailInfo');
+const detailTags=document.getElementById('detailTags');
+const detailMedia=document.getElementById('detailMedia');
+const detailPhotoGrid=document.getElementById('detailPhotoGrid');
+const detailPhotoState=document.getElementById('detailPhotoState');
+const detailFavoriteButton=document.getElementById('detailFavoriteButton');
+const kakaoMapLink=document.getElementById('kakaoMapLink');
+const reviewSummary=document.getElementById('reviewSummary');
+const reviewSortLatest=document.getElementById('reviewSortLatest');
+const reviewSortHelpful=document.getElementById('reviewSortHelpful');
 const menuPhotoButton=document.getElementById('menuPhotoButton');
 const imageModal=document.getElementById('imageModal');
 const imageTitle=document.getElementById('imageTitle');
@@ -3607,6 +3620,14 @@ function closeComments(){
   commentRestaurant=null;
   if(mapHint)mapHint.style.display='';
 }
+function closeDetailByUser(){
+  if(isMobile()&&detailHistoryPushed){
+    detailHistoryPushed=false;
+    history.back();
+    return;
+  }
+  clearSelectedRows();
+}
 function isCommentAdmin(){
   const email=String(currentAccount&&currentAccount.email||'').trim().toLowerCase();
   return COMMENT_ADMIN_EMAILS.has(email);
@@ -3621,16 +3642,38 @@ function canDeleteComment(row){
   // Separate admin privilege: the designated admin may delete anonymous comments.
   return isCommentAdmin()&&isAnonymousComment(row);
 }
+function renderReviewSummary(rows){
+  const fields=[['taste','맛'],['amount','양'],['price','가격'],['wait','대기']];
+  reviewSummary.innerHTML=fields.map(([key,label])=>{
+    const nums=rows.map(x=>Number(x&&x[key])).filter(v=>v>=1&&v<=5);
+    const avg=nums.length?nums.reduce((a,b)=>a+b,0)/nums.length:0;
+    return '<div class="review-score"><b>'+(avg?avg.toFixed(1):'-')+'</b><span>'+label+(nums.length?' · '+nums.length:'')+'</span></div>';
+  }).join('');
+}
 function renderComments(comments){
-  const rows=Array.isArray(comments)?comments:[];
-  currentCommentRows=rows.slice();
-  commentCount.textContent='댓글 '+rows.length;
+  const base=Array.isArray(comments)?comments:[];
+  currentCommentRows=base.slice();
+  commentCount.textContent='댓글 '+base.length;
+  renderReviewSummary(base);
+
+  let rows=base.slice();
+  if(reviewSortMode==='helpful'){
+    rows.sort((a,b)=>(Number(b.helpfulCount)||0)-(Number(a.helpfulCount)||0));
+  }
+
+  reviewSortLatest?.classList.toggle('active',reviewSortMode==='latest');
+  reviewSortHelpful?.classList.toggle('active',reviewSortMode==='helpful');
+
   if(!rows.length){
     commentList.innerHTML='<div class="comment-empty">아직 댓글이 없습니다. 첫 댓글을 남겨보세요.</div>';
     return;
   }
-  commentList.innerHTML=rows.map(x=>
-    '<div class="comment-item" data-comment-id="'+esc(x.id||'')+'">'+
+
+  commentList.innerHTML=rows.map(x=>{
+    const scores=[
+      ['맛',x.taste],['양',x.amount],['가격',x.price],['대기',x.wait]
+    ].filter(v=>Number(v[1])>=1&&Number(v[1])<=5);
+    return '<div class="comment-item" data-comment-id="'+esc(x.id||'')+'">'+
       '<div class="comment-item-top">'+
         '<div class="comment-nick">'+esc(x.nickname||'익명')+'</div>'+
         '<div class="comment-meta-right">'+
@@ -3638,12 +3681,19 @@ function renderComments(comments){
           (canDeleteComment(x)?'<button type="button" class="comment-delete" data-comment-id="'+esc(x.id)+'">삭제</button>':'')+
         '</div>'+
       '</div>'+
+      (scores.length?'<div class="comment-scores">'+scores.map(v=>'<span class="comment-score-chip">'+esc(v[0])+' '+esc(v[1])+'</span>').join('')+'</div>':'')+
       '<div class="comment-text">'+esc(x.comment||'')+'</div>'+
-    '</div>'
-  ).join('');
+      '<div class="comment-actions">'+
+        '<button type="button" class="comment-helpful '+(x.helpfulByMe?'active':'')+'" data-comment-id="'+esc(x.id||'')+'">👍 도움이 돼요'+((Number(x.helpfulCount)||0)>0?' '+Number(x.helpfulCount):'')+'</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
 
   commentList.querySelectorAll('.comment-delete').forEach(btn=>{
     btn.addEventListener('click',()=>deleteComment(btn.dataset.commentId,btn));
+  });
+  commentList.querySelectorAll('.comment-helpful').forEach(btn=>{
+    btn.addEventListener('click',()=>toggleHelpfulComment(btn.dataset.commentId));
   });
 }
 function makeClientCommentId(){
