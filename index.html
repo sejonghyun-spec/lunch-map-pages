@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-distance-sort-v38">
+<meta name="lunch-map-build" content="2026-10-03-list-hover-marker-v39">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -835,6 +835,33 @@ button,input,select{font:inherit}
 }
 .marker-label:hover{
   transform:translateY(-4px);
+}
+.marker-label.list-hover{
+  position:relative;
+  transform:translateY(-7px);
+  z-index:28;
+}
+.marker-label.list-hover::before{
+  content:'▼';
+  position:absolute;
+  left:50%;
+  top:-19px;
+  transform:translateX(-50%);
+  color:var(--marker-color);
+  font-size:17px;
+  font-weight:900;
+  line-height:1;
+  text-shadow:0 1px 2px rgba(255,255,255,.95),0 1px 4px rgba(22,31,36,.22);
+  pointer-events:none;
+}
+.marker-label.list-hover .marker-pin{
+  transform:scale(1.28);
+  box-shadow:
+    0 0 0 5px color-mix(in srgb,var(--marker-color) 20%,transparent),
+    0 4px 10px rgba(24,34,40,.28);
+}
+.marker-label.list-hover .marker-caption{
+  display:flex;
 }
 .marker-label.selected .marker-caption{
   display:flex;
@@ -2207,7 +2234,7 @@ function markerHtml(x){
     '</div>'+
   '</div>';
 }
-function clearMarkers(){overlays.forEach(o=>o.overlay.setMap(null));overlays=[];markerByRow.clear();hoveredMarkerRow=null;if(infoOverlay)infoOverlay.setMap(null);}
+function clearMarkers(){overlays.forEach(o=>o.overlay.setMap(null));overlays=[];markerByRow.clear();hoveredMarkerRow=null;listHoveredRow=null;if(infoOverlay)infoOverlay.setMap(null);}
 function popupHtml(x){
   const rating=ratingText(x);
   const detail=String(x.feature||x.locationHint||'').trim();
@@ -2261,6 +2288,31 @@ function reconcileSelectedRestaurant(){
   if(!exists){
     selectedRestaurantKey='';
     selectedRow=null;
+  }
+}
+let listHoveredRow=null;
+function setListMarkerHover(row,on){
+  row=Number(row);
+  if(!Number.isFinite(row))return;
+  if(listHoveredRow!==null&&listHoveredRow!==row){
+    const prev=markerByRow.get(listHoveredRow);
+    if(prev?.content)prev.content.classList.remove('list-hover');
+    if(prev?.overlay&&typeof prev.overlay.setZIndex==='function'){
+      prev.overlay.setZIndex(isRowSelected(listHoveredRow)?60:prev.baseZIndex);
+    }
+  }
+  const item=markerByRow.get(row);
+  if(!item)return;
+  if(on){
+    listHoveredRow=row;
+    item.content?.classList.add('list-hover');
+    if(item.overlay&&typeof item.overlay.setZIndex==='function')item.overlay.setZIndex(isRowSelected(row)?65:58);
+  }else{
+    item.content?.classList.remove('list-hover');
+    if(item.overlay&&typeof item.overlay.setZIndex==='function'){
+      item.overlay.setZIndex(isRowSelected(row)?60:item.baseZIndex);
+    }
+    if(listHoveredRow===row)listHoveredRow=null;
   }
 }
 function syncSelectedRowsUI(){
@@ -2575,11 +2627,15 @@ function renderList(rows){
       (sortMode==='distance'&&formatDistanceFromSeahTower(x)?'<div>↔ '+esc(formatDistanceFromSeahTower(x))+'</div>':'')+
       (x.capacity?'<div>👥 '+esc(x.capacity)+'</div>':'')+
       '<div>📍 '+esc(x.address)+'</div></div></div>').join('');
-  el.querySelectorAll('.card').forEach(card=>card.onclick=()=>{
+  el.querySelectorAll('.card').forEach(card=>{
     const row=Number(card.dataset.row);
-    const wasSelected=isRowSelected(row);
-    selectRow(row,true);
-    if(isMobile()&&!wasSelected)focusMobileListCard(row);
+    card.addEventListener('mouseenter',()=>setListMarkerHover(row,true));
+    card.addEventListener('mouseleave',()=>setListMarkerHover(row,false));
+    card.onclick=()=>{
+      const wasSelected=isRowSelected(row);
+      selectRow(row,true);
+      if(isMobile()&&!wasSelected)focusMobileListCard(row);
+    };
   });
   syncSelectedRowsUI();
   if(isMobile()&&sidebar?.classList.contains('mobile-list-mode'))sizeMobileListToOneCard(selectedRow);
