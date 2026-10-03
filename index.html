@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-detail-readability-v48">
+<meta name="lunch-map-build" content="2026-10-03-no-photos-v49">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
@@ -439,23 +439,6 @@ button,input,select,textarea{font:inherit}
 }
 .card:hover,.card.map-hover{background:#f7f9fa}
 .card.map-hover{box-shadow:inset 3px 0 0 #8a969d}
-.card-row{
-  display:grid;
-  grid-template-columns:58px minmax(0,1fr);
-  gap:10px;
-  align-items:start;
-}
-.card-thumb{
-  width:58px;
-  height:58px;
-  overflow:hidden;
-  border-radius:10px;
-  background:linear-gradient(110deg,#eef1f2 20%,#f8f9f9 40%,#eef1f2 60%);
-  background-size:200% 100%;
-}
-.card-thumb.loading{animation:skeletonSweep 1.2s linear infinite}
-.card-thumb img{width:100%;height:100%;display:block;object-fit:cover}
-.card-main{min-width:0}
 .card-mini-meta{
   display:flex;
   flex-wrap:wrap;
@@ -467,7 +450,6 @@ button,input,select,textarea{font:inherit}
 }
 .card-favorite{color:#d19a00;font-weight:800}
 .search-hit{border-radius:3px;background:#fff0a8;color:inherit}
-@keyframes skeletonSweep{to{background-position:-200% 0}}
 .card.active{
   background:color-mix(in srgb,var(--card-color,#64748b) 8%,#fff);
   box-shadow:inset 3px 0 0 var(--card-color,#64748b);
@@ -774,44 +756,6 @@ button,input,select,textarea{font:inherit}
   display:inline-flex;align-items:center;justify-content:center;height:38px;border:1px solid #f1cf00;
   border-radius:10px;padding:0 13px;background:#fee500;color:#2a2419;font-size:13.5px;font-weight:800;text-decoration:none
 }
-.detail-media{
-  display:grid;grid-template-columns:2fr 1fr;grid-template-rows:88px 88px;gap:4px;
-  margin:-24px -22px 18px;overflow:hidden;background:#eef1f2
-}
-.detail-media-item{position:relative;overflow:hidden;background:#eef1f2}
-.detail-media-item:first-child{grid-row:1/3}
-.detail-media-item img{width:100%;height:100%;display:block;object-fit:cover}
-.detail-media-skeleton{
-  width:100%;height:100%;
-  background:linear-gradient(110deg,#e6eaec 20%,#f5f7f8 40%,#e6eaec 60%);
-  background-size:200% 100%;animation:skeletonSweep 1.2s linear infinite
-}
-.detail-media-more{
-  position:absolute;right:8px;bottom:8px;border:0;border-radius:8px;padding:6px 8px;
-  background:rgba(25,29,31,.76);color:#fff;font-size:10.5px;font-weight:750;cursor:pointer
-}
-.detail-tabs{
-  position:sticky;top:0;z-index:3;display:grid;grid-template-columns:repeat(3,1fr);
-  border-top:1px solid #edf0f2;border-bottom:1px solid #dfe5e8;background:#fff
-}
-.detail-tab{
-  height:52px;border:0;border-bottom:3px solid transparent;background:#fff;color:#59646a;
-  font-size:15px;font-weight:750;letter-spacing:-.2px;cursor:pointer
-}
-.detail-tab:hover{background:#f8fafb;color:#30393e}
-.detail-tab.active{
-  border-bottom-color:var(--brand);background:#fffaf7;color:var(--brand-dark);font-weight:850
-}
-.detail-tab-panel{display:none}
-.detail-tab-panel.active{display:block}
-.detail-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
-.detail-tag{
-  display:inline-flex;align-items:center;min-height:30px;border-radius:999px;padding:5px 10px;
-  background:#f2f5f6;color:#4e5960;font-size:12.5px;font-weight:750
-}
-.detail-photo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
-.detail-photo-card{display:block;aspect-ratio:1;overflow:hidden;border-radius:11px;background:#eef1f2}
-.detail-photo-card img{width:100%;height:100%;display:block;object-fit:cover}
 .review-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 0 14px}
 .review-score{padding:11px 6px;border:1px solid #edf0f2;border-radius:10px;background:#f8f9fa;text-align:center}
 .review-score b{display:block;color:#30383d;font-size:16px;font-weight:800}
@@ -1228,71 +1172,6 @@ button,input,select,textarea{font:inherit}
   backdrop-filter:blur(3px);
 }
 .modal-backdrop.open{display:flex}
-.image-modal{
-  width:min(860px,100%);
-  max-height:min(780px,90dvh);
-  overflow:hidden;
-  background:#fff;
-  border-radius:20px;
-  box-shadow:0 24px 70px rgba(0,0,0,.28);
-}
-.image-body{
-  max-height:calc(90dvh - 78px);
-  overflow:auto;
-  padding:14px 16px 18px;
-}
-.image-note{
-  margin-bottom:12px;
-  color:#817872;
-  font-size:11.5px;
-  font-weight:600;
-  line-height:1.45;
-}
-.image-grid{
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:10px;
-}
-.image-card{
-  position:relative;
-  display:block;
-  aspect-ratio:1;
-  overflow:hidden;
-  border:1px solid #e2e6e9;
-  border-radius:13px;
-  background:#f2f3f4;
-  text-decoration:none;
-}
-.image-card img{
-  width:100%;
-  height:100%;
-  display:block;
-  object-fit:cover;
-  transition:transform .16s;
-}
-.image-card:hover img{transform:scale(1.035)}
-.image-source{
-  position:absolute;
-  left:7px;
-  right:7px;
-  bottom:7px;
-  overflow:hidden;
-  border-radius:7px;
-  padding:5px 7px;
-  background:rgba(28,31,33,.74);
-  color:#fff;
-  font-size:10.5px;
-  font-weight:650;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-.image-state{
-  padding:34px 12px;
-  color:#7f7771;
-  text-align:center;
-  font-size:13px;
-  font-weight:650;
-}
 .suggest-modal{
   width:min(620px,100%);
   max-height:min(820px,92dvh);
@@ -2032,7 +1911,6 @@ button,input,select,textarea{font:inherit}
   .detail-nav-mobile{display:flex;align-items:center;gap:5px;margin-right:7px}
   .detail-nav-mobile button{width:34px;height:34px;border:1px solid #dde3e6;border-radius:9px;background:#fff;color:#5f686d;font-size:17px;cursor:pointer}
   .detail-hero{padding:20px 16px 18px}
-  .detail-media{margin:-20px -16px 16px;grid-template-rows:78px 78px}
   .detail-tab{height:50px;font-size:15px}
   .detail-section-title{font-size:17px}
   .detail-info-label{font-size:12.5px}
@@ -2055,17 +1933,10 @@ button,input,select,textarea{font:inherit}
     padding:8px 8px calc(8px + var(--mobile-safe-bottom));
     align-items:flex-end;
   }
-  .image-modal{
-    width:100%;
-    max-height:calc(100dvh - var(--mobile-safe-top) - 12px);
-    border-radius:20px 20px 12px 12px;
-  }
-  .image-body{
-    max-height:calc(100dvh - var(--mobile-safe-top) - 82px);
-    padding:12px 12px calc(16px + var(--mobile-safe-bottom));
-  }
-  .image-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-  .image-source{font-size:10px}
+  
+  
+  
+  
   .suggest-modal{
     width:100%;
     max-height:calc(100dvh - var(--mobile-safe-top) - 12px);
@@ -2230,11 +2101,8 @@ button,input,select,textarea{font:inherit}
           </div>
         </div>
       </div>
-      <div id="list" class="list">
-        <div class="card"><div class="card-row"><div class="card-thumb loading"></div><div class="card-main"><div class="card-thumb loading" style="width:70%;height:16px;margin:4px 0 9px"></div><div class="card-thumb loading" style="width:45%;height:12px"></div></div></div></div>
-        <div class="card"><div class="card-row"><div class="card-thumb loading"></div><div class="card-main"><div class="card-thumb loading" style="width:62%;height:16px;margin:4px 0 9px"></div><div class="card-thumb loading" style="width:52%;height:12px"></div></div></div></div>
-        <div class="card"><div class="card-row"><div class="card-thumb loading"></div><div class="card-main"><div class="card-thumb loading" style="width:76%;height:16px;margin:4px 0 9px"></div><div class="card-thumb loading" style="width:40%;height:12px"></div></div></div></div>
-      </div>
+      <div id="list" class="list"><div class="empty">식당 정보를 불러오는 중입니다.</div></div>
+    </div>
     </aside>
 
     <section class="map-wrap">
@@ -2255,11 +2123,6 @@ button,input,select,textarea{font:inherit}
         </div>
         <div class="detail-scroll">
           <div class="detail-hero">
-            <div id="detailMedia" class="detail-media">
-              <div class="detail-media-item"><div class="detail-media-skeleton"></div></div>
-              <div class="detail-media-item"><div class="detail-media-skeleton"></div></div>
-              <div class="detail-media-item"><div class="detail-media-skeleton"></div></div>
-            </div>
             <div id="detailCategory" class="detail-category">식당</div>
             <div id="commentName" class="comment-name">식당을 선택해 주세요.</div>
             <div id="detailRating" class="detail-rating"></div>
@@ -2267,26 +2130,17 @@ button,input,select,textarea{font:inherit}
             <div id="detailTags" class="detail-tags"></div>
             <div class="detail-actions">
               <button id="detailFavoriteButton" class="comment-photo-btn detail-favorite-btn" type="button">♡ 즐겨찾기</button>
-              <button id="menuPhotoButton" class="comment-photo-btn" type="button">📷 사진 더보기</button>
               <a id="kakaoMapLink" class="detail-kakao-link" href="https://map.kakao.com/" target="_blank" rel="noopener noreferrer">카카오맵</a>
             </div>
           </div>
           <div class="detail-tabs" role="tablist">
             <button class="detail-tab active" type="button" data-detail-tab="home">홈</button>
-            <button class="detail-tab" type="button" data-detail-tab="photos">사진</button>
             <button class="detail-tab" type="button" data-detail-tab="reviews">후기</button>
           </div>
           <div class="detail-tab-panel active" data-detail-panel="home">
             <section class="detail-section">
               <div class="detail-section-head"><div class="detail-section-title">식당 정보</div></div>
               <div id="detailInfo" class="detail-info"></div>
-            </section>
-          </div>
-          <div class="detail-tab-panel" data-detail-panel="photos">
-            <section class="detail-section">
-              <div class="detail-section-head"><div class="detail-section-title">메뉴 · 식당 사진</div></div>
-              <div id="detailPhotoState" class="comment-loading">사진을 불러오는 중입니다.</div>
-              <div id="detailPhotoGrid" class="detail-photo-grid"></div>
             </section>
           </div>
           <div class="detail-tab-panel" data-detail-panel="reviews">
@@ -2321,23 +2175,6 @@ button,input,select,textarea{font:inherit}
   </main>
 </div>
 
-
-<div id="imageModal" class="modal-backdrop" aria-hidden="true">
-  <section class="image-modal" role="dialog" aria-modal="true" aria-labelledby="imageTitle">
-    <div class="modal-head">
-      <div>
-        <div id="imageTitle" class="modal-title">메뉴사진</div>
-        <div id="imageSub" class="modal-sub">Daum 이미지 검색 결과</div>
-      </div>
-      <button id="imageClose" class="modal-close" type="button" aria-label="닫기">×</button>
-    </div>
-    <div class="image-body">
-      <div class="image-note">웹 이미지 검색 결과이므로 실제 메뉴판과 다를 수 있습니다. 사진을 누르면 원문을 확인할 수 있습니다.</div>
-      <div id="imageState" class="image-state">식당을 선택하면 메뉴사진을 검색할 수 있습니다.</div>
-      <div id="imageGrid" class="image-grid"></div>
-    </div>
-  </section>
-</div>
 
 <div id="rouletteModal" class="modal-backdrop" aria-hidden="true">
   <section class="roulette-modal" role="dialog" aria-modal="true" aria-labelledby="rouletteTitle">
@@ -2516,9 +2353,7 @@ const colorFor=c=>COLORS[c]||'#64748b';
 const FAVORITES_KEY='lunchMapFavoritesV1';
 const RECENTS_KEY='lunchMapRecentsV1';
 const ROULETTE_HISTORY_KEY='lunchMapRouletteHistoryV1';
-const THUMB_CACHE_KEY='lunchMapThumbCacheV1';
 const DETAIL_WIDTH_KEY='lunchMapDetailWidthV1';
-const thumbRequested=new Set();
 let detailHistoryPushed=false;
 
 function readLocalJson(key,fallback){
@@ -2561,24 +2396,6 @@ function rememberRouletteWinner(x){
   const key=restaurantKey(x);
   if(!key)return;
   writeLocalJson(ROULETTE_HISTORY_KEY,[key,...rouletteHistoryKeys().filter(v=>v!==key)].slice(0,5));
-}
-function thumbCache(){
-  const value=readLocalJson(THUMB_CACHE_KEY,{});
-  return value&&typeof value==='object'&&!Array.isArray(value)?value:{};
-}
-function thumbForRestaurant(x){
-  const key=restaurantKey(x);
-  const cache=thumbCache();
-  return key&&cache[key]&&/^https?:\/\//i.test(cache[key])?cache[key]:'';
-}
-function saveRestaurantThumb(x,url){
-  if(!x||!/^https?:\/\//i.test(String(url||'')))return;
-  const key=restaurantKey(x);
-  if(!key)return;
-  const cache=thumbCache();
-  cache[key]=String(url);
-  const entries=Object.entries(cache).slice(-120);
-  writeLocalJson(THUMB_CACHE_KEY,Object.fromEntries(entries));
 }
 function highlightMatch(value,query){
   const text=String(value||'');
@@ -3195,26 +3012,18 @@ function renderList(rows){
 
   const q=searchKeyword.trim();
   el.innerHTML=rows.map(x=>{
-    const thumb=thumbForRestaurant(x);
     const distance=formatDistanceFromSeahTower(x);
     const favorite=isFavorite(x);
     const feature=String(x.feature||x.note||'').trim();
     return '<div class="card" data-row="'+x.row+'" style="--card-color:'+colorFor(x.category)+'">'+
-      '<div class="card-row">'+
-        '<div class="card-thumb '+(thumb?'':'loading')+'" data-thumb-row="'+x.row+'">'+
-          (thumb?'<img src="'+esc(thumb)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'')+
-        '</div>'+
-        '<div class="card-main">'+
-          '<div class="card-head"><div class="name">'+highlightMatch(x.name,q)+'</div>'+
-            '<div class="badge" style="--badge-color:'+colorFor(x.category)+'"><span class="badge-dot"></span>'+esc(x.category)+'</div></div>'+
-          '<div class="rating">'+esc(ratingText(x))+'</div>'+
-          (feature?'<div class="desc">'+highlightMatch(feature,q)+'</div>':'')+
-          '<div class="card-mini-meta">'+
-            (distance?'<span>↔ '+esc(distance)+'</span>':'')+
-            (x.capacity?'<span>👥 '+esc(x.capacity)+'</span>':'')+
-            (favorite?'<span class="card-favorite">★ 즐겨찾기</span>':'')+
-          '</div>'+
-        '</div>'+
+      '<div class="card-head"><div class="name">'+highlightMatch(x.name,q)+'</div>'+
+        '<div class="badge" style="--badge-color:'+colorFor(x.category)+'"><span class="badge-dot"></span>'+esc(x.category)+'</div></div>'+
+      '<div class="rating">'+esc(ratingText(x))+'</div>'+
+      (feature?'<div class="desc">'+highlightMatch(feature,q)+'</div>':'')+
+      '<div class="card-mini-meta">'+
+        (distance?'<span>↔ '+esc(distance)+'</span>':'')+
+        (x.capacity?'<span>👥 '+esc(x.capacity)+'</span>':'')+
+        (favorite?'<span class="card-favorite">★ 즐겨찾기</span>':'')+
       '</div>'+
     '</div>';
   }).join('');
@@ -3227,7 +3036,6 @@ function renderList(rows){
   });
 
   syncSelectedRowsUI();
-  preloadListThumbnails(rows.slice(0,isMobile()?3:6));
   if(isMobile()&&sidebar?.classList.contains('mobile-list-mode'))sizeMobileListToOneCard(selectedRow);
 }
 function hasValidCoords(x){
@@ -3600,23 +3408,12 @@ const detailCategory=document.getElementById('detailCategory');
 const detailRating=document.getElementById('detailRating');
 const detailInfo=document.getElementById('detailInfo');
 const detailTags=document.getElementById('detailTags');
-const detailMedia=document.getElementById('detailMedia');
-const detailPhotoGrid=document.getElementById('detailPhotoGrid');
-const detailPhotoState=document.getElementById('detailPhotoState');
 const detailFavoriteButton=document.getElementById('detailFavoriteButton');
 const kakaoMapLink=document.getElementById('kakaoMapLink');
 const reviewSummary=document.getElementById('reviewSummary');
 const reviewSortLatest=document.getElementById('reviewSortLatest');
 const reviewSortHelpful=document.getElementById('reviewSortHelpful');
-const menuPhotoButton=document.getElementById('menuPhotoButton');
-const imageModal=document.getElementById('imageModal');
-const imageTitle=document.getElementById('imageTitle');
-const imageSub=document.getElementById('imageSub');
-const imageGrid=document.getElementById('imageGrid');
-const imageState=document.getElementById('imageState');
 const mapHint=document.getElementById('mapHint');
-const imageSearchCache=new Map();
-let imageRequestSeq=0;
 
 const commentSink=document.createElement('iframe');
 commentSink.name='commentSink';
@@ -3926,176 +3723,8 @@ function toggleHelpfulComment(commentId){
   refreshCommentsSoon(restaurant,1800);
 }
 
-function safeHttpUrl(value){
-  const s=String(value||'').trim();
-  return /^https?:\/\//i.test(s)?s:'';
-}
-function renderRestaurantImages(restaurant,images){
-  const rows=(Array.isArray(images)?images:[]).filter(x=>safeHttpUrl(x&&x.thumbnailUrl));
-  imageGrid.innerHTML='';
-  if(!rows.length){
-    imageState.textContent='검색된 메뉴사진이 없습니다.';
-    imageState.style.display='block';
-    return;
-  }
-  imageState.style.display='none';
-  imageGrid.innerHTML=rows.map((x,i)=>{
-    const thumb=safeHttpUrl(x.thumbnailUrl);
-    const href=safeHttpUrl(x.sourceUrl)||safeHttpUrl(x.imageUrl)||thumb;
-    const source=String(x.sourceName||'원문 보기').trim()||'원문 보기';
-    const alt=(restaurant&&restaurant.name?restaurant.name+' ':'')+'메뉴 이미지 '+(i+1);
-    return '<a class="image-card" href="'+esc(href)+'" target="_blank" rel="noopener noreferrer">'+
-      '<img src="'+esc(thumb)+'" alt="'+esc(alt)+'" loading="lazy" referrerpolicy="no-referrer">'+
-      '<span class="image-source">'+esc(source)+'</span>'+
-    '</a>';
-  }).join('');
-}
-function fetchRestaurantImages(restaurant,timeoutMs=12000){
-  return new Promise((resolve,reject)=>{
-    if(!restaurant||!restaurant.name)return reject(new Error('restaurant required'));
-    const callback='__lunchImages'+Date.now()+Math.random().toString(36).slice(2);
-    const script=document.createElement('script');
-    let done=false;
-    const cleanup=()=>{
-      try{delete window[callback];}catch(e){window[callback]=undefined;}
-      script.remove();
-    };
-    const timer=setTimeout(()=>{
-      if(done)return;
-      done=true;
-      cleanup();
-      reject(new Error('image search timeout'));
-    },timeoutMs);
-
-    window[callback]=payload=>{
-      if(done)return;
-      done=true;
-      clearTimeout(timer);
-      cleanup();
-      if(payload&&payload.authRequired){
-        updateAccountUI(null,true);
-        reject(new Error(payload.message||'company account required'));
-        return;
-      }
-      if(payload&&payload.user)updateAccountUI(payload.user,false);
-      if(!payload||payload.ok===false){
-        reject(new Error(payload&&payload.message||'image search failed'));
-        return;
-      }
-      resolve(Array.isArray(payload.images)?payload.images:[]);
-    };
-
-    script.onerror=()=>{
-      if(done)return;
-      done=true;
-      clearTimeout(timer);
-      cleanup();
-      reject(new Error('image search load failed'));
-    };
-
-    script.src=SUGGEST_URL+
-      '?mode=imageSearch'+
-      '&name='+encodeURIComponent(restaurant.name||'')+
-      '&address='+encodeURIComponent(restaurant.address||'')+
-      '&callback='+encodeURIComponent(callback)+
-      '&t='+Date.now();
-    document.head.appendChild(script);
-  });
-}
-function applyThumbnailToCard(restaurant,url){
-  saveRestaurantThumb(restaurant,url);
-  const row=Number(restaurant&&restaurant.row);
-  const el=document.querySelector('.card-thumb[data-thumb-row="'+row+'"]');
-  if(el&&url){
-    el.classList.remove('loading');
-    el.innerHTML='<img src="'+esc(url)+'" alt="" loading="lazy" referrerpolicy="no-referrer">';
-  }
-}
-
-async function preloadListThumbnails(rows){
-  if(!currentAccount||!Array.isArray(rows))return;
-  for(const restaurant of rows){
-    if(!restaurant||thumbForRestaurant(restaurant))continue;
-    const key=restaurantCommentKey(restaurant);
-    if(thumbRequested.has(key))continue;
-    thumbRequested.add(key);
-    try{
-      let images=imageSearchCache.get(key);
-      if(!images){
-        images=await fetchRestaurantImages(restaurant,9000);
-        imageSearchCache.set(key,images);
-      }
-      const first=(images||[]).find(x=>safeHttpUrl(x&&x.thumbnailUrl));
-      if(first)applyThumbnailToCard(restaurant,first.thumbnailUrl);
-    }catch(e){}
-    await new Promise(r=>setTimeout(r,140));
-  }
-}
-
-function renderDetailImages(restaurant,images){
-  const rows=(Array.isArray(images)?images:[]).filter(x=>safeHttpUrl(x&&x.thumbnailUrl));
-  const first=rows[0];
-  if(first)saveRestaurantThumb(restaurant,first.thumbnailUrl);
-
-  const mediaRows=rows.slice(0,3);
-  detailMedia.innerHTML=mediaRows.length
-    ? [0,1,2].map(i=>{
-        const item=mediaRows[i];
-        if(!item)return '<div class="detail-media-item"></div>';
-        const src=safeHttpUrl(item.thumbnailUrl);
-        return '<div class="detail-media-item"><img src="'+esc(src)+'" alt="" loading="lazy" referrerpolicy="no-referrer">'+
-          (i===2&&rows.length>3?'<button class="detail-media-more" type="button">+'+(rows.length-3)+' 더보기</button>':'')+
-        '</div>';
-      }).join('')
-    : '<div class="detail-media-item"><div class="detail-media-skeleton"></div></div>'+
-      '<div class="detail-media-item"></div><div class="detail-media-item"></div>';
-
-  detailMedia.querySelectorAll('.detail-media-item').forEach((el,i)=>{
-    if(mediaRows[i])el.addEventListener('click',()=>setDetailTab('photos'));
-  });
-  const more=detailMedia.querySelector('.detail-media-more');
-  if(more)more.addEventListener('click',e=>{e.stopPropagation();setDetailTab('photos');});
-
-  detailPhotoGrid.innerHTML=rows.map(x=>{
-    const thumb=safeHttpUrl(x.thumbnailUrl);
-    const href=safeHttpUrl(x.sourceUrl)||safeHttpUrl(x.imageUrl)||thumb;
-    return '<a class="detail-photo-card" href="'+esc(href)+'" target="_blank" rel="noopener noreferrer">'+
-      '<img src="'+esc(thumb)+'" alt="" loading="lazy" referrerpolicy="no-referrer">'+
-    '</a>';
-  }).join('');
-  detailPhotoState.style.display=rows.length?'none':'block';
-  detailPhotoState.textContent=rows.length?'':'검색된 사진이 없습니다.';
-}
-
-async function loadDetailImages(restaurant){
-  if(!restaurant)return;
-  const key=restaurantCommentKey(restaurant);
-  detailPhotoGrid.innerHTML='';
-  detailPhotoState.style.display='block';
-  if(!currentAccount){
-    detailPhotoState.textContent='회사 계정을 연결하면 메뉴·식당 사진을 볼 수 있습니다.';
-    const cachedThumb=thumbForRestaurant(restaurant);
-    if(cachedThumb)renderDetailImages(restaurant,[{thumbnailUrl:cachedThumb,imageUrl:cachedThumb,sourceUrl:''}]);
-    return;
-  }
-  detailPhotoState.textContent='사진을 불러오는 중입니다.';
-  try{
-    let images=imageSearchCache.get(key);
-    if(!images){
-      images=await fetchRestaurantImages(restaurant);
-      imageSearchCache.set(key,images);
-    }
-    if(commentRestaurant&&restaurantCommentKey(commentRestaurant)===key)renderDetailImages(restaurant,images);
-  }catch(err){
-    if(commentRestaurant&&restaurantCommentKey(commentRestaurant)===key){
-      detailPhotoState.textContent=String(err&&err.message||'사진을 불러오지 못했습니다.');
-      detailPhotoState.style.display='block';
-    }
-  }
-}
-
 function setDetailTab(tab){
-  const valid=['home','photos','reviews'].includes(tab)?tab:'home';
+  const valid=['home','reviews'].includes(tab)?tab:'home';
   document.querySelectorAll('.detail-tab').forEach(btn=>btn.classList.toggle('active',btn.dataset.detailTab===valid));
   document.querySelectorAll('.detail-tab-panel').forEach(panel=>panel.classList.toggle('active',panel.dataset.detailPanel===valid));
 }
@@ -4168,47 +3797,6 @@ function adjustMapForDetail(position){
   }
 }
 
-async function openImageModal(){
-  const restaurant=commentRestaurant;
-  if(!restaurant)return;
-  if(!ensureCompanyAccount())return;
-
-  const key=restaurantCommentKey(restaurant);
-  const seq=++imageRequestSeq;
-  imageTitle.textContent=(restaurant.name||'선택한 식당')+' 메뉴사진';
-  imageSub.textContent='Daum 이미지 검색 결과';
-  imageGrid.innerHTML='';
-  imageState.textContent='메뉴사진을 검색하는 중입니다.';
-  imageState.style.display='block';
-  imageModal.classList.add('open');
-  imageModal.setAttribute('aria-hidden','false');
-
-  if(imageSearchCache.has(key)){
-    renderRestaurantImages(restaurant,imageSearchCache.get(key));
-    return;
-  }
-
-  try{
-    const images=await fetchRestaurantImages(restaurant);
-    if(seq!==imageRequestSeq)return;
-    imageSearchCache.set(key,images);
-    renderRestaurantImages(restaurant,images);
-  }catch(err){
-    if(seq!==imageRequestSeq)return;
-    imageGrid.innerHTML='';
-    imageState.textContent=String(err&&err.message||'메뉴사진 검색에 실패했습니다.');
-    imageState.style.display='block';
-  }
-}
-function closeImageModal(){
-  imageRequestSeq++;
-  imageModal.classList.remove('open');
-  imageModal.setAttribute('aria-hidden','true');
-}
-menuPhotoButton.addEventListener('click',openImageModal);
-document.getElementById('imageClose').addEventListener('click',closeImageModal);
-imageModal.addEventListener('click',e=>{if(e.target===imageModal)closeImageModal();});
-
 function openComments(restaurant){
   commentRestaurant=restaurant;
   rememberRecent(restaurant);
@@ -4253,10 +3841,6 @@ function openComments(restaurant){
   commentInput.value='';
   [commentTaste,commentAmount,commentPrice,commentWait].forEach(el=>{if(el)el.value='';});
 
-  detailMedia.innerHTML='<div class="detail-media-item"><div class="detail-media-skeleton"></div></div>'+
-    '<div class="detail-media-item"><div class="detail-media-skeleton"></div></div>'+
-    '<div class="detail-media-item"><div class="detail-media-skeleton"></div></div>';
-
   commentPanel.classList.add('open');
   commentPanel.setAttribute('aria-hidden','false');
   if(isMobile()){
@@ -4269,7 +3853,6 @@ function openComments(restaurant){
   if(mapHint)mapHint.style.display='none';
 
   loadComments(restaurant);
-  loadDetailImages(restaurant);
   updateFilterChipUI();
 }
 document.getElementById('commentClose').addEventListener('click',closeDetailByUser);
@@ -4737,8 +4320,7 @@ document.addEventListener('keydown',e=>{
   closeMobileMenu();
   if(suggestModal.classList.contains('open'))closeSuggestModal();
   if(rouletteModal.classList.contains('open'))closeRoulette();
-  if(imageModal.classList.contains('open'))closeImageModal();
-  else if(commentPanel.classList.contains('open'))clearSelectedRows();
+  if(commentPanel.classList.contains('open'))clearSelectedRows();
 });
 
 suggestTabNew.addEventListener('click',()=>setSuggestMode('new'));
