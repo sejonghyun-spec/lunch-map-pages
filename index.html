@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-comment-auth-retry-v55">
+<meta name="lunch-map-build" content="2026-10-03-fast-account-connect-v56">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
@@ -2366,6 +2366,7 @@ let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,p
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,selectedEditRestaurant=null,suggestMode='new',suggestPending=false,pendingSuggestionTemp=null,pendingEditUpdate=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
 let currentAccount=null,lastAuthRetry=0;
+let accountPopup=null,authPollTimer=null,authPollDeadline=0,authCheckInFlight=false;
 const COMMENT_ADMIN_EMAILS=new Set(['sejong.hyun@seah.co.kr']);
 let commentRestaurant=null,commentRequestSeq=0,commentSubmitting=false,currentCommentRows=[];
 let commentsPreloaded=false;
@@ -3483,12 +3484,121 @@ function updateAccountUI(user,needsAuth=false){
   }
 }
 
+function stopAuthPolling(){
+  if(authPollTimer){
+    clearTimeout(authPollTimer);
+    authPollTimer=null;
+  }
+  authPollDeadline=0;
+  authCheckInFlight=false;
+}
+
+function closeAccountPopup(){
+  if(accountPopup&&!accountPopup.closed){
+    try{accountPopup.close();}catch(e){}
+  }
+  accountPopup=null;
+}
+
+function checkCompanyAccountLight(timeoutMs=4500){
+  return new Promise(resolve=>{
+    if(authCheckInFlight)return resolve(null);
+    authCheckInFlight=true;
+
+    const callback='__lunchAuth'+Date.now()+Math.random().toString(36).slice(2);
+    const script=document.createElement('script');
+    let done=false;
+
+    const cleanup=()=>{
+      try{delete window[callback];}catch(e){window[callback]=undefined;}
+      script.remove();
+      authCheckInFlight=false;
+    };
+    const finish=user=>{
+      if(done)return;
+      done=true;
+      clearTimeout(timer);
+      cleanup();
+      resolve(user||null);
+    };
+    const timer=setTimeout(()=>finish(null),timeoutMs);
+
+    window[callback]=payload=>{
+      const user=payload&&payload.ok&&payload.user?payload.user:null;
+      finish(user);
+    };
+    script.onerror=()=>finish(null);
+    script.src=SUGGEST_URL+
+      '?mode=auth'+
+      '&callback='+encodeURIComponent(callback)+
+      '&t='+Date.now();
+    script.async=true;
+    document.head.appendChild(script);
+  });
+}
+
+function finishAccountConnection(user){
+  if(!user||!user.email)return false;
+  stopAuthPolling();
+  updateAccountUI(user,false);
+  closeAccountPopup();
+
+  // Load the selected restaurant review first; refresh the full live DB afterward.
+  if(commentRestaurant)loadComments(commentRestaurant);
+  setTimeout(()=>{
+    liveDbPromise=loadLiveDb().catch(()=>false);
+  },150);
+  return true;
+}
+
+async function pollAccountConnection(){
+  if(currentAccount){
+    stopAuthPolling();
+    closeAccountPopup();
+    return;
+  }
+  const user=await checkCompanyAccountLight(3000);
+  if(user){
+    finishAccountConnection(user);
+    return;
+  }
+
+  if(accountPopup&&accountPopup.closed&&Date.now()>authPollDeadline-12000){
+    // One quick final check after the popup closes.
+    const finalUser=await checkCompanyAccountLight(2500);
+    if(finalUser){
+      finishAccountConnection(finalUser);
+      return;
+    }
+  }
+
+  if(Date.now()>=authPollDeadline){
+    stopAuthPolling();
+    return;
+  }
+  authPollTimer=setTimeout(pollAccountConnection,450);
+}
+
+function startAuthPolling(){
+  stopAuthPolling();
+  authPollDeadline=Date.now()+18000;
+  authPollTimer=setTimeout(pollAccountConnection,120);
+}
+
 function openAccountConnection(){
-  return window.open(
+  if(accountPopup&&!accountPopup.closed){
+    try{accountPopup.focus();}catch(e){}
+    startAuthPolling();
+    return accountPopup;
+  }
+
+  accountPopup=window.open(
     SUGGEST_URL+'?source=lunch-map&t='+Date.now(),
     'lunchMapCompanyAccount',
     'width=620,height=720'
   );
+  startAuthPolling();
+  return accountPopup;
 }
 
 accountButton.addEventListener('click',openAccountConnection);
@@ -3498,18 +3608,17 @@ window.addEventListener('message',e=>{
   if(!allowedOrigins.has(e.origin))return;
   const data=e.data||{};
   if(data.source!=='lunch-map-auth'||!data.ok||!data.user)return;
-  updateAccountUI(data.user,false);
-  if(commentRestaurant)loadComments(commentRestaurant);
+  finishAccountConnection(data.user);
 });
 
 window.addEventListener('focus',()=>{
   if(currentAccount)return;
   const now=Date.now();
-  if(now-lastAuthRetry<2500)return;
+  if(now-lastAuthRetry<700)return;
   lastAuthRetry=now;
-  setTimeout(()=>{
-    loadLiveDb().catch(()=>false);
-  },500);
+  checkCompanyAccountLight(3000).then(user=>{
+    if(user)finishAccountConnection(user);
+  });
 });
 
 function ensureCompanyAccount(){
