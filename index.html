@@ -2489,7 +2489,8 @@ function getInitialMapLevel(){
 }
 const SUGGEST_URL='https://script.google.com/a/seah.co.kr/macros/s/AKfycbzpCuw9c6Y8K6_4tnqZzwMBoKGIiW3pv-DheDHYD6XpbT1tEqDlZUFFkPgn-7w_q1L7tA/exec';
 let allData=[],selectedCategories=new Set(),searchKeyword='',sortMode='default';
-let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all';
+let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all',distanceFilter='all';
+let favoritesOnly=false,recentOnly=false,mapOnlyMode=false,reviewSortMode='latest';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',hoveredMarkerRow=null,searchTimer=null;
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,selectedEditRestaurant=null,suggestMode='new',suggestPending=false,pendingSuggestionTemp=null,pendingEditUpdate=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
@@ -2499,8 +2500,85 @@ let commentRestaurant=null,commentRequestSeq=0,commentSubmitting=false,currentCo
 let commentsPreloaded=false;
 const preloadedComments=new Map();
 let rouletteCandidates=[],rouletteWinner=null,rouletteSpinning=false,rouletteRotation=0,rouletteTicker=null,rouletteCategory='전체';
+let rouletteDistance='all',rouletteMinRating=0,rouletteExcludeRecent=true;
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
 const colorFor=c=>COLORS[c]||'#64748b';
+const FAVORITES_KEY='lunchMapFavoritesV1';
+const RECENTS_KEY='lunchMapRecentsV1';
+const ROULETTE_HISTORY_KEY='lunchMapRouletteHistoryV1';
+const THUMB_CACHE_KEY='lunchMapThumbCacheV1';
+const DETAIL_WIDTH_KEY='lunchMapDetailWidthV1';
+const thumbRequested=new Set();
+let detailHistoryPushed=false;
+
+function readLocalJson(key,fallback){
+  try{
+    const value=JSON.parse(localStorage.getItem(key)||'null');
+    return value==null?fallback:value;
+  }catch(e){return fallback;}
+}
+function writeLocalJson(key,value){
+  try{localStorage.setItem(key,JSON.stringify(value));}catch(e){}
+}
+function favoriteSet(){
+  return new Set((readLocalJson(FAVORITES_KEY,[])||[]).map(String));
+}
+function recentKeys(){
+  return (readLocalJson(RECENTS_KEY,[])||[]).map(String);
+}
+function rouletteHistoryKeys(){
+  return (readLocalJson(ROULETTE_HISTORY_KEY,[])||[]).map(String);
+}
+function restaurantKey(x){return restaurantIdentityKey(x);}
+function isFavorite(x){return favoriteSet().has(restaurantKey(x));}
+function toggleFavorite(x){
+  const key=restaurantKey(x);
+  if(!key)return false;
+  const set=favoriteSet();
+  let active=false;
+  if(set.has(key))set.delete(key);
+  else{set.add(key);active=true;}
+  writeLocalJson(FAVORITES_KEY,[...set]);
+  return active;
+}
+function rememberRecent(x){
+  const key=restaurantKey(x);
+  if(!key)return;
+  const next=[key,...recentKeys().filter(v=>v!==key)].slice(0,10);
+  writeLocalJson(RECENTS_KEY,next);
+}
+function rememberRouletteWinner(x){
+  const key=restaurantKey(x);
+  if(!key)return;
+  writeLocalJson(ROULETTE_HISTORY_KEY,[key,...rouletteHistoryKeys().filter(v=>v!==key)].slice(0,5));
+}
+function thumbCache(){
+  const value=readLocalJson(THUMB_CACHE_KEY,{});
+  return value&&typeof value==='object'&&!Array.isArray(value)?value:{};
+}
+function thumbForRestaurant(x){
+  const key=restaurantKey(x);
+  const cache=thumbCache();
+  return key&&cache[key]&&/^https?:\/\//i.test(cache[key])?cache[key]:'';
+}
+function saveRestaurantThumb(x,url){
+  if(!x||!/^https?:\/\//i.test(String(url||'')))return;
+  const key=restaurantKey(x);
+  if(!key)return;
+  const cache=thumbCache();
+  cache[key]=String(url);
+  const entries=Object.entries(cache).slice(-120);
+  writeLocalJson(THUMB_CACHE_KEY,Object.fromEntries(entries));
+}
+function highlightMatch(value,query){
+  const text=String(value||'');
+  const q=String(query||'').trim();
+  if(!q)return esc(text);
+  const i=text.toLowerCase().indexOf(q.toLowerCase());
+  if(i<0)return esc(text);
+  return esc(text.slice(0,i))+'<mark class="search-hit">'+esc(text.slice(i,i+q.length))+'</mark>'+esc(text.slice(i+q.length));
+}
+
 
 function rawRatingValue(value){
   if(value==null||value==='')return 0;
