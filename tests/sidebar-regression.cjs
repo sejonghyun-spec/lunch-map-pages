@@ -122,30 +122,57 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
  await check('company-account popup opens (mock endpoint; no account changes)',async()=>{
    const wait=context.waitForEvent('page');await page.click('#accountButton');const popup=await wait;await popup.waitForLoadState('domcontentloaded');assert.ok(popup.url().startsWith('https://script.google.com/'));await popup.close();
  });
- for(const width of [900,768,390,360,320])await check('mobile '+width+'px: search/list sheets, card sizing, mid/full and detail',async()=>{
-   await page.setViewportSize({width,height:844});await page.waitForTimeout(220);
-   await menu('mobileSearchOpen');assert.ok(await state(()=>sidebar.classList.contains('sheet-full')&&sidebar.classList.contains('mobile-search-mode')));
-   assert.ok(await state(()=>{const s=sidebar.getBoundingClientRect();return s.left>=0&&s.right<=innerWidth&&sidebar.scrollWidth<=sidebar.clientWidth+1&&document.querySelector('.multi-filter-scroll').getBoundingClientRect().width<=s.width}));
-   if(width===390)await shot('mobile-search');
-   await menu('mobileListOpen');assert.ok(await state(()=>sidebar.classList.contains('sheet-mid')&&sidebar.classList.contains('mobile-list-mode')));
-   const geometry=await state(()=>{const c=document.querySelector('.card').getBoundingClientRect();const l=document.getElementById('list').getBoundingClientRect();const s=sidebar.getBoundingClientRect();return {card:c.height,list:l.height,bottom:l.bottom,sheet:s.bottom,firstTop:c.top,listTop:l.top}});
-   assert.ok(Math.abs(geometry.card-geometry.list)<=1,JSON.stringify(geometry));assert.ok(geometry.bottom<=geometry.sheet+1);assert.ok(Math.abs(geometry.firstTop-geometry.listTop)<=1);
-   // A longer card must fit after scroll snapping settles too.
-   await state(()=>{const list=document.getElementById('list');const cards=[...list.querySelectorAll('.card')];const tallest=cards.reduce((a,b)=>a.offsetHeight>b.offsetHeight?a:b);list.scrollTo({top:tallest.offsetTop,behavior:'instant'});});
-   await page.waitForTimeout(400);
-   assert.ok(await state(()=>{const list=document.getElementById('list');const cards=[...list.querySelectorAll('.card')];const current=cards.reduce((a,b)=>Math.abs(a.offsetTop-list.scrollTop)<Math.abs(b.offsetTop-list.scrollTop)?a:b);return Math.abs(current.getBoundingClientRect().height-list.getBoundingClientRect().height)<=1}));
-   await state(()=>document.getElementById('list').scrollTo({top:0,behavior:'instant'}));await page.waitForTimeout(350);
-   if(width===390)await shot('mobile-list');
-   await page.click('#sortButton');await page.waitForTimeout(250);
-   assert.ok(await state(()=>{const s=sidebar.getBoundingClientRect(),m=document.getElementById('sortMenu').getBoundingClientRect();return sheetState==='full'&&m.top>=s.top&&m.bottom<=s.bottom}));
-   await page.click('[data-sort="distance"]');assert.equal(await state(()=>sortMode),'distance');
-   await state(()=>{sortMode='default';syncSortUI();render(false);setSheetState('mid');});await page.waitForTimeout(250);
+ for(const width of [900,768,390,360,320])await check('mobile '+width+'px: unified map sheet, filters, normal list scroll and detail',async()=>{
+   await page.setViewportSize({width,height:844});await page.waitForTimeout(260);
+   assert.ok(await state(()=>sheetState==='mid'&&sidebar.classList.contains('sheet-mid')&&sidebar.classList.contains('mobile-unified-mode')));
+   assert.ok(await state(()=>!sidebar.classList.contains('mobile-search-mode')&&!sidebar.classList.contains('mobile-list-mode')));
+   assert.ok(await page.locator('#search').isVisible());
+   assert.ok(!(await page.locator('#mobileSearchOpen').isVisible())&&!(await page.locator('#mobileListOpen').isVisible()));
+   assert.ok(await state(()=>getComputedStyle(document.querySelector('.multi-filter-wrap')).display==='none'));
+   assert.ok(await page.locator('#mobileFilterToggle').isVisible());
+   assert.ok(!(await page.locator('[data-chip="map"]').isVisible()));
+   const layout=await state(()=>{
+     const s=sidebar.getBoundingClientRect(),h=document.querySelector('.topbar').getBoundingClientRect();
+     const list=document.getElementById('list'),card=document.querySelector('.card');
+     return {sheetH:s.height,sheetBottom:s.bottom,headerH:h.height,listH:list.getBoundingClientRect().height,cardH:card.getBoundingClientRect().height,snap:getComputedStyle(list).scrollSnapType,overflow:sidebar.scrollWidth-sidebar.clientWidth};
+   });
+   assert.ok(layout.headerH<=70,JSON.stringify(layout));
+   assert.ok(layout.sheetH>=250&&layout.sheetH<500,JSON.stringify(layout));
+   assert.ok(layout.listH>layout.cardH,JSON.stringify(layout));
+   assert.ok(!/mandatory/.test(layout.snap),layout.snap);
+   assert.ok(layout.overflow<=1,JSON.stringify(layout));
+   if(width===390)await shot('mobile-unified-mid');
 
-   await page.click('#sheetHandle');assert.ok(await state(()=>sheetState==='full'));await state(()=>setSheetState('mid'));
-   await page.locator('.card-open').first().click();await page.waitForTimeout(250);assert.ok(await state(()=>commentPanel.classList.contains('open')&&sheetState==='hidden'));
+   await page.click('#mobileFilterToggle');await page.waitForTimeout(180);
+   assert.ok(await state(()=>sheetState==='full'&&sidebar.classList.contains('mobile-filters-open')));
+   assert.ok(await page.locator('.multi-filter-wrap').isVisible());
+   await choose('distanceFilter','500');
+   assert.ok(await page.evaluate(()=>getRows().every(x=>distanceFromSeahTower(x)<=500)));
+   await page.click('#multiFilterReset');
+   await page.click('#mobileFilterToggle');
+   assert.ok(await state(()=>!sidebar.classList.contains('mobile-filters-open')));
+   await state(()=>setSheetState('mid'));await page.waitForTimeout(120);
+
+   await page.click('#sortButton');await page.waitForTimeout(140);
+   assert.ok(await state(()=>{const s=sidebar.getBoundingClientRect(),m=document.getElementById('sortMenu').getBoundingClientRect();return m.top>=s.top&&m.bottom<=s.bottom+1}));
+   await page.click('[data-sort="distance"]');assert.equal(await state(()=>sortMode),'distance');
+   await state(()=>{sortMode='default';syncSortUI();render(false);setSheetState('mid');});await page.waitForTimeout(120);
+
+   await page.click('#sheetHandle');assert.ok(await state(()=>sheetState==='full'));
+   await page.click('#sheetHandle');assert.ok(await state(()=>sheetState==='mid'));
+   await state(()=>setSheetState('peek'));await page.waitForTimeout(100);
+   assert.ok(!(await page.locator('#search').isVisible())&&await page.locator('.list-head').isVisible());
+   await page.click('#sheetHandle');assert.ok(await state(()=>sheetState==='mid'));
+
+   await page.click('#mobileMyLocation');await page.waitForTimeout(250);
+   assert.ok(await state(()=>Math.abs(map.getCenter().getLat()-37.55)<0.0001));
+
+   await page.locator('.card-open').first().click();await page.waitForTimeout(250);
+   assert.ok(await state(()=>commentPanel.classList.contains('open')&&sheetState==='hidden'));
    const p=await page.locator('#commentPanel').boundingBox();assert.ok(p.x>=-1&&p.x+p.width<=width+1);
    if(width===390)await shot('mobile-detail');
-   await page.click('#commentClose');await page.waitForTimeout(250);
+   await page.click('#commentClose');await page.waitForTimeout(350);
+   assert.ok(await state(()=>!commentPanel.classList.contains('open')&&sheetState==='mid'));
  });
  await check('desktop after mobile resize and no uncaught errors',async()=>{
    await page.setViewportSize({width:1440,height:900});await reset();assert.ok(await page.locator('#search').isVisible());assert.deepEqual(errors,[]);
