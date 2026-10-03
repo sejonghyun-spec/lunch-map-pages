@@ -168,11 +168,12 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(await state(()=>Math.abs(map.getCenter().getLat()-37.55)<0.0001));
 
    await page.locator('.card-open').first().click();await page.waitForTimeout(250);
-   assert.ok(await state(()=>commentPanel.classList.contains('open')&&sheetState==='hidden'));
-   const p=await page.locator('#commentPanel').boundingBox();assert.ok(p.x>=-1&&p.x+p.width<=width+1);
+   assert.ok(await state(()=>commentPanel.classList.contains('open')&&sheetState==='hidden'&&document.body.classList.contains('detail-mobile-open')));
+   const p=await page.locator('#commentPanel').boundingBox();
+   assert.ok(Math.abs(p.x)<=1&&Math.abs(p.width-width)<=1&&p.y<=1,JSON.stringify(p));
    if(width===390)await shot('mobile-detail');
    await page.click('#commentClose');await page.waitForTimeout(350);
-   assert.ok(await state(()=>!commentPanel.classList.contains('open')&&sheetState==='mid'));
+   assert.ok(await state(()=>!commentPanel.classList.contains('open')&&sheetState==='mid'&&!document.body.classList.contains('detail-mobile-open')));
  });
  await check('desktop after mobile resize and no uncaught errors',async()=>{
    await page.setViewportSize({width:1440,height:900});await reset();assert.ok(await page.locator('#search').isVisible());assert.deepEqual(errors,[]);
