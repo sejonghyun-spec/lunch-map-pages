@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-list-hover-marker-v39">
+<meta name="lunch-map-build" content="2026-10-03-list-hover-arrow-large-v40">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -845,13 +845,15 @@ button,input,select{font:inherit}
   content:'▼';
   position:absolute;
   left:50%;
-  top:-19px;
+  top:-28px;
   transform:translateX(-50%);
   color:var(--marker-color);
-  font-size:17px;
+  font-size:25px;
   font-weight:900;
   line-height:1;
-  text-shadow:0 1px 2px rgba(255,255,255,.95),0 1px 4px rgba(22,31,36,.22);
+  text-shadow:
+    0 1px 2px rgba(255,255,255,.98),
+    0 2px 6px rgba(22,31,36,.28);
   pointer-events:none;
 }
 .marker-label.list-hover .marker-pin{
