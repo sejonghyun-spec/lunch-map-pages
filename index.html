@@ -3882,6 +3882,33 @@ function deleteComment(commentId,button){
   refreshCommentsSoon(restaurant,3000);
 }
 
+function toggleHelpfulComment(commentId){
+  if(!commentRestaurant||!commentId)return;
+  if(!ensureCompanyAccount())return;
+
+  const restaurant=commentRestaurant;
+  const restaurantKey=restaurantCommentKey(restaurant);
+  const rows=currentCommentRows.map(x=>{
+    if(String(x.id||'')!==String(commentId))return x;
+    const active=!x.helpfulByMe;
+    const count=Math.max(0,(Number(x.helpfulCount)||0)+(active?1:-1));
+    return {...x,helpfulByMe:active,helpfulCount:count};
+  });
+
+  currentCommentRows=rows;
+  preloadedComments.set(restaurantKey,rows);
+  renderComments(rows);
+
+  postCommentFields({
+    mode:'commentHelpful',
+    key:restaurantKey,
+    commentId:commentId
+  }).catch(()=>{
+    showToast('도움이 돼요 반영에 실패했습니다.');
+  });
+  refreshCommentsSoon(restaurant,1800);
+}
+
 function safeHttpUrl(value){
   const s=String(value||'').trim();
   return /^https?:\/\//i.test(s)?s:'';
@@ -4249,6 +4276,12 @@ commentForm.addEventListener('submit',e=>{
     return;
   }
 
+  const scores={
+    taste:commentTaste?.value||'',
+    amount:commentAmount?.value||'',
+    price:commentPrice?.value||'',
+    wait:commentWait?.value||''
+  };
   const commentId=makeClientCommentId();
   const nickname=getCommentNickname();
   const optimisticRow={
@@ -4256,14 +4289,18 @@ commentForm.addEventListener('submit',e=>{
     nickname:nickname,
     comment:textValue,
     createdAt:'방금',
-    canDelete:true
+    canDelete:true,
+    helpfulCount:0,
+    helpfulByMe:false,
+    ...scores
   };
 
-  // 즉시 화면에 표시
   const afterAdd=[optimisticRow,...currentCommentRows];
+  currentCommentRows=afterAdd;
   renderComments(afterAdd);
   preloadedComments.set(restaurantKey,afterAdd);
   commentInput.value='';
+  [commentTaste,commentAmount,commentPrice,commentWait].forEach(el=>{if(el)el.value='';});
   commentSubmitting=true;
   commentSubmit.disabled=true;
   commentSubmit.textContent='등록 중';
@@ -4277,6 +4314,10 @@ commentForm.addEventListener('submit',e=>{
     address:restaurant.address||'',
     commentId:commentId,
     comment:textValue,
+    taste:scores.taste,
+    amount:scores.amount,
+    price:scores.price,
+    wait:scores.wait,
     website:''
   }).catch(()=>{
     commentStatus.textContent='댓글 등록 전송에 실패했습니다.';
@@ -4289,7 +4330,7 @@ commentForm.addEventListener('submit',e=>{
   commentStatus.textContent=nickname+'로 등록했습니다.';
   commentStatus.className='comment-status';
   showToast('댓글이 등록되었습니다.');
-  refreshCommentsSoon(restaurant,3000);
+  refreshCommentsSoon(restaurant,2200);
 });
 
 const rouletteModal=document.getElementById('rouletteModal');
