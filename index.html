@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-kakao-direct-place-v51">
+<meta name="lunch-map-build" content="2026-10-03-kakao-detail-fields-v52">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
@@ -848,6 +848,12 @@ button,input,select,textarea{font:inherit}
   line-height:1.5;
   word-break:break-word;
 }
+.detail-info-link{
+  color:#287bb5;
+  font-weight:700;
+  text-decoration:none;
+}
+.detail-info-link:hover{text-decoration:underline}
 .comment-count{
   flex:0 0 auto;
   padding:5px 9px;
@@ -3171,6 +3177,7 @@ function searchPlaceForRow(row){
 }
 
 const kakaoPlaceUrlCache=new Map();
+const kakaoPlaceDetailCache=new Map();
 
 function normalizeKakaoAddress(value){
   return String(value||'')
@@ -3245,35 +3252,71 @@ function kakaoKeywordSearchPromise(keyword,row){
   });
 }
 
+async function resolveKakaoPlace(row){
+  if(!row||!row.name)return null;
+  const cacheKey=restaurantCommentKey(row);
+  if(kakaoPlaceDetailCache.has(cacheKey))return kakaoPlaceDetailCache.get(cacheKey);
+  if(!placesService)return null;
+
+  let place=null;
+  const combined=[row.name,row.address].filter(Boolean).join(' ').trim();
+  if(combined)place=await kakaoKeywordSearchPromise(combined,row);
+  if(!place)place=await kakaoKeywordSearchPromise(row.name,row);
+  if(!place)return null;
+
+  row._placeId=place.id||row._placeId||'';
+  row._placeUrl=String(place.place_url||'').trim().replace(/^http:/i,'https:')||
+    (place.id?'https://place.map.kakao.com/'+encodeURIComponent(place.id):'');
+
+  kakaoPlaceDetailCache.set(cacheKey,place);
+  if(row._placeUrl)kakaoPlaceUrlCache.set(cacheKey,row._placeUrl);
+  return place;
+}
+
 async function resolveKakaoPlaceUrl(row){
   if(!row||!row.name)return '';
   const cacheKey=restaurantCommentKey(row);
   if(kakaoPlaceUrlCache.has(cacheKey))return kakaoPlaceUrlCache.get(cacheKey);
 
   const knownId=String(row._placeId||row.placeId||'').trim();
-  if(knownId){
-    const direct='https://place.map.kakao.com/'+encodeURIComponent(knownId);
-    kakaoPlaceUrlCache.set(cacheKey,direct);
-    return direct;
-  }
+  const place=await resolveKakaoPlace(row);
 
-  if(!placesService)return '';
+  const direct=String(place&&place.place_url||'').trim().replace(/^http:/i,'https:')||
+    (place&&place.id?'https://place.map.kakao.com/'+encodeURIComponent(place.id):'')||
+    (knownId?'https://place.map.kakao.com/'+encodeURIComponent(knownId):'');
 
-  let place=null;
-  const combined=[row.name,row.address].filter(Boolean).join(' ').trim();
-  if(combined)place=await kakaoKeywordSearchPromise(combined,row);
-  if(!place)place=await kakaoKeywordSearchPromise(row.name,row);
-
-  if(!place)return '';
-
-  const direct=String(place.place_url||'').trim().replace(/^http:/i,'https:')||
-    (place.id?'https://place.map.kakao.com/'+encodeURIComponent(place.id):'');
-  if(!direct)return '';
-
-  row._placeId=place.id||row._placeId||'';
-  row._placeUrl=direct;
-  kakaoPlaceUrlCache.set(cacheKey,direct);
+  if(direct)kakaoPlaceUrlCache.set(cacheKey,direct);
   return direct;
+}
+
+function renderRestaurantDetailInfo(row,place){
+  if(!row)return;
+  const distance=formatDistanceFromSeahTower(row);
+  const kakaoCategory=String(place&&place.category_name||'').trim();
+  const phone=String(place&&place.phone||'').trim();
+  const roadAddress=String(place&&place.road_address_name||'').trim();
+  const address=roadAddress||String(row.address||'').trim();
+
+  const infoRows=[
+    ['특징',row.feature],
+    ['비고',row.note],
+    ['수용인원',row.capacity],
+    ['거리',distance?('세아타워 기준 '+distance):''],
+    ['카카오 업종',kakaoCategory],
+    ['전화',phone],
+    ['주소',address]
+  ].filter(x=>String(x[1]||'').trim());
+
+  detailInfo.innerHTML=infoRows.length
+    ? infoRows.map(([label,value])=>{
+        let rendered=esc(value);
+        if(label==='전화'){
+          const tel=String(value||'').replace(/[^0-9+]/g,'');
+          if(tel)rendered='<a class="detail-info-link" href="tel:'+esc(tel)+'">'+esc(value)+'</a>';
+        }
+        return '<div class="detail-info-row"><div class="detail-info-label">'+esc(label)+'</div><div class="detail-info-value">'+rendered+'</div></div>';
+      }).join('')
+    : '<div class="comment-empty">등록된 상세 정보가 없습니다.</div>';
 }
 
 async function prepareKakaoPlaceLink(row){
@@ -3282,8 +3325,11 @@ async function prepareKakaoPlaceLink(row){
   kakaoMapLink.removeAttribute('href');
   kakaoMapLink.textContent='카카오맵 확인 중';
 
+  const place=await resolveKakaoPlace(row);
   const url=await resolveKakaoPlaceUrl(row);
   if(!commentRestaurant||restaurantCommentKey(commentRestaurant)!==targetKey)return;
+
+  renderRestaurantDetailInfo(row,place);
 
   kakaoMapLink.classList.remove('is-loading');
   kakaoMapLink.textContent='카카오맵';
@@ -3291,7 +3337,7 @@ async function prepareKakaoPlaceLink(row){
     kakaoMapLink.href=url;
     kakaoMapLink.title='카카오맵에서 '+String(row.name||'식당')+' 상세정보 보기';
   }else{
-    kakaoMapLink.href='https://map.kakao.com/?q='+encodeURIComponent(String(row.name||'').trim());
+    kakaoMapLink.href='https://map.kakao.com/?q='+encodeURIComponent([row.name,row.address].filter(Boolean).join(' '));
     kakaoMapLink.title='카카오맵에서 '+String(row.name||'식당')+' 검색';
   }
 }
@@ -3963,18 +4009,7 @@ function openComments(restaurant){
   if(/빠른|빨리|회전 빠|금방/.test(filterText(restaurant)))tags.push('빠른 식사');
   detailTags.innerHTML=tags.map(x=>'<span class="detail-tag">'+esc(x)+'</span>').join('');
 
-  const infoRows=[
-    ['특징',restaurant.feature],
-    ['비고',restaurant.note],
-    ['수용인원',restaurant.capacity],
-    ['거리',distance?('세아타워 기준 '+distance):''],
-    ['주소',restaurant.address]
-  ].filter(x=>String(x[1]||'').trim());
-
-  detailInfo.innerHTML=infoRows.length
-    ? infoRows.map(x=>'<div class="detail-info-row"><div class="detail-info-label">'+esc(x[0])+'</div><div class="detail-info-value">'+esc(x[1])+'</div></div>').join('')
-    : '<div class="comment-empty">등록된 상세 정보가 없습니다.</div>';
-
+  renderRestaurantDetailInfo(restaurant,null);
   prepareKakaoPlaceLink(restaurant);
   updateFavoriteButton();
 
