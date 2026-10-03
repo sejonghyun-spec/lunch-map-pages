@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-no-photos-v49">
+<meta name="lunch-map-build" content="2026-10-03-no-photos-map-restored-v50">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
@@ -755,6 +755,25 @@ button,input,select,textarea{font:inherit}
 .detail-kakao-link{
   display:inline-flex;align-items:center;justify-content:center;height:38px;border:1px solid #f1cf00;
   border-radius:10px;padding:0 13px;background:#fee500;color:#2a2419;font-size:13.5px;font-weight:800;text-decoration:none
+}
+.detail-tabs{
+  position:sticky;top:0;z-index:3;display:grid;grid-template-columns:repeat(2,1fr);
+  border-top:1px solid #edf0f2;border-bottom:1px solid #dfe5e8;background:#fff
+}
+.detail-tab{
+  height:52px;border:0;border-bottom:3px solid transparent;background:#fff;color:#59646a;
+  font-size:15px;font-weight:750;letter-spacing:-.2px;cursor:pointer
+}
+.detail-tab:hover{background:#f8fafb;color:#30393e}
+.detail-tab.active{
+  border-bottom-color:var(--brand);background:#fffaf7;color:var(--brand-dark);font-weight:850
+}
+.detail-tab-panel{display:none}
+.detail-tab-panel.active{display:block}
+.detail-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+.detail-tag{
+  display:inline-flex;align-items:center;min-height:30px;border-radius:999px;padding:5px 10px;
+  background:#f2f5f6;color:#4e5960;font-size:12.5px;font-weight:750
 }
 .review-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 0 14px}
 .review-score{padding:11px 6px;border:1px solid #edf0f2;border-radius:10px;background:#f8f9fa;text-align:center}
@@ -1933,10 +1952,6 @@ button,input,select,textarea{font:inherit}
     padding:8px 8px calc(8px + var(--mobile-safe-bottom));
     align-items:flex-end;
   }
-  
-  
-  
-  
   .suggest-modal{
     width:100%;
     max-height:calc(100dvh - var(--mobile-safe-top) - 12px);
@@ -2102,7 +2117,6 @@ button,input,select,textarea{font:inherit}
         </div>
       </div>
       <div id="list" class="list"><div class="empty">식당 정보를 불러오는 중입니다.</div></div>
-    </div>
     </aside>
 
     <section class="map-wrap">
