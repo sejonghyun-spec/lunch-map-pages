@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-restaurant-detail-panel-v42">
+<meta name="lunch-map-build" content="2026-10-03-narrower-side-panels-v43">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -16,7 +16,7 @@
   --soft:#f7f4f1;
   --panel:#fff;
   --shadow:0 8px 24px rgba(34,27,22,.12);
-  --sidebar:500px;
+  --sidebar:430px;
   --header:74px;
 }
 *{box-sizing:border-box}
@@ -576,8 +576,8 @@ button,input,select{font:inherit}
   z-index:35;
   display:grid;
   grid-template-rows:auto minmax(0,1fr) auto;
-  width:min(460px,46vw);
-  min-width:370px;
+  width:min(400px,42vw);
+  min-width:340px;
   height:100%;
   overflow:hidden;
   transform:translateX(-104%);
