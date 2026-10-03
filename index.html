@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-fast-account-connect-v56">
+<meta name="lunch-map-build" content="2026-10-03-sidebar-explore-v57">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
@@ -88,9 +88,9 @@ button,input,select,textarea{font:inherit}
 .filter-btn{
   flex:0 0 auto;
   min-height:38px;
-  border:1px solid #e2e6e9;
+  border:1px solid var(--line);
   background:#fff;
-  color:#3f4549;
+  color:#625950;
   border-radius:999px;
   padding:8px 14px;
   font-size:14px;
@@ -109,11 +109,9 @@ button,input,select,textarea{font:inherit}
   background:var(--filter-color,#64748b);
   color:#fff;
   filter:saturate(1.05) brightness(.98);
-  transform:translateY(-1px);
-  text-shadow:0 1px 1px rgba(0,0,0,.16);
-  box-shadow:
-    0 2px 5px rgba(25,31,35,.18),
-    inset 0 0 0 1px rgba(255,255,255,.22);
+  transform:none;
+  text-shadow:none;
+  box-shadow:none;
 }
 .filter-btn.active:hover{
   background:var(--filter-color,#64748b);
@@ -203,138 +201,77 @@ button,input,select,textarea{font:inherit}
   overflow:hidden;
 }
 .sheet-handle{display:none}
-.search-wrap{padding:11px 16px 9px}
+.search-wrap{padding:18px 16px 12px}
+.search-field{position:relative;display:block}
+.search-icon{
+  position:absolute;left:16px;top:50%;transform:translateY(-50%);
+  width:20px;height:20px;color:var(--brand);pointer-events:none;
+}
 .search{
-  width:100%;
-  height:46px;
-  border:1px solid #dfe4e7;
-  border-radius:10px;
-  padding:0 15px;
-  font-size:16px;
-  color:var(--text);
-  background:#fff;
-  outline:none;
+  width:100%;height:52px;border:1.5px solid #b98065;border-radius:14px;
+  padding:0 14px 0 46px;font-size:16px;color:var(--text);background:#fff;
+  outline:none;box-shadow:0 3px 12px rgba(154,79,49,.06);
+  transition:border-color .14s,box-shadow .14s;
 }
-.search::placeholder{color:#918983}
-.search:focus{
-  border-color:#b8c2c8;
-  box-shadow:0 0 0 3px rgba(75,92,101,.07);
-}
+.search::placeholder{color:#8a8078}
+.search:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(154,79,49,.13)}
 .multi-filter-wrap{padding:0 16px 10px}
-.multi-filter-scroll{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:7px 8px;
-  width:100%;
+.multi-filter-scroll{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.compact-filter{position:relative;min-width:0;display:block}
+.compact-filter-label{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  height:36px;border:1px solid var(--line);border-radius:999px;
+  background:#fff;color:#625950;font-size:13px;font-weight:600;
+  white-space:nowrap;pointer-events:none;
+}
+.compact-filter-label::after{
+  content:'';width:5px;height:5px;border-right:1.5px solid currentColor;
+  border-bottom:1.5px solid currentColor;transform:translateY(-2px) rotate(45deg);flex:none;
 }
 .multi-filter-select{
-  width:100%;
-  min-width:0;
-  max-width:none;
-  height:40px;
-  appearance:none;
-  -webkit-appearance:none;
-  border:1px solid #dfe4e7;
-  border-radius:11px;
-  padding:0 34px 0 12px;
-  background-color:#fff;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M2 2l4 4 4-4' fill='none' stroke='%23646b70' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;
-  background-position:right 12px center;
-  color:#4a5155;
-  font-size:13px;
-  font-weight:600;
-  outline:none;
-  cursor:pointer;
-  transition:border-color .14s,background-color .14s,color .14s,box-shadow .14s;
+  position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;
+  font-size:16px;
 }
-.multi-filter-select:hover{
-  border-color:#cbd2d6;
-  background-color:#fafbfc;
+.compact-filter:has(.multi-filter-select:hover) .compact-filter-label{background:var(--soft);border-color:#cdbbae}
+.compact-filter:has(.multi-filter-select.active) .compact-filter-label{
+  background:#faf0e9;border-color:#bc866d;color:var(--brand-dark);font-weight:700;
 }
-.multi-filter-select:focus{
-  border-color:#9da8ae;
-  box-shadow:0 0 0 3px rgba(74,87,94,.07);
+.compact-filter:has(.multi-filter-select:focus-visible) .compact-filter-label{
+  outline:2px solid var(--brand);outline-offset:2px;
 }
-.multi-filter-select.active{
-  border-color:#c79a86;
-  background-color:#fbf4f0;
-  color:var(--brand-dark);
-  font-weight:700;
-}
-.multi-filter-select:disabled{opacity:.48;cursor:not-allowed}
+.compact-filter:has(.multi-filter-select:disabled){opacity:.48}
 .multi-filter-reset{
-  grid-column:1/-1;
-  justify-self:end;
-  width:auto;
-  height:28px;
-  border:0;
-  border-radius:7px;
-  padding:0 4px;
-  background:transparent;
-  color:#7b8286;
-  font-size:12px;
-  font-weight:600;
-  cursor:pointer;
+  margin-left:auto;flex:none;height:32px;border:0;border-radius:8px;padding:0 6px;
+  background:transparent;color:var(--muted);font-size:12px;font-weight:550;cursor:pointer;
 }
-.multi-filter-reset:hover{
-  background:#f5f6f7;
-  color:#50575b;
-}
+.multi-filter-reset:hover{background:var(--soft);color:var(--brand-dark)}
 .filter-chip-row{
-  display:flex;
-  gap:6px;
-  overflow-x:auto;
-  padding:0 16px 9px;
-  scrollbar-width:none;
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;
+  margin:0 16px 10px;padding:4px;border-radius:12px;background:#f5f3f1;
 }
-.filter-chip-row::-webkit-scrollbar{display:none}
 .filter-chip{
-  flex:0 0 auto;
-  height:31px;
-  border:1px solid #dfe4e7;
-  border-radius:999px;
-  padding:0 10px;
-  background:#fff;
-  color:#596267;
-  font-size:11.5px;
-  font-weight:700;
-  cursor:pointer;
+  min-width:0;height:34px;border:1px solid transparent;border-radius:9px;padding:0 3px;
+  background:transparent;color:#675e57;font-size:12.5px;font-weight:650;white-space:nowrap;
+  cursor:pointer;transition:background .14s,color .14s;
 }
-.filter-chip.active{
-  border-color:#566269;
-  background:#566269;
-  color:#fff;
-}
-.quick-row{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:9px;
-  padding:0 16px 12px;
-}
+.filter-chip:hover{background:#eae4de}
+.filter-chip.active{border-color:var(--brand);background:var(--brand);color:#fff}
+.quick-row{display:flex;align-items:center;gap:6px;padding:0 16px 12px}
+.map-tools-label{font-size:11px;color:#8b8178;margin-right:2px;flex:none}
 .quick-btn{
-  height:44px;
-  border:1px solid #dfe4e7;
-  border-radius:11px;
-  background:#fff;
-  color:#41494d;
-  font-size:14px;
-  font-weight:650;
-  cursor:pointer;
-  transition:background .12s,border-color .12s,box-shadow .12s;
+  height:32px;border:1px solid var(--line);border-radius:8px;padding:0 10px;
+  background:#fff;color:#625950;font-size:12px;font-weight:600;cursor:pointer;
 }
-.quick-btn:hover{
-  background:#fafbfc;
-  border-color:#cbd2d6;
-  box-shadow:0 1px 3px rgba(34,44,50,.06);
-}
+.quick-btn:hover{background:var(--soft);border-color:#cdbbae}
+.sidebar button:focus-visible,.filter-btn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
 .list-head{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:9px 16px 8px;
-  border-top:1px solid #f0ebe7;
-  border-bottom:1px solid #f0ebe7;
+  padding:11px 18px;
+  border-top:1px solid var(--line);
+  border-bottom:0;
   font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",Arial,sans-serif;
 }
 .list-title{
@@ -343,12 +280,9 @@ button,input,select,textarea{font:inherit}
   line-height:1.25;
   letter-spacing:-.25px;
 }
-.list-sub{
-  margin-top:3px;
-  font-size:12px;
-  font-weight:500;
-  color:#777f84;
-}
+.list-heading{display:flex;align-items:baseline;gap:7px;min-width:0}
+.list-sub{font-size:15px;font-weight:750;color:var(--brand);font-variant-numeric:tabular-nums}
+
 .sort-wrap{
   position:relative;
   flex:0 0 auto;
@@ -426,54 +360,51 @@ button,input,select,textarea{font:inherit}
 }
 .sort-option.active .sort-check{visibility:visible}
 .list{
-  min-height:0;
-  overflow-y:auto;
-  padding:0 12px 14px;
-  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",Arial,sans-serif;
+  position:relative;min-height:0;overflow-y:auto;padding:0 10px 14px;
+  scrollbar-width:thin;scrollbar-color:#d7cfc8 transparent;scroll-padding-top:4px;
 }
+.list::-webkit-scrollbar{width:5px}
+.list::-webkit-scrollbar-thumb{background:#d7cfc8;border-radius:999px}
 .card{
-  padding:10px 8px 11px;
-  border-bottom:1px solid #edf0f2;
-  cursor:pointer;
-  transition:background .12s,border-color .12s,box-shadow .12s;
+  position:relative;padding:13px 10px 14px;border-bottom:1px solid #f0ece8;
+  border-radius:10px;cursor:pointer;
+  transition:background .12s,box-shadow .12s;
 }
-.card:hover,.card.map-hover{background:#f7f9fa}
-.card.map-hover{box-shadow:inset 3px 0 0 #8a969d}
-.card-mini-meta{
-  display:flex;
-  flex-wrap:wrap;
-  gap:5px 9px;
-  margin-top:5px;
-  color:#7a8388;
-  font-size:11.5px;
-  font-weight:550;
-}
-.card-favorite{color:#d19a00;font-weight:800}
-.search-hit{border-radius:3px;background:#fff0a8;color:inherit}
+.card:hover{background:#f7f5f3}
+.card.map-hover{background:#f4f6f7;box-shadow:inset 0 0 0 1px #aab4ba}
 .card.active{
-  background:color-mix(in srgb,var(--card-color,#64748b) 8%,#fff);
-  box-shadow:inset 3px 0 0 var(--card-color,#64748b);
+  background:color-mix(in srgb,var(--card-color,#64748b) 4%,#fff);
+  box-shadow:inset 4px 0 0 var(--card-color,#64748b);
 }
-.card.active .name{
-  color:#24292d;
-}
-.card-head{
-  display:flex;
-  gap:8px;
-  align-items:center;
-}
+.card.active.map-hover{box-shadow:inset 4px 0 0 var(--card-color,#64748b),inset 0 0 0 1px #aab4ba}
+.card-head{display:flex;gap:7px;align-items:center;min-width:0}
 .name{
-  min-width:0;
-  flex:1 1 auto;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  color:#24292d;
-  font-size:16px;
-  font-weight:700;
-  line-height:1.3;
-  letter-spacing:-.32px;
+  min-width:0;flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:var(--text);font-size:17px;font-weight:750;line-height:1.4;letter-spacing:-.32px;
 }
+.card-open{border:0;padding:0;background:transparent;text-align:left;cursor:pointer}
+.card-favorite{
+  display:grid;place-items:center;flex:none;width:30px;height:30px;border:0;border-radius:8px;
+  background:transparent;color:#9b9188;font-size:22px;cursor:pointer;line-height:1;
+}
+.card-favorite:hover{background:#f0e7df}
+.card-favorite[aria-pressed="true"]{color:var(--brand)}
+.card .badge{min-height:24px;padding:4px 8px;font-size:11.5px;gap:5px}
+.card .badge-dot{width:5px;height:5px}
+.card-stats{display:flex;align-items:center;flex-wrap:wrap;gap:4px 7px;margin-top:5px;font-size:12px;line-height:1.5;color:var(--muted)}
+.card-stats .rating{min-height:0;margin:0;font-size:13px;color:#a75a19;font-weight:750}
+.card-evaluations{font-variant-numeric:tabular-nums}
+.card-evaluations + .card-review:not([hidden])::before{content:'·';margin-right:7px;color:#b2a79d}
+.card-stats:not(:has(.rating,.card-distance,.card-review:not([hidden]))){display:none}
+.card-distance{margin-left:auto;font-variant-numeric:tabular-nums;font-size:12px;color:#756a61;white-space:nowrap}
+.card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.card-tag{max-width:100%;border-radius:5px;padding:3px 7px;background:#f1f2f3;color:#5c6063;font-size:12px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-feature,.card-note{margin-top:7px;font-size:13px;line-height:1.5;color:#58514b;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.card-note{font-size:12px;color:#7d7168;-webkit-line-clamp:1}
+.card-note-label{color:#8a7b70;font-weight:650;margin-right:6px}
+.card-address{margin-top:7px;font-size:12px;color:#8a8078;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.search-hit{border-radius:3px;background:#fff0a8;color:inherit}
+
 .badge{
   flex:0 0 auto;
   display:inline-flex;
@@ -1764,79 +1695,23 @@ button,input,select,textarea{font:inherit}
   }
   .sheet-handle:active{cursor:grabbing}
 
-  .search-wrap{padding:8px 12px}
-  .search{
-    height:46px;
-    padding:0 14px;
-    border-radius:13px;
-    font-size:16px;
-  }
-  .multi-filter-wrap{padding:0 12px 8px}
-  .filter-chip-row{padding:0 12px 8px}
-  .multi-filter-scroll{
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:6px;
-  }
-  .multi-filter-select{
-    width:100%;
-    min-width:0;
-    max-width:none;
-    height:38px;
-    padding:0 32px 0 11px;
-    background-position:right 11px center;
-    font-size:12.5px;
-  }
-  .multi-filter-reset{
-    grid-column:1/-1;
-    height:27px;
-    font-size:11.5px;
-  }
-  .quick-row{
-    gap:8px;
-    padding:0 12px 8px;
-  }
-  .quick-btn{
-    height:42px;
-    border-radius:12px;
-    font-size:14px;
-  }
-  .list-head{
-    padding:9px 12px 8px;
-  }
-  .list-title{font-size:16.5px;font-weight:700}
-  .list-sub{font-size:11.5px;font-weight:500}
-  .sort-btn{height:32px;font-size:12px}
-  .list{
-    padding:0 8px calc(14px + var(--mobile-safe-bottom));
-    -webkit-overflow-scrolling:touch;
-    overscroll-behavior:contain;
-  }
+  .search-wrap{padding:6px 12px 10px}
+  .search{height:48px;padding-left:44px;font-size:16px}
+  .search-icon{left:14px}
+  .multi-filter-wrap{padding:0 12px 9px}
+  .filter-chip-row{margin:0 12px 9px}
+  .compact-filter-label{height:36px;font-size:12px;gap:4px}
+  .quick-row{padding:0 12px 10px;gap:5px}
+  .quick-btn{padding:0 8px}
+  .list-head{padding:9px 12px}
+  .list-title{font-size:16px}
+  .list-sub{font-size:14px}
+  .sort-btn{height:32px;font-size:12.5px}
+  .list{padding:0 8px calc(14px + var(--mobile-safe-bottom));-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
   .card{padding:12px 10px 13px}
-  .name{font-size:15.5px;font-weight:700}
-  .badge{
-    min-height:30px;
-    padding:6px 11px;
-    font-size:12.5px;
-    font-weight:700;
-  }
-  .rating{
-    margin-top:4px;
-    font-size:13px;
-    font-weight:650;
-  }
-  .desc{
-    margin-top:4px;
-    font-size:13px;
-    font-weight:450;
-    line-height:1.48;
-  }
-  .meta{
-    gap:3px;
-    margin-top:6px;
-    font-size:12px;
-    font-weight:450;
-    line-height:1.45;
-  }
+  .card .name{font-size:16px}
+  .card .badge{font-size:11.5px}
+
   .empty{
     padding:26px 12px;
     font-size:12.5px;
@@ -2069,21 +1944,29 @@ button,input,select,textarea{font:inherit}
   <main class="main">
     <aside class="sidebar" id="sidebar">
       <div class="sheet-handle" id="sheetHandle" aria-label="식당 목록 열기/닫기"></div>
-      <div class="search-wrap"><input id="search" class="search" type="search" placeholder="식당 이름 · 특징 · 주소 검색"></div>
+      <div class="search-wrap"><label class="search-field">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5" stroke-linecap="round"/></svg>
+        <input id="search" class="search" type="search" aria-label="식당 이름, 특징, 주소 검색" placeholder="식당 이름 · 특징 · 주소 검색">
+      </label></div>
       <div class="multi-filter-wrap">
         <div class="multi-filter-scroll">
+          <label class="compact-filter"><span class="compact-filter-label" aria-hidden="true">평점</span>
           <select id="ratingFilter" class="multi-filter-select" aria-label="평점 필터">
             <option value="all">평점 전체</option>
             <option value="5">★ 5점</option>
             <option value="4">★ 4점 이상</option>
             <option value="3">★ 3점 이상</option>
           </select>
+          </label>
+          <label class="compact-filter"><span class="compact-filter-label" aria-hidden="true">인원</span>
           <select id="capacityFilter" class="multi-filter-select" aria-label="인원 필터">
             <option value="all">인원 전체</option>
             <option value="4">4명+</option>
             <option value="8">8명+</option>
             <option value="group">단체 가능</option>
           </select>
+          </label>
+          <label class="compact-filter"><span class="compact-filter-label" aria-hidden="true">특징</span>
           <select id="featureFilter" class="multi-filter-select" aria-label="특징 필터">
             <option value="all">특징 전체</option>
             <option value="waiting">웨이팅</option>
@@ -2092,6 +1975,8 @@ button,input,select,textarea{font:inherit}
             <option value="group">단체</option>
             <option value="fast">빠른 식사</option>
           </select>
+          </label>
+          <label class="compact-filter"><span class="compact-filter-label" aria-hidden="true">거리</span>
           <select id="distanceFilter" class="multi-filter-select" aria-label="거리 필터">
             <option value="all">거리 전체</option>
             <option value="300">300m 이내</option>
@@ -2099,21 +1984,23 @@ button,input,select,textarea{font:inherit}
             <option value="700">700m 이내</option>
             <option value="1000">1km 이내</option>
           </select>
-          <button id="multiFilterReset" class="multi-filter-reset" type="button">↻ 초기화</button>
+          </label>
         </div>
       </div>
-      <div id="filterChipRow" class="filter-chip-row">
+      <div id="filterChipRow" class="filter-chip-row" role="group" aria-label="빠른 필터">
         <button class="filter-chip" type="button" data-chip="rating4">★ 4점↑</button>
         <button class="filter-chip" type="button" data-chip="favorites">♡ 즐겨찾기</button>
         <button class="filter-chip" type="button" data-chip="recent">최근 본</button>
         <button class="filter-chip" type="button" data-chip="map">현재 지도</button>
       </div>
-      <div class="quick-row">
+      <div class="quick-row" role="group" aria-label="위치 및 지도 제어">
+        <span class="map-tools-label">지도</span>
         <button id="myLocation" class="quick-btn">◎ 내 위치</button>
         <button id="showAll" class="quick-btn">⌂ 전체 보기</button>
+        <button id="multiFilterReset" class="multi-filter-reset" type="button" aria-label="상세 필터와 빠른 필터 초기화">↻ 초기화</button>
       </div>
       <div class="list-head">
-        <div><div id="listTitle" class="list-title">식당 목록</div><div id="listSub" class="list-sub">지도에 표시된 식당</div></div>
+        <div class="list-heading"><div id="listTitle" class="list-title">주변 식당</div><div id="listSub" class="list-sub" role="status" aria-live="polite"></div></div>
         <div id="sortWrap" class="sort-wrap">
           <button id="sortButton" class="sort-btn" type="button" aria-haspopup="menu" aria-expanded="false">
             <span id="sortLabel">기본순</span><span class="sort-chevron" aria-hidden="true"></span>
@@ -2530,6 +2417,7 @@ function updateFilterChipUI(){
       (chip==='recent'&&recentOnly)||
       (chip==='map'&&mapOnlyMode);
     btn.classList.toggle('active',active);
+    btn.setAttribute('aria-pressed',String(active));
   });
   const mapBtn=document.getElementById('mapBoundsButton');
   if(mapBtn)mapBtn.classList.toggle('active',mapOnlyMode);
@@ -2546,6 +2434,14 @@ function updateMultiFilterUI(){
     if(!el)return;
     el.value=value;
     el.classList.toggle('active',value!=='all');
+    const labels={
+      ratingFilter:{all:'평점',5:'5점',4:'4점↑',3:'3점↑'},
+      capacityFilter:{all:'인원',4:'4명+',8:'8명+',group:'단체'},
+      featureFilter:{all:'특징',waiting:'웨이팅',reservation:'예약',room:'룸',group:'단체',fast:'빠른 식사'},
+      distanceFilter:{all:'거리',300:'300m',500:'500m',700:'700m',1000:'1km'}
+    };
+    const label=el.parentElement.querySelector('.compact-filter-label');
+    if(label)label.textContent=labels[id][value]||labels[id].all;
   });
   updateFilterChipUI();
 }
@@ -3030,26 +2926,54 @@ function getRows(){
   return rows;
 }
 
+// Only display registered text. In particular, “룸 없음” must never become a “룸” tag.
+function cardFeatureParts(x){
+  const text=String(x.feature||'').trim();
+  const parts=text.split(/[,·|\n]+/).map(v=>v.trim()).filter(Boolean);
+  const tagged=parts.length>0&&parts.length<=3&&parts.every(v=>v.length<=18);
+  return {tags:tagged?[...new Set(parts)]:[],description:tagged?'':text};
+}
+function updateCardReviewCounts(){
+  // A cache-only DOM update: no request, list rebuild, or scroll reset.
+  document.querySelectorAll('.card-review').forEach(el=>{
+    const rows=preloadedComments.get(el.dataset.reviewKey);
+    el.hidden=!Array.isArray(rows);
+    el.textContent=Array.isArray(rows)?'후기 '+rows.length:'';
+  });
+}
+function updateListHeading(count){
+  const searchMode=searchKeyword.trim()||(isMobile()&&sidebar?.classList.contains('mobile-search-mode'));
+  document.getElementById('listTitle').textContent=searchMode?'검색 결과':'주변 식당';
+  document.getElementById('listSub').textContent=count+'곳';
+}
 function renderList(rows){
   const el=document.getElementById('list');
-  document.getElementById('listSub').textContent='현재 '+rows.length+'곳';
-  if(!rows.length){el.innerHTML='<div class="empty">조건에 맞는 식당이 없습니다.</div>';return;}
+  updateListHeading(rows.length);
+  if(!rows.length){el.innerHTML='<div class="empty">조건에 맞는 식당이 없습니다.<br>검색어나 필터를 변경해 보세요.</div>';return;}
 
   const q=searchKeyword.trim();
   el.innerHTML=rows.map(x=>{
     const distance=formatDistanceFromSeahTower(x);
     const favorite=isFavorite(x);
-    const feature=String(x.feature||x.note||'').trim();
+    const score=ratingScore(x);
+    const features=cardFeatureParts(x);
+    const note=String(x.note||'').trim();
+    const capacity=String(x.capacity||'').trim();
+    const tags=[...features.tags];
+    if(capacity&&/[\p{L}\p{N}]/u.test(capacity))tags.push('인원 '+capacity);
     return '<div class="card" data-row="'+x.row+'" style="--card-color:'+colorFor(x.category)+'">'+
-      '<div class="card-head"><div class="name">'+highlightMatch(x.name,q)+'</div>'+
-        '<div class="badge" style="--badge-color:'+colorFor(x.category)+'"><span class="badge-dot"></span>'+esc(x.category)+'</div></div>'+
-      '<div class="rating">'+esc(ratingText(x))+'</div>'+
-      (feature?'<div class="desc">'+highlightMatch(feature,q)+'</div>':'')+
-      '<div class="card-mini-meta">'+
-        (distance?'<span>↔ '+esc(distance)+'</span>':'')+
-        (x.capacity?'<span>👥 '+esc(x.capacity)+'</span>':'')+
-        (favorite?'<span class="card-favorite">★ 즐겨찾기</span>':'')+
+      '<div class="card-head"><button type="button" class="name card-open" title="'+esc(x.name)+'">'+highlightMatch(x.name,q)+'</button>'+
+        '<div class="badge" style="--badge-color:'+colorFor(x.category)+'"><span class="badge-dot"></span>'+esc(x.category)+'</div>'+
+        '<button type="button" class="card-favorite" aria-label="'+esc(x.name)+' 즐겨찾기" aria-pressed="'+favorite+'">'+(favorite?'♥':'♡')+'</button></div>'+
+      '<div class="card-stats">'+
+        (score?'<span class="rating">★ '+score.toFixed(1)+'</span><span class="card-evaluations">평가 '+(Number(x._ratingCount)||1)+'</span>':'')+
+        '<span class="card-review" data-review-key="'+esc(restaurantCommentKey(x))+'" hidden></span>'+
+        (distance?'<span class="card-distance" title="세아타워 기준 직선거리" aria-label="세아타워에서 직선거리 '+esc(distance)+'">↔ '+esc(distance)+'</span>':'')+
       '</div>'+
+      (tags.length?'<div class="card-tags">'+tags.map(t=>'<span class="card-tag" title="'+esc(t)+'">'+highlightMatch(t,q)+'</span>').join('')+'</div>':'')+
+      (features.description?'<div class="card-feature">'+highlightMatch(features.description,q)+'</div>':'')+
+      (note&&note!==String(x.feature||'').trim()?'<div class="card-note" title="'+esc(note)+'"><span class="card-note-label">메모</span>'+highlightMatch(note,q)+'</div>':'')+
+      (!tags.length&&!features.description&&!note&&x.address?'<div class="card-address">'+highlightMatch(x.address,q)+'</div>':'')+
     '</div>';
   }).join('');
 
@@ -3058,8 +2982,20 @@ function renderList(rows){
     card.addEventListener('mouseenter',()=>setListMarkerHover(row,true));
     card.addEventListener('mouseleave',()=>setListMarkerHover(row,false));
     card.onclick=()=>selectRow(row,true);
+    card.querySelector('.card-favorite').addEventListener('click',event=>{
+      event.stopPropagation();
+      const restaurant=rows.find(x=>Number(x.row)===row);
+      if(!restaurant)return;
+      toggleFavorite(restaurant);
+      updateFavoriteButton();
+      setListMarkerHover(row,false);
+      if(favoritesOnly)render(false);
+      else renderList(getRows());
+      document.querySelector('.card[data-row="'+row+'"] .card-favorite')?.focus({preventScroll:true});
+    });
   });
 
+  updateCardReviewCounts();
   syncSelectedRowsUI();
   if(isMobile()&&sidebar?.classList.contains('mobile-list-mode'))sizeMobileListToOneCard(selectedRow);
 }
@@ -3637,6 +3573,7 @@ function applyCommentBundle(bundle){
   }
   commentsPreloaded=true;
   updateMultiFilterUI();
+  updateCardReviewCounts();
 
   if(commentRestaurant){
     const key=restaurantCommentKey(commentRestaurant);
@@ -3779,6 +3716,7 @@ function renderReviewSummary(rows){
 function renderComments(comments){
   const base=Array.isArray(comments)?comments:[];
   currentCommentRows=base.slice();
+  updateCardReviewCounts();
   commentCount.textContent='댓글 '+base.length;
   renderReviewSummary(base);
 
@@ -4892,8 +4830,6 @@ const mobileMenuButton=document.getElementById('mobileMenuButton');
 const headerActions=document.getElementById('headerActions');
 const mobileSearchOpen=document.getElementById('mobileSearchOpen');
 const mobileListOpen=document.getElementById('mobileListOpen');
-const mobileListTitle=document.getElementById('listTitle');
-const mobileListSub=document.getElementById('listSub');
 
 function closeMobileMenu(){
   if(!mobileMenuButton||!headerActions)return;
@@ -4939,8 +4875,7 @@ function setMobilePanelMode(mode){
   const searchMode=mode==='search';
   sidebar.classList.toggle('mobile-search-mode',searchMode);
   sidebar.classList.toggle('mobile-list-mode',!searchMode);
-  if(mobileListTitle)mobileListTitle.textContent=searchMode?'검색 결과':'식당 목록';
-  if(mobileListSub)mobileListSub.textContent=searchMode?'검색어와 조건에 맞는 식당':'선택한 식당 1곳 표시 · 스크롤해서 다른 식당 보기';
+  updateListHeading(getRows().length);
 }
 function sizeMobileListToOneCard(row){
   if(!isMobile()||!sidebar||!sidebar.classList.contains('mobile-list-mode'))return;
@@ -4961,6 +4896,20 @@ function sizeMobileListToOneCard(row){
     sidebar.style.setProperty('--mobile-list-visible',visible+'px');
   });
 }
+// Card content has variable height. Resize the one-card sheet after scrolling
+// settles, without rebuilding the list or changing its scroll position.
+let mobileListScrollTimer=null;
+document.getElementById('list').addEventListener('scroll',()=>{
+  if(!isMobile()||sheetState!=='mid'||!sidebar.classList.contains('mobile-list-mode'))return;
+  clearTimeout(mobileListScrollTimer);
+  mobileListScrollTimer=setTimeout(()=>{
+    if(!isMobile()||sheetState!=='mid'||!sidebar.classList.contains('mobile-list-mode'))return;
+    const list=document.getElementById('list');
+    const cards=[...list.querySelectorAll('.card')];
+    const nearest=cards.reduce((best,card)=>!best||Math.abs(card.offsetTop-list.scrollTop)<Math.abs(best.offsetTop-list.scrollTop)?card:best,null);
+    if(nearest)sizeMobileListToOneCard(Number(nearest.dataset.row));
+  },120);
+},{passive:true});
 function focusMobileListCard(row){
   if(!isMobile())return;
   setMobilePanelMode('list');
@@ -5026,6 +4975,8 @@ window.addEventListener('resize',()=>{
   }else if(sheetState==='peek'){
     setSheetState('hidden');
   }
+  updateListHeading(getRows().length);
+  if(isMobile())sizeMobileListToOneCard(selectedRow);
   if(mapReady&&map){
     requestAnimationFrame(()=>{
       map.relayout();
