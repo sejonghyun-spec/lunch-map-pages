@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-mobile-single-card-viewport-v37">
+<meta name="lunch-map-build" content="2026-10-03-distance-sort-v38">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <style>
 :root{
@@ -1830,6 +1830,7 @@ button,input,select{font:inherit}
             <button class="sort-option active" type="button" data-sort="default" role="menuitem"><span>기본순</span><span class="sort-check">✓</span></button>
             <button class="sort-option" type="button" data-sort="rating" role="menuitem"><span>별점순</span><span class="sort-check">✓</span></button>
             <button class="sort-option" type="button" data-sort="name" role="menuitem"><span>이름순</span><span class="sort-check">✓</span></button>
+            <button class="sort-option" type="button" data-sort="distance" role="menuitem"><span>거리순</span><span class="sort-check">✓</span></button>
           </div>
         </div>
       </div>
@@ -2005,6 +2006,7 @@ const KAKAO_KEY='c6656c45b7640edcf233a408bf0afa9a';
 const COLORS={'한식':'#d97706','일식':'#2563eb','중식':'#dc2626','양식':'#7c3aed','아시아':'#059669','분식':'#db2777','카페':'#92400e','회식':'#475569'};
 const ORDER=['전체','한식','일식','중식','양식','아시아','분식','카페','회식'];
 const HOME_LAT=37.5501151,HOME_LNG=126.9146385;
+const SEAH_TOWER_LAT=37.55076110,SEAH_TOWER_LNG=126.91420060;
 const DESKTOP_INITIAL_MAP_LEVEL=2;
 const MOBILE_INITIAL_MAP_LEVEL=4;
 function useMobileInitialView(){
@@ -2515,6 +2517,19 @@ function buildFilters(){
     render(false);
   });
 }
+function distanceFromSeahTower(x){
+  if(!hasValidCoords(x))return Number.POSITIVE_INFINITY;
+  return distanceMeters(
+    {lat:SEAH_TOWER_LAT,lng:SEAH_TOWER_LNG},
+    {lat:Number(x.lat),lng:Number(x.lng)}
+  );
+}
+function formatDistanceFromSeahTower(x){
+  const meters=distanceFromSeahTower(x);
+  if(!Number.isFinite(meters))return '';
+  if(meters<1000)return Math.round(meters)+'m';
+  return (meters/1000).toFixed(meters<10000?1:0)+'km';
+}
 function getRows(){
   const q=searchKeyword.trim().toLowerCase();
 
@@ -2545,6 +2560,7 @@ function getRows(){
 
   if(sortMode==='rating')rows=[...rows].sort((a,b)=>ratingScore(b)-ratingScore(a)||a.name.localeCompare(b.name,'ko'));
   else if(sortMode==='name')rows=[...rows].sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+  else if(sortMode==='distance')rows=[...rows].sort((a,b)=>distanceFromSeahTower(a)-distanceFromSeahTower(b)||a.name.localeCompare(b.name,'ko'));
   return rows;
 }
 function renderList(rows){
@@ -2555,7 +2571,10 @@ function renderList(rows){
     '<div class="card-head"><div class="name">'+esc(x.name)+'</div><div class="badge" style="--badge-color:'+colorFor(x.category)+'"><span class="badge-dot"></span>'+esc(x.category)+'</div></div>'+
     '<div class="rating">'+esc(ratingText(x))+'</div>'+
     (x.feature?'<div class="desc">'+esc(x.feature)+'</div>':'')+
-    '<div class="meta">'+(x.capacity?'<div>👥 '+esc(x.capacity)+'</div>':'')+'<div>📍 '+esc(x.address)+'</div></div></div>').join('');
+    '<div class="meta">'+
+      (sortMode==='distance'&&formatDistanceFromSeahTower(x)?'<div>↔ '+esc(formatDistanceFromSeahTower(x))+'</div>':'')+
+      (x.capacity?'<div>👥 '+esc(x.capacity)+'</div>':'')+
+      '<div>📍 '+esc(x.address)+'</div></div></div>').join('');
   el.querySelectorAll('.card').forEach(card=>card.onclick=()=>{
     const row=Number(card.dataset.row);
     const wasSelected=isRowSelected(row);
@@ -2575,7 +2594,7 @@ function render(fit=true){
   renderMap(rows.filter(hasValidCoords),fit);
 }
 function syncSortUI(){
-  const labels={default:'기본순',rating:'별점순',name:'이름순'};
+  const labels={default:'기본순',rating:'별점순',name:'이름순',distance:'거리순'};
   const label=document.getElementById('sortLabel');
   if(label)label.textContent=labels[sortMode]||labels.default;
   document.querySelectorAll('.sort-option').forEach(btn=>{
