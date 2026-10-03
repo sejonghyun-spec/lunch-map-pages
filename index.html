@@ -4343,9 +4343,20 @@ const rouletteResultName=document.getElementById('rouletteResultName');
 const rouletteResultMeta=document.getElementById('rouletteResultMeta');
 const rouletteAgain=document.getElementById('rouletteAgain');
 const rouletteGo=document.getElementById('rouletteGo');
+const rouletteDistanceEl=document.getElementById('rouletteDistance');
+const rouletteMinRatingEl=document.getElementById('rouletteMinRating');
+const rouletteExcludeRecentEl=document.getElementById('rouletteExcludeRecent');
 
 function getRouletteCandidates(){
-  return displayRestaurants().filter(x=>rouletteCategory==='전체'||x.category===rouletteCategory);
+  const recentWinners=new Set(rouletteHistoryKeys());
+  return displayRestaurants().filter(x=>{
+    if(rouletteCategory!=='전체'&&x.category!==rouletteCategory)return false;
+    const distance=distanceFromSeahTower(x);
+    if(rouletteDistance!=='all'&&(!Number.isFinite(distance)||distance>Number(rouletteDistance)))return false;
+    if(ratingScore(x)<Number(rouletteMinRating||0))return false;
+    if(rouletteExcludeRecent&&recentWinners.has(restaurantKey(x)))return false;
+    return true;
+  });
 }
 function buildRouletteCategories(){
   const displayRows=displayRestaurants();
@@ -4372,12 +4383,18 @@ function updateRouletteCandidates(){
   rouletteCandidates=getRouletteCandidates();
   rouletteContext.textContent=rouletteCategory+' · '+rouletteCandidates.length+'곳';
   rouletteLive.textContent=rouletteCandidates.length
-    ? '분류를 확인한 뒤 룰렛을 돌려주세요.'
-    : '선택한 분류에 식당이 없습니다.';
+    ? '조건을 확인한 뒤 룰렛을 돌려주세요.'
+    : '조건에 맞는 식당이 없습니다.';
   rouletteAgain.disabled=!rouletteCandidates.length;
 }
 function openRoulette(){
   rouletteCategory='전체';
+  rouletteDistance='all';
+  rouletteMinRating=0;
+  rouletteExcludeRecent=true;
+  rouletteDistanceEl.value='all';
+  rouletteMinRatingEl.value='0';
+  rouletteExcludeRecentEl.checked=true;
   rouletteWinner=null;
   rouletteResult.classList.remove('show');
   rouletteGo.disabled=true;
@@ -4422,6 +4439,7 @@ function spinRoulette(){
     rouletteTicker=null;
     rouletteSpinning=false;
     rouletteWinner=winner;
+    rememberRouletteWinner(winner);
     rouletteCategories.querySelectorAll('.roulette-category').forEach(btn=>btn.disabled=false);
     rouletteAgain.disabled=false;
     rouletteAgain.textContent='다시 돌리기';
@@ -4455,6 +4473,9 @@ function goRouletteWinner(){
   },120);
 }
 
+rouletteDistanceEl.addEventListener('change',()=>{rouletteDistance=rouletteDistanceEl.value;updateRouletteCandidates();});
+rouletteMinRatingEl.addEventListener('change',()=>{rouletteMinRating=Number(rouletteMinRatingEl.value)||0;updateRouletteCandidates();});
+rouletteExcludeRecentEl.addEventListener('change',()=>{rouletteExcludeRecent=rouletteExcludeRecentEl.checked;updateRouletteCandidates();});
 document.getElementById('rouletteOpen').addEventListener('click',openRoulette);
 document.getElementById('rouletteClose').addEventListener('click',closeRoulette);
 rouletteAgain.addEventListener('click',spinRoulette);
