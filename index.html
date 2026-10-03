@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-03-public-comments-endpoint-v54">
+<meta name="lunch-map-build" content="2026-10-03-comment-auth-retry-v55">
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
@@ -2359,7 +2359,6 @@ function getInitialMapLevel(){
   return useMobileInitialView()?MOBILE_INITIAL_MAP_LEVEL:DESKTOP_INITIAL_MAP_LEVEL;
 }
 const SUGGEST_URL='https://script.google.com/a/seah.co.kr/macros/s/AKfycbzpCuw9c6Y8K6_4tnqZzwMBoKGIiW3pv-DheDHYD6XpbT1tEqDlZUFFkPgn-7w_q1L7tA/exec';
-const COMMENTS_URL='https://script.google.com/macros/s/AKfycbzfLjRPKiDqMMb8p7e3QmjaEGE0APdrCJRSzstCAd_2NHmj4ufJOGv7sTghnCE0OGTXdA/exec';
 let allData=[],selectedCategories=new Set(),searchKeyword='',sortMode='default';
 let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all',distanceFilter='all';
 let favoritesOnly=false,recentOnly=false,mapOnlyMode=false,reviewSortMode='latest';
@@ -3485,10 +3484,23 @@ function updateAccountUI(user,needsAuth=false){
 }
 
 function openAccountConnection(){
-  window.open(SUGGEST_URL,'lunchMapCompanyAccount','width=620,height=720');
+  return window.open(
+    SUGGEST_URL+'?source=lunch-map&t='+Date.now(),
+    'lunchMapCompanyAccount',
+    'width=620,height=720'
+  );
 }
 
 accountButton.addEventListener('click',openAccountConnection);
+
+window.addEventListener('message',e=>{
+  const allowedOrigins=new Set(['https://script.google.com','https://script.googleusercontent.com']);
+  if(!allowedOrigins.has(e.origin))return;
+  const data=e.data||{};
+  if(data.source!=='lunch-map-auth'||!data.ok||!data.user)return;
+  updateAccountUI(data.user,false);
+  if(commentRestaurant)loadComments(commentRestaurant);
+});
 
 window.addEventListener('focus',()=>{
   if(currentAccount)return;
@@ -3734,7 +3746,9 @@ function fetchComments(restaurant,timeoutMs=5000){
       cleanup();
       if(payload&&payload.authRequired){
         updateAccountUI(null,true);
-        reject(new Error(payload.message||'company account required'));
+        const err=new Error(payload.message||'company account required');
+        err.code='AUTH_REQUIRED';
+        reject(err);
         return;
       }
       if(payload&&payload.user)updateAccountUI(payload.user,false);
@@ -3753,8 +3767,9 @@ function fetchComments(restaurant,timeoutMs=5000){
       reject(new Error('comments load failed'));
     };
 
-    script.src=COMMENTS_URL+
-      '?key='+encodeURIComponent(key)+
+    script.src=SUGGEST_URL+
+      '?mode=comments'+
+      '&key='+encodeURIComponent(key)+
       '&callback='+encodeURIComponent(callback)+
       '&t='+Date.now();
 
@@ -3767,22 +3782,31 @@ async function loadComments(restaurant){
   const seq=++commentRequestSeq;
   const key=restaurantCommentKey(restaurant);
 
-  // If the authenticated live bundle already has reviews, render immediately.
   if(commentsPreloaded&&preloadedComments.has(key)){
     const rows=preloadedComments.get(key)||[];
     if(seq===commentRequestSeq)renderComments(rows);
-
-    // Quiet refresh keeps the list current without replacing visible reviews on failure.
-    fetchComments(restaurant,7000).then(fresh=>{
-      preloadedComments.set(key,fresh);
-      if(seq===commentRequestSeq&&commentRestaurant&&restaurantCommentKey(commentRestaurant)===key){
-        renderComments(fresh);
-      }
-    }).catch(()=>{});
+    if(currentAccount){
+      fetchComments(restaurant,7000).then(fresh=>{
+        preloadedComments.set(key,fresh);
+        if(seq===commentRequestSeq&&commentRestaurant&&restaurantCommentKey(commentRestaurant)===key){
+          renderComments(fresh);
+        }
+      }).catch(()=>{});
+    }
     return rows;
   }
 
-  // Review reading is public, so do not wait for the company-account live DB request.
+  if(!currentAccount){
+    currentCommentRows=[];
+    commentCount.textContent='댓글 -';
+    commentList.innerHTML=
+      '<div class="comment-empty">기존 댓글을 보려면 회사 Google 계정 연결이 필요합니다.'+
+      '<button type="button" class="comment-retry" id="commentConnect">계정 연결</button></div>';
+    const connect=document.getElementById('commentConnect');
+    if(connect)connect.addEventListener('click',()=>openAccountConnection());
+    return [];
+  }
+
   commentCount.textContent='댓글 ·';
   commentList.innerHTML='<div class="comment-loading">댓글을 불러오는 중입니다.</div>';
 
@@ -3795,11 +3819,15 @@ async function loadComments(restaurant){
     if(seq===commentRequestSeq){
       currentCommentRows=[];
       commentCount.textContent='댓글 -';
+      const authRequired=err&&err.code==='AUTH_REQUIRED';
       commentList.innerHTML=
-        '<div class="comment-empty">댓글 조회에 실패했습니다.'+
-        '<button type="button" class="comment-retry" id="commentRetry">다시 시도</button></div>';
-      const retry=document.getElementById('commentRetry');
-      if(retry)retry.addEventListener('click',()=>loadComments(restaurant));
+        '<div class="comment-empty">'+
+        (authRequired?'회사 Google 계정 연결이 필요합니다.':'댓글 조회에 실패했습니다.')+
+        '<button type="button" class="comment-retry" id="'+(authRequired?'commentConnect':'commentRetry')+'">'+
+        (authRequired?'계정 연결':'다시 시도')+
+        '</button></div>';
+      const btn=document.getElementById(authRequired?'commentConnect':'commentRetry');
+      if(btn)btn.addEventListener('click',()=>authRequired?openAccountConnection():loadComments(restaurant));
     }
     return [];
   }
@@ -3900,12 +3928,21 @@ function toggleHelpfulComment(commentId){
   refreshCommentsSoon(restaurant,1800);
 }
 
-function setDetailTab(tab){
+function setDetailTab(tab,fromUser=false){
   const valid=['home','reviews'].includes(tab)?tab:'home';
   document.querySelectorAll('.detail-tab').forEach(btn=>btn.classList.toggle('active',btn.dataset.detailTab===valid));
   document.querySelectorAll('.detail-tab-panel').forEach(panel=>panel.classList.toggle('active',panel.dataset.detailPanel===valid));
+
+  if(valid==='reviews'&&commentRestaurant){
+    const key=restaurantCommentKey(commentRestaurant);
+    const hasCached=preloadedComments.has(key);
+    if(!currentAccount&&!hasCached&&fromUser){
+      openAccountConnection();
+    }
+    loadComments(commentRestaurant);
+  }
 }
-document.querySelectorAll('.detail-tab').forEach(btn=>btn.addEventListener('click',()=>setDetailTab(btn.dataset.detailTab)));
+document.querySelectorAll('.detail-tab').forEach(btn=>btn.addEventListener('click',()=>setDetailTab(btn.dataset.detailTab,true)));
 
 function updateFavoriteButton(){
   if(!commentRestaurant)return;
@@ -4018,7 +4055,7 @@ function openComments(restaurant){
   }
   if(mapHint)mapHint.style.display='none';
 
-  loadComments(restaurant);
+  if(currentAccount||preloadedComments.has(restaurantCommentKey(restaurant)))loadComments(restaurant);
   updateFilterChipUI();
 }
 document.getElementById('commentClose').addEventListener('click',closeDetailByUser);
