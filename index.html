@@ -3958,6 +3958,172 @@ function fetchRestaurantImages(restaurant,timeoutMs=12000){
     document.head.appendChild(script);
   });
 }
+function applyThumbnailToCard(restaurant,url){
+  saveRestaurantThumb(restaurant,url);
+  const row=Number(restaurant&&restaurant.row);
+  const el=document.querySelector('.card-thumb[data-thumb-row="'+row+'"]');
+  if(el&&url){
+    el.classList.remove('loading');
+    el.innerHTML='<img src="'+esc(url)+'" alt="" loading="lazy" referrerpolicy="no-referrer">';
+  }
+}
+
+async function preloadListThumbnails(rows){
+  if(!currentAccount||!Array.isArray(rows))return;
+  for(const restaurant of rows){
+    if(!restaurant||thumbForRestaurant(restaurant))continue;
+    const key=restaurantCommentKey(restaurant);
+    if(thumbRequested.has(key))continue;
+    thumbRequested.add(key);
+    try{
+      let images=imageSearchCache.get(key);
+      if(!images){
+        images=await fetchRestaurantImages(restaurant,9000);
+        imageSearchCache.set(key,images);
+      }
+      const first=(images||[]).find(x=>safeHttpUrl(x&&x.thumbnailUrl));
+      if(first)applyThumbnailToCard(restaurant,first.thumbnailUrl);
+    }catch(e){}
+    await new Promise(r=>setTimeout(r,140));
+  }
+}
+
+function renderDetailImages(restaurant,images){
+  const rows=(Array.isArray(images)?images:[]).filter(x=>safeHttpUrl(x&&x.thumbnailUrl));
+  const first=rows[0];
+  if(first)saveRestaurantThumb(restaurant,first.thumbnailUrl);
+
+  const mediaRows=rows.slice(0,3);
+  detailMedia.innerHTML=mediaRows.length
+    ? [0,1,2].map(i=>{
+        const item=mediaRows[i];
+        if(!item)return '<div class="detail-media-item"></div>';
+        const src=safeHttpUrl(item.thumbnailUrl);
+        return '<div class="detail-media-item"><img src="'+esc(src)+'" alt="" loading="lazy" referrerpolicy="no-referrer">'+
+          (i===2&&rows.length>3?'<button class="detail-media-more" type="button">+'+(rows.length-3)+' 더보기</button>':'')+
+        '</div>';
+      }).join('')
+    : '<div class="detail-media-item"><div class="detail-media-skeleton"></div></div>'+
+      '<div class="detail-media-item"></div><div class="detail-media-item"></div>';
+
+  detailMedia.querySelectorAll('.detail-media-item').forEach((el,i)=>{
+    if(mediaRows[i])el.addEventListener('click',()=>setDetailTab('photos'));
+  });
+  const more=detailMedia.querySelector('.detail-media-more');
+  if(more)more.addEventListener('click',e=>{e.stopPropagation();setDetailTab('photos');});
+
+  detailPhotoGrid.innerHTML=rows.map(x=>{
+    const thumb=safeHttpUrl(x.thumbnailUrl);
+    const href=safeHttpUrl(x.sourceUrl)||safeHttpUrl(x.imageUrl)||thumb;
+    return '<a class="detail-photo-card" href="'+esc(href)+'" target="_blank" rel="noopener noreferrer">'+
+      '<img src="'+esc(thumb)+'" alt="" loading="lazy" referrerpolicy="no-referrer">'+
+    '</a>';
+  }).join('');
+  detailPhotoState.style.display=rows.length?'none':'block';
+  detailPhotoState.textContent=rows.length?'':'검색된 사진이 없습니다.';
+}
+
+async function loadDetailImages(restaurant){
+  if(!restaurant)return;
+  const key=restaurantCommentKey(restaurant);
+  detailPhotoGrid.innerHTML='';
+  detailPhotoState.style.display='block';
+  if(!currentAccount){
+    detailPhotoState.textContent='회사 계정을 연결하면 메뉴·식당 사진을 볼 수 있습니다.';
+    const cachedThumb=thumbForRestaurant(restaurant);
+    if(cachedThumb)renderDetailImages(restaurant,[{thumbnailUrl:cachedThumb,imageUrl:cachedThumb,sourceUrl:''}]);
+    return;
+  }
+  detailPhotoState.textContent='사진을 불러오는 중입니다.';
+  try{
+    let images=imageSearchCache.get(key);
+    if(!images){
+      images=await fetchRestaurantImages(restaurant);
+      imageSearchCache.set(key,images);
+    }
+    if(commentRestaurant&&restaurantCommentKey(commentRestaurant)===key)renderDetailImages(restaurant,images);
+  }catch(err){
+    if(commentRestaurant&&restaurantCommentKey(commentRestaurant)===key){
+      detailPhotoState.textContent=String(err&&err.message||'사진을 불러오지 못했습니다.');
+      detailPhotoState.style.display='block';
+    }
+  }
+}
+
+function setDetailTab(tab){
+  const valid=['home','photos','reviews'].includes(tab)?tab:'home';
+  document.querySelectorAll('.detail-tab').forEach(btn=>btn.classList.toggle('active',btn.dataset.detailTab===valid));
+  document.querySelectorAll('.detail-tab-panel').forEach(panel=>panel.classList.toggle('active',panel.dataset.detailPanel===valid));
+}
+document.querySelectorAll('.detail-tab').forEach(btn=>btn.addEventListener('click',()=>setDetailTab(btn.dataset.detailTab)));
+
+function updateFavoriteButton(){
+  if(!commentRestaurant)return;
+  const active=isFavorite(commentRestaurant);
+  detailFavoriteButton.classList.toggle('active',active);
+  detailFavoriteButton.textContent=active?'★ 즐겨찾기':'♡ 즐겨찾기';
+}
+detailFavoriteButton.addEventListener('click',()=>{
+  if(!commentRestaurant)return;
+  toggleFavorite(commentRestaurant);
+  updateFavoriteButton();
+  updateFilterChipUI();
+  renderList(getRows());
+});
+reviewSortLatest.addEventListener('click',()=>{reviewSortMode='latest';renderComments(currentCommentRows);});
+reviewSortHelpful.addEventListener('click',()=>{reviewSortMode='helpful';renderComments(currentCommentRows);});
+
+function navigateDetail(delta){
+  if(!commentRestaurant)return;
+  const rows=getRows();
+  const index=rows.findIndex(x=>restaurantKey(x)===restaurantKey(commentRestaurant));
+  if(index<0||!rows.length)return;
+  const target=rows[(index+delta+rows.length)%rows.length];
+  if(target)selectRow(target.row,true,false);
+}
+document.getElementById('detailPrev').addEventListener('click',()=>navigateDetail(-1));
+document.getElementById('detailNext').addEventListener('click',()=>navigateDetail(1));
+
+function initDetailResizer(){
+  const handle=document.getElementById('detailResizer');
+  if(!handle)return;
+  const saved=Number(localStorage.getItem(DETAIL_WIDTH_KEY));
+  if(Number.isFinite(saved)&&saved>=340&&saved<=520)commentPanel.style.setProperty('--detail-width',saved+'px');
+  let startX=0,startWidth=0;
+  handle.addEventListener('pointerdown',e=>{
+    if(isMobile())return;
+    startX=e.clientX;
+    startWidth=commentPanel.getBoundingClientRect().width;
+    handle.setPointerCapture?.(e.pointerId);
+    const move=ev=>{
+      const width=Math.max(340,Math.min(520,startWidth+(ev.clientX-startX)));
+      commentPanel.style.setProperty('--detail-width',width+'px');
+      localStorage.setItem(DETAIL_WIDTH_KEY,String(Math.round(width)));
+    };
+    const up=ev=>{
+      handle.removeEventListener('pointermove',move);
+      handle.removeEventListener('pointerup',up);
+      handle.releasePointerCapture?.(ev.pointerId);
+      if(mapReady&&map)requestAnimationFrame(()=>map.relayout());
+    };
+    handle.addEventListener('pointermove',move);
+    handle.addEventListener('pointerup',up);
+  });
+}
+initDetailResizer();
+
+function adjustMapForDetail(position){
+  if(!mapReady||!map||!position)return;
+  map.setLevel(Math.min(map.getLevel(),3));
+  map.panTo(position);
+  if(!isMobile()){
+    setTimeout(()=>{
+      const shift=Math.min(220,Math.round(commentPanel.getBoundingClientRect().width/2));
+      try{map.panBy(-shift,0);}catch(e){}
+    },160);
+  }
+}
+
 async function openImageModal(){
   const restaurant=commentRestaurant;
   if(!restaurant)return;
@@ -4001,6 +4167,10 @@ imageModal.addEventListener('click',e=>{if(e.target===imageModal)closeImageModal
 
 function openComments(restaurant){
   commentRestaurant=restaurant;
+  rememberRecent(restaurant);
+  reviewSortMode='latest';
+  setDetailTab('home');
+
   const color=colorFor(restaurant.category);
   const distance=formatDistanceFromSeahTower(restaurant);
   commentName.textContent=restaurant.name||'선택한 식당';
@@ -4008,6 +4178,14 @@ function openComments(restaurant){
   detailCategory.style.setProperty('--detail-color',color);
   detailRating.textContent=ratingText(restaurant)||'';
   commentSub.textContent=restaurant.address||'주소 정보 없음';
+
+  const tags=[];
+  if(distance)tags.push('↔ '+distance);
+  if(restaurant.capacity)tags.push('👥 '+restaurant.capacity);
+  if(/예약/.test(filterText(restaurant)))tags.push('예약 가능');
+  if(isGroupFriendly(restaurant))tags.push('단체');
+  if(/빠른|빨리|회전 빠|금방/.test(filterText(restaurant)))tags.push('빠른 식사');
+  detailTags.innerHTML=tags.map(x=>'<span class="detail-tag">'+esc(x)+'</span>').join('');
 
   const infoRows=[
     ['특징',restaurant.feature],
@@ -4021,18 +4199,36 @@ function openComments(restaurant){
     ? infoRows.map(x=>'<div class="detail-info-row"><div class="detail-info-label">'+esc(x[0])+'</div><div class="detail-info-value">'+esc(x[1])+'</div></div>').join('')
     : '<div class="comment-empty">등록된 상세 정보가 없습니다.</div>';
 
+  kakaoMapLink.href='https://map.kakao.com/?q='+encodeURIComponent([restaurant.name,restaurant.address].filter(Boolean).join(' '));
+  updateFavoriteButton();
+
   commentStatus.textContent=currentAccount
     ? getCommentNickname()+' 계정으로 등록됩니다.'
     : '회사 Google 계정 연결 후 댓글을 등록할 수 있습니다.';
   commentStatus.className='comment-status';
   commentInput.value='';
+  [commentTaste,commentAmount,commentPrice,commentWait].forEach(el=>{if(el)el.value='';});
+
+  detailMedia.innerHTML='<div class="detail-media-item"><div class="detail-media-skeleton"></div></div>'+
+    '<div class="detail-media-item"><div class="detail-media-skeleton"></div></div>'+
+    '<div class="detail-media-item"><div class="detail-media-skeleton"></div></div>';
+
   commentPanel.classList.add('open');
   commentPanel.setAttribute('aria-hidden','false');
-  if(isMobile())setSheetState('hidden');
+  if(isMobile()){
+    setSheetState('hidden');
+    if(!detailHistoryPushed){
+      history.pushState({lunchMapDetail:true},'');
+      detailHistoryPushed=true;
+    }
+  }
   if(mapHint)mapHint.style.display='none';
+
   loadComments(restaurant);
+  loadDetailImages(restaurant);
+  updateFilterChipUI();
 }
-document.getElementById('commentClose').addEventListener('click',clearSelectedRows);
+document.getElementById('commentClose').addEventListener('click',closeDetailByUser);
 
 commentForm.addEventListener('submit',e=>{
   e.preventDefault();
