@@ -126,6 +126,27 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(await state(()=>{const a=aggregateRestaurantRows([{row:999,name:'검증',address:'주소',rating:5},{row:1000,name:'검증',address:'주소',rating:4}])[0];renderList([a]);return document.querySelector('.rating').textContent==='★ 4.5'&&document.querySelector('.card-evaluations').textContent==='평가 2'}));
    assert.ok(await state(()=>{renderList([{row:999,name:'검증',feature:'룸 없음',note:'<img src=x onerror=alert(1)>',capacity:'~'}]);return !document.querySelector('.card .rating')&&!document.querySelector('.card img')&&getComputedStyle(document.querySelector('.card-stats')).display==='none'&&document.querySelector('.card-note').textContent.includes('<img')}));await reset();
  });
+ await check('search autocomplete, quick action bar, clustering helpers, review insight and hours parser',async()=>{
+   await page.setViewportSize({width:1440,height:900});await reset();
+   await page.fill('#search','자');await page.waitForTimeout(80);
+   assert.ok(await page.locator('#searchSuggestions').evaluate(el=>el.classList.contains('open')));
+   assert.ok(await page.locator('#searchSuggestions .search-suggestion').count()>0);
+   await page.fill('#search','');await page.waitForTimeout(80);
+   const firstRow=await state(()=>getRows()[0]?.row);
+   assert.ok(firstRow);
+   await state(row=>selectRow(row,false,false),firstRow);await page.waitForTimeout(100);
+   assert.ok(await page.locator('#mapQuickBar').isVisible());
+   assert.ok((await page.textContent('#mapQuickName')).trim().length>0);
+   assert.ok(await state(()=>typeof clusterGroupsForMap==='function'&&typeof operatingInfo==='function'));
+   assert.deepEqual(await state(()=>{const x=operatingInfo({hours:'11:00-21:00'});return [x.text,!!x.status];}),['11:00-21:00',true]);
+   await state(()=>renderReviewSummary([
+     {taste:5,amount:4,price:3,wait:4},
+     {taste:5,amount:4,price:3,wait:4},
+     {taste:4,amount:4,price:3,wait:4}
+   ]));
+   assert.ok(!(await page.locator('#detailReviewInsight').evaluate(el=>el.hidden)));
+   await state(()=>clearSelectedRows());
+ });
  await check('roulette and proposal dialogs open and close',async()=>{
    await page.click('#rouletteOpen');assert.ok(await page.locator('#rouletteModal').evaluate(el=>el.classList.contains('open')));await page.click('#rouletteClose');
    await page.click('#suggestOpen');assert.ok(await page.locator('#suggestModal').evaluate(el=>el.classList.contains('open')));await page.click('#suggestClose');
