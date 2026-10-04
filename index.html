@@ -633,6 +633,13 @@ button,input,select,textarea{font:inherit}
 }
 .hours-state{display:inline-flex;align-items:center;gap:5px;font-weight:800}
 .hours-state.open{color:#18794e}.hours-state.break{color:#a05a00}.hours-state.closed{color:#a33b32}
+.card-hours,.mobile-card-hours{
+  display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:800;white-space:nowrap
+}
+.card-hours.open,.mobile-card-hours.open{color:#18794e}
+.card-hours.break,.mobile-card-hours.break{color:#a05a00}
+.card-hours.closed,.mobile-card-hours.closed{color:#a33b32}
+
 @media(max-width:900px){
   .mobile-search-suggestions{left:0;right:0;top:calc(100% + 5px);max-height:260px}
   .map-quick-bar{display:none!important}
@@ -4078,7 +4085,6 @@ function loadKakao(){return new Promise((resolve,reject)=>{if(window.kakao&&kaka
 function syncMarkerLabelVisibility(){
   const wrap=document.querySelector('.map-wrap');
   if(wrap)wrap.classList.remove('show-marker-labels');
-  syncMapQuickBar();
   requestAnimationFrame(syncMarkerCaptionCollisions);
 }
 function markerCaptionPriority(el){
@@ -4295,6 +4301,7 @@ function syncSelectedRowsUI(){
   });
   const mapWrap=document.querySelector('.map-wrap');
   if(mapWrap)mapWrap.classList.toggle('has-selection',!!selectedRestaurantKey);
+  syncMapQuickBar();
   requestAnimationFrame(syncMarkerCaptionCollisions);
 }
 function clearSelectedRows(){
@@ -4327,8 +4334,13 @@ function selectRow(row,pan=true,toggle=true){
   openComments(data);
 
   const item=markerByRow.get(row);
-  if(item&&mapReady&&pan)adjustMapForDetail(item.position);
-  if(item&&mapReady&&!pan)adjustMapForDetail(item.position);
+  if(item&&mapReady)adjustMapForDetail(item.position);
+  else if(mapReady&&hasValidCoords(data)){
+    const position=new kakao.maps.LatLng(Number(data.lat),Number(data.lng));
+    map.panTo(position);
+    if(map.getLevel()>4)map.setLevel(3);
+    setTimeout(()=>renderMap(getRows().filter(hasValidCoords),false),0);
+  }
   if(isMobile())setSheetState('hidden');
 }
 function distanceMeters(a,b){
@@ -4689,6 +4701,7 @@ function renderMobileList(rows){
     const rawTags=[...features.tags];
     if(capacity&&/[\p{L}\p{N}]/u.test(capacity))rawTags.push('인원 '+capacity);
     const tags=[...new Set(rawTags)].slice(0,2);
+    const hours=operatingInfo(x);
     return '<div class="card mobile-card" data-row="'+x.row+'" style="--card-color:'+colorFor(x.category)+';--mobile-card-color:'+colorFor(x.category)+'">'+
       '<span class="zine-index">'+String(index+1).padStart(2,'0')+'</span>'+
       '<div class="mobile-card-head">'+
@@ -4699,6 +4712,7 @@ function renderMobileList(rows){
       '<div class="mobile-card-meta">'+
         (score?'<span class="mobile-card-rating">★ '+score.toFixed(1)+'</span><span>평가 '+(Number(x._ratingCount)||1)+'</span>':'')+
         '<span class="card-review" data-review-key="'+esc(restaurantCommentKey(x))+'" hidden></span>'+
+        (hours.status!=='unknown'?'<span class="mobile-card-hours '+esc(hours.status)+'">'+esc(hours.label)+'</span>':'')+
         (distance?'<span class="mobile-card-distance">↔ '+esc(distance)+'</span>':'')+
       '</div>'+
       (tags.length?'<div class="mobile-card-tags">'+tags.map(t=>'<span class="mobile-card-tag">'+esc(t)+'</span>').join('')+'</div>':'')+
@@ -4741,6 +4755,7 @@ function renderList(rows){
     const rawTags=[...features.tags];
     if(capacity&&/[\p{L}\p{N}]/u.test(capacity))rawTags.push('인원 '+capacity);
     const tags=[...new Set(rawTags)].slice(0,3);
+    const hours=operatingInfo(x);
     return '<div class="card" data-row="'+x.row+'" style="--card-color:'+colorFor(x.category)+'">'+
       '<span class="zine-index">'+String(index+1).padStart(2,'0')+'</span>'+
       '<div class="card-head"><button type="button" class="name card-open" title="'+esc(x.name)+'">'+highlightMatch(x.name,q)+'</button>'+
@@ -4749,6 +4764,7 @@ function renderList(rows){
       '<div class="card-stats">'+
         (score?'<span class="rating">★ '+score.toFixed(1)+'</span><span class="card-evaluations">평가 '+(Number(x._ratingCount)||1)+'</span>':'')+
         '<span class="card-review" data-review-key="'+esc(restaurantCommentKey(x))+'" hidden></span>'+
+        (hours.status!=='unknown'?'<span class="card-hours '+esc(hours.status)+'">'+esc(hours.label)+'</span>':'')+
         (distance?'<span class="card-distance" title="세아타워 기준 직선거리" aria-label="세아타워에서 직선거리 '+esc(distance)+'">↔ '+esc(distance)+'</span>':'')+
       '</div>'+
       (tags.length?'<div class="card-tags">'+tags.map(t=>'<span class="card-tag" title="'+esc(t)+'">'+highlightMatch(t,q)+'</span>').join('')+'</div>':'')+
