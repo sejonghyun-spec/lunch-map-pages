@@ -48,10 +48,10 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    const missing=await page.evaluate(ids=>ids.filter(id=>!document.getElementById(id)),ids);
    assert.deepEqual([...new Set(missing)].filter(id=>!['commentConnect','commentRetry','suggestLookupStatus','openNaverLink','openGoogleLink'].includes(id)),[]);
  });
- await check('theme selector defaults to Simple and switches all four themes',async()=>{
+ await check('theme selector defaults to Simple and switches all five themes',async()=>{
    assert.equal(await state(()=>document.documentElement.dataset.theme),'simple');
-   assert.equal(await page.locator('[data-theme-option]').count(),4);
-   for(const theme of ['modern','foodie','warm','simple']){
+   assert.equal(await page.locator('[data-theme-option]').count(),5);
+   for(const theme of ['night','mono','foodpop','editorial','simple']){
      await page.click('#themeButton');
      await page.click('[data-theme-option="'+theme+'"]');
      assert.equal(await state(()=>document.documentElement.dataset.theme),theme);
@@ -142,8 +142,8 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(await page.locator('#themeButton').isVisible());
    await page.click('#themeButton');
    assert.ok(await page.locator('#themeMenu').isVisible());
-   await page.click('[data-theme-option="modern"]');
-   assert.equal(await state(()=>document.documentElement.dataset.theme),'modern');
+   await page.click('[data-theme-option="night"]');
+   assert.equal(await state(()=>document.documentElement.dataset.theme),'night');
    await state(()=>applyTheme('simple',true));
 
    assert.ok(!(await page.locator('#mobileSearchOpen').isVisible())&&!(await page.locator('#mobileListOpen').isVisible()));
