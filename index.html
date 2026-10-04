@@ -844,6 +844,9 @@ button,input,select,textarea{font:inherit}
 }
 
 .detail-topbar-actions{display:flex;align-items:center;gap:7px}
+.comment-panel.open{animation:detailPanelIn .16s ease-out}
+@keyframes detailPanelIn{from{opacity:.72;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+@media(prefers-reduced-motion:reduce){.comment-panel.open{animation:none}}
 .detail-edit-button{
   height:32px;border:1px solid #d9dfe2;border-radius:8px;padding:0 9px;background:#fff;
   color:#5f686d;font-size:11.5px;font-weight:800;cursor:pointer
@@ -922,6 +925,7 @@ button,input,select,textarea{font:inherit}
 .detail-info-sub{color:#7b858a;font-size:12px}
 @media(max-width:900px){
   .detail-action-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  body.detail-mobile-open .compare-tray{display:none!important}
   .compare-tray{left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));max-width:none}
   .compare-content{grid-template-columns:1fr;padding:12px}
   .compare-modal{width:min(560px,100%);max-height:94dvh;border-radius:16px}
@@ -3173,6 +3177,37 @@ html[data-theme="editorial"] .detail-review-insight{
   border:2px solid #111317;border-radius:0;background:#efff54;color:#111317
 }
 
+
+html[data-theme="night"] .detail-action,
+html[data-theme="night"] .detail-edit-button{
+  border-color:#424a53;background:#242a31;color:#eef2f5
+}
+html[data-theme="night"] .detail-action:hover,
+html[data-theme="night"] .detail-edit-button:hover{background:#303740}
+html[data-theme="night"] .detail-kakao-link{border-color:#d39a38;background:#d39a38;color:#171b20}
+html[data-theme="night"] .related-place,
+html[data-theme="night"] .compare-card{border-color:#353c44;background:#20262d;color:#f3f5f7}
+html[data-theme="night"] .related-place:hover{background:#292f37}
+html[data-theme="night"] .related-place b,
+html[data-theme="night"] .compare-card h3{color:#f3f5f7}
+html[data-theme="night"] .compare-tray{border-color:#3a4149;background:rgba(27,32,38,.98);color:#f7f9fb}
+html[data-theme="night"] .compare-tray-copy span{color:#bbc4cb}
+
+html[data-theme="editorial"] .detail-action,
+html[data-theme="editorial"] .detail-edit-button{
+  border:2px solid #111317;border-radius:0;background:#fffefa;color:#111317;box-shadow:2px 2px 0 #111317
+}
+html[data-theme="editorial"] .detail-kakao-link{background:#efff54}
+html[data-theme="editorial"] .related-place,
+html[data-theme="editorial"] .compare-card{
+  border:2px solid #111317;border-radius:0;background:#fffefa;box-shadow:3px 3px 0 #cfd0ca
+}
+html[data-theme="editorial"] .related-place:hover{background:#efff54;box-shadow:3px 3px 0 #315efb}
+html[data-theme="editorial"] .compare-tray{
+  border:2px solid #111317;border-radius:0;background:#f7f4ea;color:#111317;box-shadow:5px 5px 0 #111317
+}
+html[data-theme="editorial"] .compare-modal{border:3px solid #111317;border-radius:0;box-shadow:8px 8px 0 #111317}
+
 /* Bistro — quiet restaurant guide, warm paper + forest + burgundy */
 html[data-theme="bistro"]{
   --brand:#8a3d48;--brand-dark:#5c2830;--text:#27241f;--muted:#766e63;
@@ -3498,6 +3533,20 @@ html[data-theme="bistro"] .map-cluster{
 html[data-theme="bistro"] .detail-review-insight{
   border:1px solid rgba(255,250,240,.25);background:rgba(255,250,240,.10);color:#fffaf0
 }
+
+
+html[data-theme="bistro"] .detail-action,
+html[data-theme="bistro"] .detail-edit-button{
+  border-color:#b9aa99;border-radius:4px;background:#fbf8f2;color:#514940
+}
+html[data-theme="bistro"] .detail-kakao-link{border-color:#d1b75e;background:#ead681;color:#30291f}
+html[data-theme="bistro"] .related-place,
+html[data-theme="bistro"] .compare-card{border-color:#cdbfaf;border-radius:4px;background:#faf6ee}
+html[data-theme="bistro"] .related-place:hover{background:#eee5d8}
+html[data-theme="bistro"] .compare-tray{
+  border-color:#756858;background:#faf6ee;color:#302a24;box-shadow:5px 5px 0 rgba(72,57,43,.13)
+}
+html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:6px;background:#faf6ee}
 
 @media(max-width:900px){
   html[data-theme="night"] .mobile-sheet{border-radius:22px 22px 0 0}
@@ -5123,7 +5172,8 @@ function renderList(rows){
     const capacity=String(x.capacity||'').trim();
     const rawTags=[...features.tags];
     if(capacity&&/[\p{L}\p{N}]/u.test(capacity))rawTags.push('인원 '+capacity);
-    const tags=[...new Set(rawTags)].slice(0,3);
+    const tags=[...new Set(rawTags)].slice(0,2);
+    const summary=features.description||(note&&note!==String(x.feature||'').trim()?note:'');
     const hours=operatingInfo(x);
     return '<div class="card" data-row="'+x.row+'" style="--card-color:'+colorFor(x.category)+'">'+
       '<span class="zine-index">'+String(index+1).padStart(2,'0')+'</span>'+
@@ -5137,9 +5187,8 @@ function renderList(rows){
         (distance?'<span class="card-distance" title="세아타워 기준 직선거리" aria-label="세아타워에서 직선거리 '+esc(distance)+'">↔ '+esc(distance)+'</span>':'')+
       '</div>'+
       (tags.length?'<div class="card-tags">'+tags.map(t=>'<span class="card-tag" title="'+esc(t)+'">'+highlightMatch(t,q)+'</span>').join('')+'</div>':'')+
-      (features.description?'<div class="card-feature">'+highlightMatch(features.description,q)+'</div>':'')+
-      (note&&note!==String(x.feature||'').trim()?'<div class="card-note" title="'+esc(note)+'"><span class="card-note-label">메모</span>'+highlightMatch(note,q)+'</div>':'')+
-      (!tags.length&&!features.description&&!note&&x.address?'<div class="card-address">'+highlightMatch(x.address,q)+'</div>':'')+
+      (!tags.length&&summary?'<div class="card-feature">'+highlightMatch(summary,q)+'</div>':'')+
+      (!tags.length&&!summary&&x.address?'<div class="card-address">'+highlightMatch(x.address,q)+'</div>':'')+
     '</div>';
   }).join('');
 
@@ -5979,6 +6028,7 @@ function renderComments(comments){
   updateCardReviewCounts();
   commentCount.textContent='댓글 '+base.length;
   renderReviewSummary(base);
+  if(commentRestaurant)renderDetailDecision(commentRestaurant);
 
   let rows=base.slice();
   if(reviewSortMode==='helpful'){
@@ -6255,7 +6305,7 @@ function updateFavoriteButton(){
   if(!commentRestaurant)return;
   const active=isFavorite(commentRestaurant);
   detailFavoriteButton.classList.toggle('active',active);
-  detailFavoriteButton.textContent=active?'★ 즐겨찾기':'♡ 즐겨찾기';
+  detailFavoriteButton.textContent=active?'♥ 저장됨':'♡ 저장';
 }
 detailFavoriteButton.addEventListener('click',()=>{
   if(!commentRestaurant)return;
@@ -6278,6 +6328,48 @@ function navigateDetail(delta){
 }
 document.getElementById('detailPrev').addEventListener('click',()=>navigateDetail(-1));
 document.getElementById('detailNext').addEventListener('click',()=>navigateDetail(1));
+detailPhoneLink?.addEventListener('click',e=>{if(detailPhoneLink.getAttribute('aria-disabled')==='true')e.preventDefault();});
+detailDirectionsLink?.addEventListener('click',e=>{if(detailDirectionsLink.getAttribute('aria-disabled')==='true')e.preventDefault();});
+detailShareButton?.addEventListener('click',()=>{if(commentRestaurant)shareRestaurant(commentRestaurant);});
+detailCompareButton?.addEventListener('click',()=>{if(commentRestaurant)toggleCompareRestaurant(commentRestaurant);});
+compareOpen?.addEventListener('click',openCompareModal);
+compareClear?.addEventListener('click',()=>{compareKeys=[];syncCompareUI();showToast('비교 목록을 비웠습니다.');});
+document.getElementById('compareClose')?.addEventListener('click',closeCompareModal);
+compareModal?.addEventListener('click',e=>{if(e.target===compareModal)closeCompareModal();});
+
+function openCurrentRestaurantEditor(){
+  if(!commentRestaurant)return;
+  if(!isCommentAdmin()){
+    showToast('관리자 계정 연결 후 수정할 수 있습니다.');
+    ensureCompanyAccount();
+    return;
+  }
+  const row=Number(commentRestaurant.row);
+  setSuggestMode('edit');
+  suggestPending=false;
+  suggestSubmit.disabled=false;
+  suggestModal.classList.add('open');
+  suggestModal.setAttribute('aria-hidden','false');
+  populateEditRestaurantSelect();
+  selectExistingRestaurant(row);
+  setTimeout(()=>editRestaurantSelect?.focus(),60);
+}
+detailEditButton?.addEventListener('click',openCurrentRestaurantEditor);
+
+const detailHero=document.querySelector('.detail-hero');
+let detailSwipeStart=null;
+detailHero?.addEventListener('pointerdown',e=>{
+  if(!isMobile())return;
+  detailSwipeStart={x:e.clientX,y:e.clientY};
+});
+detailHero?.addEventListener('pointerup',e=>{
+  if(!isMobile()||!detailSwipeStart)return;
+  const dx=e.clientX-detailSwipeStart.x,dy=e.clientY-detailSwipeStart.y;
+  detailSwipeStart=null;
+  if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.35)return;
+  navigateDetail(dx<0?1:-1);
+});
+
 
 function initDetailResizer(){
   const handle=document.getElementById('detailResizer');
@@ -6836,8 +6928,9 @@ suggestModal.addEventListener('click',e=>{if(e.target===suggestModal)closeSugges
 document.addEventListener('keydown',e=>{
   if(e.key!=='Escape')return;
   closeMobileMenu();
-  if(suggestModal.classList.contains('open'))closeSuggestModal();
-  if(rouletteModal.classList.contains('open'))closeRoulette();
+  if(compareModal?.classList.contains('open')){closeCompareModal();return;}
+  if(suggestModal.classList.contains('open')){closeSuggestModal();return;}
+  if(rouletteModal.classList.contains('open')){closeRoulette();return;}
   if(commentPanel.classList.contains('open'))clearSelectedRows();
 });
 
