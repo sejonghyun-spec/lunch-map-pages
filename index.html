@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-editorial-sidebar-fix-v76">
+<meta name="lunch-map-build" content="2026-10-04-mapfocus-bistro-v77">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
   const saved=localStorage.getItem(key);
-  document.documentElement.dataset.theme=['simple','night','editorial'].includes(saved)?saved:'simple';
+  document.documentElement.dataset.theme=['simple','night','editorial','mapfocus','bistro'].includes(saved)?saved:'simple';
 }catch(e){document.documentElement.dataset.theme='simple';}})();
 </script>
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
@@ -215,6 +215,8 @@ button,input,select,textarea{font:inherit}
 .theme-preview.simple{background:linear-gradient(135deg,#fff 0 55%,#9a4f31 55% 70%,#eee7e1 70%)}
 .theme-preview.night{background:linear-gradient(135deg,#0d1117 0 52%,#171b22 52% 68%,#9ca3af 68%)}
 .theme-preview.editorial{background:linear-gradient(135deg,#fffdf7 0 44%,#123b6d 44% 66%,#e14c3f 66% 84%,#f1c94d 84%)}
+.theme-preview.mapfocus{background:linear-gradient(135deg,#eef8ff 0 42%,#ffffff 42% 62%,#2f80ed 62% 74%,#d8e7f6 74%)}
+.theme-preview.bistro{background:linear-gradient(135deg,#f3ecdf 0 48%,#214a38 48% 66%,#8a3d48 66% 82%,#c6a66a 82%)}
 .theme-option-copy{min-width:0}
 .theme-option-copy b{display:block;font-size:13px;font-weight:850}
 .theme-option-copy small{display:block;margin-top:2px;color:#7b726b;font-size:11.5px;font-weight:550}
@@ -2927,9 +2929,535 @@ html[data-theme="editorial"] .marker-label.selected .marker-name{
   color:#123b6d;
   box-shadow:4px 4px 0 rgba(225,76,63,.26)
 }
+
+/* Map Focus — lighter controls, narrower list, more map */
+html[data-theme="mapfocus"]{
+  --brand:#2f80ed;--brand-dark:#1d5fb7;--text:#1f2b37;--muted:#718096;
+  --line:#d9e3ec;--soft:#f1f6fa;--panel:#fff;
+  --sidebar:360px;
+  --theme-control-bg:rgba(255,255,255,.96);--theme-header-bg:rgba(248,251,253,.97);
+  --theme-sidebar-bg:#f8fbfd;--theme-sheet-bg:rgba(250,253,255,.98);
+  --theme-card-bg:#fff;--theme-chip-bg:#edf5fb;
+}
+html[data-theme="mapfocus"] body{background:#eef4f8}
+html[data-theme="mapfocus"] .topbar{
+  border-bottom:1px solid #d8e2ea;
+  background:rgba(249,252,254,.97);
+  box-shadow:0 2px 12px rgba(43,68,87,.06);
+  backdrop-filter:blur(14px)
+}
+html[data-theme="mapfocus"] .brand{border-right:1px solid #d8e2ea}
+html[data-theme="mapfocus"] .brand-title{color:#18324a;font-weight:800}
+html[data-theme="mapfocus"] .brand-sub{color:#718096}
+html[data-theme="mapfocus"] .filter-btn{
+  min-height:36px;
+  border-color:#d8e2ea;
+  border-radius:10px;
+  background:#fff;
+  color:#526579;
+  padding:7px 12px;
+  box-shadow:0 2px 8px rgba(45,71,91,.04)
+}
+html[data-theme="mapfocus"] .filter-btn:hover{border-color:#a9bfd2;background:#f5f9fc}
+html[data-theme="mapfocus"] .filter-btn.active{
+  border-color:#2f80ed;
+  background:#2f80ed;
+  color:#fff;
+  box-shadow:0 3px 10px rgba(47,128,237,.18)
+}
+html[data-theme="mapfocus"] .theme-button,
+html[data-theme="mapfocus"] .account-btn,
+html[data-theme="mapfocus"] .roulette-btn{
+  border-color:#d5e0e8;
+  border-radius:10px;
+  background:#fff;
+  color:#40566b;
+  box-shadow:0 2px 8px rgba(45,71,91,.05)
+}
+html[data-theme="mapfocus"] .suggest-btn{
+  border-radius:10px;
+  background:#2f80ed;
+  box-shadow:0 3px 10px rgba(47,128,237,.17)
+}
+html[data-theme="mapfocus"] .sidebar{
+  border-right:1px solid #d9e3ec;
+  background:#f8fbfd;
+  box-shadow:8px 0 24px rgba(41,68,89,.06)
+}
+html[data-theme="mapfocus"] .search-wrap{padding:14px 13px 9px}
+html[data-theme="mapfocus"] .search,
+html[data-theme="mapfocus"] #mobileSearch{
+  height:46px;
+  border:1px solid #b9cddd;
+  border-radius:12px;
+  background:#fff;
+  color:#20364a;
+  box-shadow:0 4px 14px rgba(46,80,106,.07)
+}
+html[data-theme="mapfocus"] .search:focus,
+html[data-theme="mapfocus"] #mobileSearch:focus{
+  border-color:#2f80ed;
+  box-shadow:0 0 0 3px rgba(47,128,237,.10)
+}
+html[data-theme="mapfocus"] .search-icon,
+html[data-theme="mapfocus"] .mobile-search-icon{color:#2f80ed}
+html[data-theme="mapfocus"] .multi-filter-wrap{padding:0 13px 10px}
+html[data-theme="mapfocus"] .compact-filter-label{
+  height:34px;
+  border-color:#d6e1e9;
+  border-radius:9px;
+  background:#fff;
+  color:#53687b;
+  font-size:12.5px
+}
+html[data-theme="mapfocus"] .filter-chip-row{
+  margin:0 13px 10px;
+  padding:4px;
+  border-radius:10px;
+  background:#eaf2f8
+}
+html[data-theme="mapfocus"] .filter-chip{
+  height:32px;
+  border-radius:8px;
+  color:#52677a;
+  font-size:12px
+}
+html[data-theme="mapfocus"] .filter-chip.active{background:#2f80ed;border-color:#2f80ed;color:#fff}
+html[data-theme="mapfocus"] .quick-row{
+  padding:8px 13px 10px;
+  border-top:1px solid #e3ebf1
+}
+html[data-theme="mapfocus"] .map-tools-label{color:#8797a6}
+html[data-theme="mapfocus"] .quick-btn{
+  height:31px;
+  border-color:#d4e0e9;
+  border-radius:8px;
+  background:#fff;
+  color:#52677a;
+  font-size:12px
+}
+html[data-theme="mapfocus"] .list-head{
+  padding:10px 14px 8px;
+  border-top:1px solid #e0e9f0
+}
+html[data-theme="mapfocus"] .list-title{font-size:16.5px;color:#20364a}
+html[data-theme="mapfocus"] .list-sub{font-size:13px;color:#82909d}
+html[data-theme="mapfocus"] .sort-btn{
+  height:31px;
+  border-radius:8px;
+  background:#eef5fa;
+  color:#53687b
+}
+html[data-theme="mapfocus"] .card{
+  margin:4px 2px;
+  padding:11px 9px 12px;
+  border:1px solid transparent;
+  border-bottom-color:#e5ecf1;
+  border-radius:10px;
+  background:transparent;
+  box-shadow:none
+}
+html[data-theme="mapfocus"] .card:hover{
+  border-color:#d8e4ec;
+  background:#fff;
+  box-shadow:0 4px 12px rgba(42,68,88,.05)
+}
+html[data-theme="mapfocus"] .card.active{
+  border-color:#9dc4ec;
+  background:#eef7ff;
+  box-shadow:0 4px 13px rgba(47,128,237,.08)
+}
+html[data-theme="mapfocus"] .card.active::before{background:#2f80ed}
+html[data-theme="mapfocus"] .name,
+html[data-theme="mapfocus"] .mobile-card-name{color:#20364a;font-weight:800}
+html[data-theme="mapfocus"] .card-stats,
+html[data-theme="mapfocus"] .card-evaluations,
+html[data-theme="mapfocus"] .card-review,
+html[data-theme="mapfocus"] .card-distance,
+html[data-theme="mapfocus"] .card-note,
+html[data-theme="mapfocus"] .card-feature,
+html[data-theme="mapfocus"] .card-address{color:#758596}
+html[data-theme="mapfocus"] .card-tag,
+html[data-theme="mapfocus"] .mobile-card-tag{
+  border-color:#dce7ef;
+  background:#edf4f9;
+  color:#52677a
+}
+html[data-theme="mapfocus"] .theme-menu,
+html[data-theme="mapfocus"] .sort-menu{
+  border-color:#d5e1e9;
+  background:rgba(255,255,255,.985);
+  box-shadow:0 14px 34px rgba(42,69,89,.14);
+  backdrop-filter:blur(14px)
+}
+html[data-theme="mapfocus"] .mobile-sheet{
+  border-top:1px solid #d9e4ec;
+  background:rgba(249,252,254,.98);
+  box-shadow:0 -14px 34px rgba(41,68,89,.13);
+  backdrop-filter:blur(16px)
+}
+html[data-theme="mapfocus"] .mobile-sheet-quick button{
+  border-color:#d5e1e9;
+  background:#fff;
+  color:#50667a
+}
+html[data-theme="mapfocus"] .mobile-sheet-quick button.active{
+  border-color:#2f80ed;background:#2f80ed;color:#fff
+}
+html[data-theme="mapfocus"] .mobile-card{
+  margin:4px 2px;
+  padding:11px 8px 12px;
+  border:1px solid transparent;
+  border-bottom-color:#e4ebf0;
+  border-radius:10px;
+  background:transparent
+}
+html[data-theme="mapfocus"] .mobile-card.map-hover,
+html[data-theme="mapfocus"] .mobile-card:hover{background:#fff}
+html[data-theme="mapfocus"] .map-area-filter,
+html[data-theme="mapfocus"] .mobile-map-location,
+html[data-theme="mapfocus"] .selection-bar{
+  border-color:#cbdbe7;
+  background:rgba(255,255,255,.96);
+  color:#40586d;
+  box-shadow:0 5px 16px rgba(45,74,96,.13);
+  backdrop-filter:blur(10px)
+}
+html[data-theme="mapfocus"] .comment-panel{
+  border-right:1px solid #d8e3eb;
+  background:#fbfdff;
+  box-shadow:8px 0 24px rgba(42,68,89,.12)
+}
+html[data-theme="mapfocus"] .detail-hero{
+  background:linear-gradient(180deg,#eef7ff,#fbfdff)
+}
+html[data-theme="mapfocus"] .detail-section,
+html[data-theme="mapfocus"] .detail-tabs,
+html[data-theme="mapfocus"] .detail-tab,
+html[data-theme="mapfocus"] .comment-compose{background:#fbfdff}
+html[data-theme="mapfocus"] .marker-name{
+  border-color:#b8cee0;
+  background:rgba(255,255,255,.97);
+  color:#20364a;
+  box-shadow:0 4px 12px rgba(42,68,89,.16)
+}
+html[data-theme="mapfocus"] .marker-label.selected .marker-name{
+  border-color:#2f80ed;
+  background:#f1f8ff;
+  color:#18324a
+}
+
+/* Bistro — quiet restaurant guide, warm paper + forest + burgundy */
+html[data-theme="bistro"]{
+  --brand:#8a3d48;--brand-dark:#5c2830;--text:#27241f;--muted:#766e63;
+  --line:#d7cdbf;--soft:#f1eadf;--panel:#faf6ee;
+  --theme-control-bg:#faf6ee;--theme-header-bg:#214a38;--theme-sidebar-bg:#f4eee4;
+  --theme-sheet-bg:#f7f2e9;--theme-card-bg:#fbf8f2;--theme-chip-bg:#ece4d7;
+}
+html[data-theme="bistro"] body{
+  background:#e8dfd1;
+  color:#27241f
+}
+html[data-theme="bistro"] .topbar{
+  border-bottom:1px solid #173829;
+  background:#214a38;
+  box-shadow:0 3px 12px rgba(42,35,25,.12)
+}
+html[data-theme="bistro"] .brand{border-right:1px solid rgba(255,255,255,.20)}
+html[data-theme="bistro"] .brand-title{
+  color:#fffaf0;
+  font-family:"Noto Serif KR","Nanum Myeongjo",serif;
+  font-size:24px;
+  font-weight:700;
+  letter-spacing:-.45px
+}
+html[data-theme="bistro"] .brand-sub{color:#d8e5dc}
+html[data-theme="bistro"] .filter-btn,
+html[data-theme="bistro"] .theme-button,
+html[data-theme="bistro"] .account-btn,
+html[data-theme="bistro"] .roulette-btn{
+  border:1px solid rgba(255,255,255,.27);
+  border-radius:999px;
+  background:rgba(255,255,255,.08);
+  color:#fffaf0;
+  box-shadow:none
+}
+html[data-theme="bistro"] .filter-btn:hover,
+html[data-theme="bistro"] .theme-button:hover,
+html[data-theme="bistro"] .account-btn:hover,
+html[data-theme="bistro"] .roulette-btn:hover{
+  background:rgba(255,255,255,.15)
+}
+html[data-theme="bistro"] .filter-btn.active{
+  border-color:#d7bd7a;
+  background:#d7bd7a;
+  color:#23362c;
+  filter:none
+}
+html[data-theme="bistro"] .suggest-btn{
+  border-radius:999px;
+  background:#8a3d48;
+  color:#fff;
+  box-shadow:none
+}
+html[data-theme="bistro"] .sidebar{
+  border-right:1px solid #cfc2b2;
+  background:#f4eee4;
+  box-shadow:none
+}
+html[data-theme="bistro"] .search,
+html[data-theme="bistro"] #mobileSearch{
+  border:1px solid #9f8a75;
+  border-radius:5px;
+  background:#fbf8f2;
+  color:#2b2823;
+  box-shadow:none
+}
+html[data-theme="bistro"] .search:focus,
+html[data-theme="bistro"] #mobileSearch:focus{
+  border-color:#8a3d48;
+  box-shadow:0 0 0 2px rgba(138,61,72,.10)
+}
+html[data-theme="bistro"] .search-icon,
+html[data-theme="bistro"] .mobile-search-icon{color:#8a3d48}
+html[data-theme="bistro"] .compact-filter-label{
+  border-color:#cdbfaf;
+  border-radius:4px;
+  background:#fbf8f2;
+  color:#4e473f;
+  font-family:"Noto Serif KR","Nanum Myeongjo",serif;
+  font-weight:600
+}
+html[data-theme="bistro"] .filter-chip-row{
+  border-top:1px solid #cdbfaf;
+  border-bottom:1px solid #cdbfaf;
+  border-radius:0;
+  background:transparent
+}
+html[data-theme="bistro"] .filter-chip{
+  border-radius:0;
+  color:#5a5148;
+  font-weight:700
+}
+html[data-theme="bistro"] .filter-chip.active{
+  border-color:#214a38;
+  background:#214a38;
+  color:#fffaf0
+}
+html[data-theme="bistro"] .quick-row{border-top:1px solid #d5cabd}
+html[data-theme="bistro"] .map-tools-label{color:#83776b}
+html[data-theme="bistro"] .quick-btn{
+  border-color:#c9bbab;
+  border-radius:4px;
+  background:#fbf8f2;
+  color:#514a42
+}
+html[data-theme="bistro"] .list-head{
+  border-top:1px solid #cabdac;
+  border-bottom:1px solid #cabdac
+}
+html[data-theme="bistro"] .list-title,
+html[data-theme="bistro"] .mobile-list-heading strong{
+  color:#214a38;
+  font-family:"Noto Serif KR","Nanum Myeongjo",serif;
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:-.25px
+}
+html[data-theme="bistro"] .list-sub{color:#807468}
+html[data-theme="bistro"] .sort-btn,
+html[data-theme="bistro"] .mobile-sort{
+  border:0;
+  border-bottom:1px solid #8f806f;
+  border-radius:0;
+  background:transparent;
+  color:#5a5148
+}
+html[data-theme="bistro"] .card{
+  margin:0 5px;
+  padding:16px 8px;
+  border:0;
+  border-bottom:1px solid #d8ccbd;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none
+}
+html[data-theme="bistro"] .card:hover{background:#eee5d8}
+html[data-theme="bistro"] .card.active{
+  background:#f5e7e8;
+  box-shadow:inset 3px 0 0 #8a3d48
+}
+html[data-theme="bistro"] .card.active::before{display:none}
+html[data-theme="bistro"] .name,
+html[data-theme="bistro"] .mobile-card-name,
+html[data-theme="bistro"] .comment-name,
+html[data-theme="bistro"] .detail-section-title{
+  color:#29251f;
+  font-family:"Noto Serif KR","Nanum Myeongjo",serif;
+  font-weight:700;
+  letter-spacing:-.2px
+}
+html[data-theme="bistro"] .name,
+html[data-theme="bistro"] .mobile-card-name{font-size:18px}
+html[data-theme="bistro"] .badge,
+html[data-theme="bistro"] .mobile-card-category{
+  border:1px solid #bcae9d!important;
+  border-radius:2px!important;
+  background:transparent!important;
+  color:#665b50!important
+}
+html[data-theme="bistro"] .badge-dot{background:#8a3d48!important}
+html[data-theme="bistro"] .rating,
+html[data-theme="bistro"] .mobile-card-rating{color:#8a3d48;font-weight:800}
+html[data-theme="bistro"] .card-stats,
+html[data-theme="bistro"] .card-evaluations,
+html[data-theme="bistro"] .card-review,
+html[data-theme="bistro"] .card-distance,
+html[data-theme="bistro"] .card-note,
+html[data-theme="bistro"] .card-feature,
+html[data-theme="bistro"] .card-address{color:#766d63}
+html[data-theme="bistro"] .card-tag,
+html[data-theme="bistro"] .mobile-card-tag,
+html[data-theme="bistro"] .detail-tag{
+  border:1px solid #cabbaa;
+  border-radius:2px;
+  background:#eee6da;
+  color:#5b5148
+}
+html[data-theme="bistro"] .theme-menu,
+html[data-theme="bistro"] .sort-menu{
+  border:1px solid #6f6254;
+  border-radius:4px;
+  background:#faf6ee;
+  box-shadow:6px 6px 0 rgba(72,57,43,.14)
+}
+html[data-theme="bistro"] .theme-option,
+html[data-theme="bistro"] .sort-option{border-radius:2px;background:transparent}
+html[data-theme="bistro"] .theme-option:hover,
+html[data-theme="bistro"] .sort-option:hover{background:#eee5d8}
+html[data-theme="bistro"] .theme-option.active,
+html[data-theme="bistro"] .sort-option.active{background:#214a38;color:#fffaf0}
+html[data-theme="bistro"] .theme-option.active small{color:#d8e5dc}
+html[data-theme="bistro"] .mobile-sheet{
+  border-top:1px solid #837363;
+  border-radius:10px 10px 0 0!important;
+  background:#f7f2e9;
+  box-shadow:0 -12px 30px rgba(65,49,36,.12)
+}
+html[data-theme="bistro"] .mobile-sheet-handle::before{background:#8a3d48}
+html[data-theme="bistro"] .mobile-sheet-quick button{
+  border-color:#c7b8a8;
+  border-radius:4px;
+  background:#fbf8f2;
+  color:#514940
+}
+html[data-theme="bistro"] .mobile-sheet-quick button.active{
+  border-color:#214a38;background:#214a38;color:#fffaf0
+}
+html[data-theme="bistro"] .mobile-card{
+  margin:0 4px;
+  padding:15px 8px;
+  border:0;
+  border-bottom:1px solid #d8ccbd;
+  border-radius:0;
+  background:transparent
+}
+html[data-theme="bistro"] .map-area-filter,
+html[data-theme="bistro"] .mobile-map-location,
+html[data-theme="bistro"] .selection-bar{
+  border:1px solid #8e7e6e;
+  border-radius:4px;
+  background:#faf6ee;
+  color:#493f36;
+  box-shadow:4px 4px 0 rgba(76,58,42,.12)
+}
+html[data-theme="bistro"] .comment-panel,
+html[data-theme="bistro"] .detail-scroll,
+html[data-theme="bistro"] .detail-topbar,
+html[data-theme="bistro"] .detail-tabs,
+html[data-theme="bistro"] .detail-tab,
+html[data-theme="bistro"] .detail-section,
+html[data-theme="bistro"] .comment-compose{
+  border-color:#d3c6b7;
+  background:#faf6ee
+}
+html[data-theme="bistro"] .detail-hero{
+  border-bottom:1px solid #8a3d48;
+  background:#214a38
+}
+html[data-theme="bistro"] .comment-name{color:#fffaf0;font-size:28px}
+html[data-theme="bistro"] .comment-sub{color:#d8e5dc}
+html[data-theme="bistro"] .detail-section-title{color:#214a38}
+html[data-theme="bistro"] .detail-tab.active{
+  border-color:#8a3d48;
+  background:#f4e8e8;
+  color:#6f3039
+}
+html[data-theme="bistro"] .review-score{
+  border-color:#cdbfaf;
+  border-radius:3px;
+  background:#f3ece2
+}
+html[data-theme="bistro"] .review-sort button,
+html[data-theme="bistro"] .comment-helpful{
+  border-color:#b9aa99;
+  border-radius:3px;
+  background:#fbf8f2;
+  color:#5c5147
+}
+html[data-theme="bistro"] .suggest-modal,
+html[data-theme="bistro"] .roulette-modal{
+  border:1px solid #64584c;
+  border-radius:6px;
+  background:#faf6ee;
+  box-shadow:8px 8px 0 rgba(76,58,42,.14)
+}
+html[data-theme="bistro"] .modal-head{
+  border-bottom:1px solid #8a3d48;
+  background:#214a38;
+  color:#fffaf0
+}
+html[data-theme="bistro"] .modal-title{font-family:"Noto Serif KR","Nanum Myeongjo",serif}
+html[data-theme="bistro"] .modal-sub{color:#d8e5dc}
+html[data-theme="bistro"] .modal-close{background:#f2eadf;color:#214a38}
+html[data-theme="bistro"] .suggest-tabs,
+html[data-theme="bistro"] .suggest-tab{background:#faf6ee;border-color:#d3c6b7}
+html[data-theme="bistro"] .kakao-info{
+  border:1px solid #6f6254;
+  border-radius:4px;
+  background:#faf6ee;
+  box-shadow:5px 5px 0 rgba(72,57,43,.12)
+}
+html[data-theme="bistro"] .popup-name{
+  color:#214a38;
+  font-family:"Noto Serif KR","Nanum Myeongjo",serif;
+  font-weight:700
+}
+html[data-theme="bistro"] .marker-caption::before{
+  border-color:#746656;
+  background:#faf6ee
+}
+html[data-theme="bistro"] .marker-name{
+  border:1px solid #746656;
+  border-radius:3px;
+  background:#faf6ee;
+  color:#332d27;
+  font-family:"Noto Serif KR","Nanum Myeongjo",serif;
+  font-weight:600;
+  box-shadow:4px 4px 0 rgba(72,57,43,.12)
+}
+html[data-theme="bistro"] .marker-label.selected .marker-caption::before{
+  border-color:#8a3d48;background:#f5e7e8
+}
+html[data-theme="bistro"] .marker-label.selected .marker-name{
+  border-color:#8a3d48;background:#f5e7e8;color:#4e232a
+}
+
 @media(max-width:900px){
   html[data-theme="night"] .mobile-sheet{border-radius:22px 22px 0 0}
   html[data-theme="editorial"] .mobile-sheet{border-radius:0}
+  html[data-theme="mapfocus"] .mobile-sheet{border-radius:24px 24px 0 0}
+  html[data-theme="bistro"] .mobile-sheet{border-radius:10px 10px 0 0}
 }
 </style>
 </head>
@@ -2958,6 +3486,16 @@ html[data-theme="editorial"] .marker-label.selected .marker-name{
         <button class="theme-option" type="button" data-theme-option="editorial" role="menuitem">
           <span class="theme-preview editorial" aria-hidden="true"></span>
           <span class="theme-option-copy"><b>에디토리얼</b><small>매거진 & 포스터 스타일</small></span>
+          <span class="theme-check">✓</span>
+        </button>
+        <button class="theme-option" type="button" data-theme-option="mapfocus" role="menuitem">
+          <span class="theme-preview mapfocus" aria-hidden="true"></span>
+          <span class="theme-option-copy"><b>맵 포커스</b><small>지도를 넓고 가볍게 탐색</small></span>
+          <span class="theme-check">✓</span>
+        </button>
+        <button class="theme-option" type="button" data-theme-option="bistro" role="menuitem">
+          <span class="theme-preview bistro" aria-hidden="true"></span>
+          <span class="theme-option-copy"><b>비스트로</b><small>차분한 레스토랑 가이드</small></span>
           <span class="theme-check">✓</span>
         </button>
       </div>
@@ -6020,7 +6558,7 @@ window.addEventListener('message',e=>{
 });
 
 const THEME_KEY='lunch-map-theme-v1';
-const THEME_IDS=['simple','night','editorial'];
+const THEME_IDS=['simple','night','editorial','mapfocus','bistro'];
 const themeControl=document.getElementById('themeControl');
 const themeButton=document.getElementById('themeButton');
 const themeMenu=document.getElementById('themeMenu');
@@ -6036,7 +6574,7 @@ function syncThemeUI(){
     btn.setAttribute('aria-current',active?'true':'false');
   });
   if(themeButton){
-    const labels={simple:'심플',night:'나이트',editorial:'에디토리얼'};
+    const labels={simple:'심플',night:'나이트',editorial:'에디토리얼',mapfocus:'맵 포커스',bistro:'비스트로'};
     themeButton.title='현재 테마: '+(labels[current]||labels.simple);
   }
 }
