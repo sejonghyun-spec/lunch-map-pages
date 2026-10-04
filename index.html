@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-editorial-magazine-v75">
+<meta name="lunch-map-build" content="2026-10-04-editorial-sidebar-fix-v76">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -2546,9 +2546,7 @@ html[data-theme="editorial"] .brand-sub{color:#dbe7f5}
 html[data-theme="editorial"] .filter-btn,
 html[data-theme="editorial"] .theme-button,
 html[data-theme="editorial"] .account-btn,
-html[data-theme="editorial"] .roulette-btn,
-html[data-theme="editorial"] .quick-btn,
-html[data-theme="editorial"] .compact-filter-label{
+html[data-theme="editorial"] .roulette-btn{
   border:1px solid rgba(255,255,255,.34);
   border-radius:2px;
   background:rgba(255,255,255,.10);
@@ -2589,6 +2587,8 @@ html[data-theme="editorial"] #mobileSearch:focus{
 }
 html[data-theme="editorial"] .search-icon,
 html[data-theme="editorial"] .mobile-search-icon{color:#123b6d}
+html[data-theme="editorial"] .search::placeholder,
+html[data-theme="editorial"] #mobileSearch::placeholder{color:#6f7e8f}
 html[data-theme="editorial"] .filter-chip-row{
   border:1px solid #c9d2df;
   border-radius:2px;
@@ -2608,6 +2608,68 @@ html[data-theme="editorial"] .sidebar{
   border-right:4px solid #123b6d;
   background:#f7f5ef;
   box-shadow:none
+}
+html[data-theme="editorial"] .sidebar .compact-filter-label{
+  border:1px solid #9fb0c3;
+  border-radius:2px;
+  background:#fff;
+  color:#183a60;
+  font-weight:800;
+  box-shadow:none
+}
+html[data-theme="editorial"] .sidebar .compact-filter:has(.multi-filter-select:hover) .compact-filter-label{
+  border-color:#123b6d;
+  background:#eef4fb;
+  color:#123b6d
+}
+html[data-theme="editorial"] .sidebar .compact-filter:has(.multi-filter-select.active) .compact-filter-label{
+  border-color:#e14c3f;
+  background:#fff3df;
+  color:#9f3028
+}
+html[data-theme="editorial"] .sidebar .multi-filter-reset{
+  color:#53667a;
+  font-weight:750
+}
+html[data-theme="editorial"] .sidebar .multi-filter-reset:hover{
+  background:#e7edf4;
+  color:#123b6d
+}
+html[data-theme="editorial"] .sidebar .quick-row{
+  border-top:1px solid #cbd4df
+}
+html[data-theme="editorial"] .sidebar .map-tools-label{
+  color:#5b6d80;
+  font-weight:750
+}
+html[data-theme="editorial"] .sidebar .quick-btn{
+  border:1px solid #a9b8c8;
+  border-radius:2px;
+  background:#fff;
+  color:#183a60;
+  font-weight:800;
+  box-shadow:none
+}
+html[data-theme="editorial"] .sidebar .quick-btn:hover{
+  border-color:#123b6d;
+  background:#eaf1f8;
+  color:#123b6d
+}
+html[data-theme="editorial"] .sidebar .filter-chip-row{
+  border-color:#b8c6d5;
+  background:#dfe8f2
+}
+html[data-theme="editorial"] .sidebar .filter-chip{
+  color:#29435f
+}
+html[data-theme="editorial"] .sidebar .filter-chip:hover{
+  background:#cfdbe8;
+  color:#123b6d
+}
+html[data-theme="editorial"] .sidebar .filter-chip.active{
+  border-color:#123b6d;
+  background:#123b6d;
+  color:#fff
 }
 html[data-theme="editorial"] .list-head{
   border-top:0;
@@ -2664,6 +2726,15 @@ html[data-theme="editorial"] .rating,
 html[data-theme="editorial"] .mobile-card-rating{
   color:#e14c3f;
   font-weight:900
+}
+html[data-theme="editorial"] .card-stats,
+html[data-theme="editorial"] .card-evaluations,
+html[data-theme="editorial"] .card-review,
+html[data-theme="editorial"] .card-distance,
+html[data-theme="editorial"] .card-note,
+html[data-theme="editorial"] .card-feature,
+html[data-theme="editorial"] .card-address{
+  color:#4d5f72
 }
 html[data-theme="editorial"] .card-tag,
 html[data-theme="editorial"] .mobile-card-tag{
