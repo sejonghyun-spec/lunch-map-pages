@@ -6204,13 +6204,14 @@ function canDeleteComment(row){
 
 const placeCaptureModal=document.getElementById('placeCaptureModal');
 const placeCaptureClose=document.getElementById('placeCaptureClose');
-const capturePasteZone=document.getElementById('capturePasteZone');
-const captureFileAdd=document.getElementById('captureFileAdd');
-const captureQueue=document.getElementById('captureQueue');
-const captureCount=document.getElementById('captureCount');
+const placeTextInput=document.getElementById('placeTextInput');
 const captureStatus=document.getElementById('captureStatus');
 const captureClear=document.getElementById('captureClear');
 const captureDone=document.getElementById('captureDone');
+const menuAutoButton=document.getElementById('menuAutoButton');
+const menuStatus=document.getElementById('menuStatus');
+const menuList=document.getElementById('menuList');
+const menuMeta=document.getElementById('menuMeta');
 
 function syncPlaceCaptureUI(){
   if(!placeCaptureButton||!detailCaptureButton)return;
@@ -6219,23 +6220,38 @@ function syncPlaceCaptureUI(){
   detailCaptureButton.hidden=!admin;
   placeCaptureButton.disabled=!admin||placeCaptureBusy;
   detailCaptureButton.disabled=!admin||placeCaptureBusy;
-  placeCaptureButton.textContent=placeCaptureBusy?'분석 중…':'📋 플레이스 캡처 입력';
-  detailCaptureButton.textContent=placeCaptureBusy?'분석 중…':'📋 캡처';
+  placeCaptureButton.textContent=placeCaptureBusy?'판독 중…':'📋 플레이스 텍스트';
+  detailCaptureButton.textContent=placeCaptureBusy?'판독 중…':'📋 텍스트';
   placeCaptureButton.classList.toggle('busy',placeCaptureBusy);
-  placeCaptureButton.title='네이버 플레이스 캡처를 붙여넣어 DB를 자동 반영합니다.';
+  placeCaptureButton.title='네이버 플레이스에서 복사한 텍스트를 붙여넣어 DB에 반영합니다.';
+}
+function syncMenuAdminUI(){
+  if(!menuAutoButton)return;
+  menuAutoButton.hidden=!isCommentAdmin();
+  menuAutoButton.disabled=!isCommentAdmin()||!commentRestaurant||menuAutoBusy;
+  menuAutoButton.textContent=menuAutoBusy?'검색 중…':'웹에서 자동찾기';
 }
 function setPlaceCaptureBusy(on){
   placeCaptureBusy=!!on;
   syncPlaceCaptureUI();
   placeCaptureModal?.querySelector('.capture-modal')?.classList.toggle('busy',placeCaptureBusy);
-  if(captureDone)captureDone.disabled=placeCaptureBusy||!captureQueueData.length;
-  if(captureClear)captureClear.disabled=placeCaptureBusy||!captureQueueData.length;
-  if(captureFileAdd)captureFileAdd.disabled=placeCaptureBusy;
+  if(placeTextInput)placeTextInput.disabled=placeCaptureBusy;
+  if(captureDone)captureDone.disabled=placeCaptureBusy||!String(placeTextInput?.value||'').trim();
+  if(captureClear)captureClear.disabled=placeCaptureBusy||!String(placeTextInput?.value||'').trim();
+}
+function setMenuAutoBusy(on){
+  menuAutoBusy=!!on;
+  syncMenuAdminUI();
 }
 function setCaptureStatus(message,type=''){
   if(!captureStatus)return;
   captureStatus.textContent=String(message||'');
   captureStatus.className='capture-status'+(type?' '+type:'');
+}
+function setMenuStatus(message,type=''){
+  if(!menuStatus)return;
+  menuStatus.textContent=String(message||'');
+  menuStatus.className='menu-status'+(type?' '+type:'');
 }
 function submitPlaceCaptureForm(fields){
   const form=document.createElement('form');
@@ -6253,86 +6269,6 @@ function submitPlaceCaptureForm(fields){
   form.submit();
   setTimeout(()=>form.remove(),100);
 }
-function readCaptureFile(file){
-  return new Promise((resolve,reject)=>{
-    const reader=new FileReader();
-    reader.onload=()=>resolve(String(reader.result||''));
-    reader.onerror=()=>reject(new Error('이미지를 읽지 못했습니다.'));
-    reader.readAsDataURL(file);
-  });
-}
-function loadCaptureImage(dataUrl){
-  return new Promise((resolve,reject)=>{
-    const img=new Image();
-    img.onload=()=>resolve(img);
-    img.onerror=()=>reject(new Error('이미지를 열지 못했습니다.'));
-    img.src=dataUrl;
-  });
-}
-async function compressCaptureFile(file){
-  if(!file||!/^image\/(?:png|jpeg|jpg|webp)$/i.test(file.type||''))throw new Error('PNG/JPG/WEBP 이미지만 사용할 수 있습니다.');
-  const source=await readCaptureFile(file);
-  const img=await loadCaptureImage(source);
-  const maxSide=1200;
-  const ratio=Math.min(1,maxSide/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height));
-  const width=Math.max(1,Math.round((img.naturalWidth||img.width)*ratio));
-  const height=Math.max(1,Math.round((img.naturalHeight||img.height)*ratio));
-  const canvas=document.createElement('canvas');
-  canvas.width=width;canvas.height=height;
-  const ctx=canvas.getContext('2d',{alpha:false});
-  ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);
-  ctx.drawImage(img,0,0,width,height);
-  return canvas.toDataURL('image/jpeg',.76);
-}
-function renderCaptureQueue(){
-  if(!captureQueue)return;
-  captureCount.textContent=captureQueueData.length+'장 대기 중';
-  captureDone.disabled=placeCaptureBusy||!captureQueueData.length;
-  captureClear.disabled=placeCaptureBusy||!captureQueueData.length;
-  if(!captureQueueData.length){
-    captureQueue.innerHTML='<div class="capture-empty">붙여넣은 캡처가 여기에 쌓입니다.</div>';
-    return;
-  }
-  captureQueue.innerHTML=captureQueueData.map((x,i)=>
-    '<div class="capture-item" data-index="'+i+'">'+
-      '<img src="'+x.dataUrl+'" alt="캡처 '+(i+1)+'">'+
-      '<b>'+(i+1)+'</b>'+
-      '<button type="button" aria-label="캡처 '+(i+1)+' 삭제">×</button>'+
-    '</div>'
-  ).join('');
-  captureQueue.querySelectorAll('.capture-item button').forEach(btn=>btn.addEventListener('click',()=>{
-    const idx=Number(btn.closest('.capture-item').dataset.index);
-    if(Number.isFinite(idx)){captureQueueData.splice(idx,1);renderCaptureQueue();}
-  }));
-}
-async function addPlaceCaptureFiles(files){
-  if(placeCaptureBusy)return;
-  const incoming=[...(files||[])].filter(f=>/^image\//i.test(f.type||''));
-  if(!incoming.length){
-    setCaptureStatus('클립보드에서 이미지가 확인되지 않았습니다.','error');
-    return;
-  }
-  const room=Math.max(0,10-captureQueueData.length);
-  if(!room){
-    setCaptureStatus('한 번에 최대 10장까지 처리할 수 있습니다.','error');
-    return;
-  }
-  const selected=incoming.slice(0,room);
-  if(incoming.length>room)setCaptureStatus('최대 10장까지만 대기열에 추가했습니다.','error');
-  else setCaptureStatus('이미지를 준비하는 중입니다.');
-  try{
-    for(const file of selected){
-      const dataUrl=await compressCaptureFile(file);
-      captureQueueData.push({dataUrl:dataUrl});
-      renderCaptureQueue();
-    }
-    setCaptureStatus('계속 Ctrl+V로 붙여넣거나 완료를 눌러 자동 반영하세요.');
-  }catch(err){
-    setCaptureStatus(String(err&&err.message||'이미지를 준비하지 못했습니다.'),'error');
-  }finally{
-    if(placeCaptureInput)placeCaptureInput.value='';
-  }
-}
 function openPlaceCaptureModal(){
   if(!isCommentAdmin()){
     showToast('관리자 계정에서만 사용할 수 있습니다.');
@@ -6341,137 +6277,212 @@ function openPlaceCaptureModal(){
   if(placeCaptureBusy)return;
   placeCaptureModal.classList.add('open');
   placeCaptureModal.setAttribute('aria-hidden','false');
-  setCaptureStatus(captureQueueData.length?'계속 붙여넣거나 완료를 눌러 주세요.':'클립보드의 네이버 플레이스 캡처를 Ctrl+V로 붙여넣으세요.');
-  renderCaptureQueue();
-  setTimeout(()=>capturePasteZone?.focus(),60);
+  setCaptureStatus('네이버 플레이스에서 복사한 텍스트를 그대로 붙여넣으세요.');
+  setTimeout(()=>placeTextInput?.focus(),60);
 }
 function closePlaceCaptureModal(){
   if(placeCaptureBusy)return;
   placeCaptureModal.classList.remove('open');
   placeCaptureModal.setAttribute('aria-hidden','true');
 }
-function clearCaptureQueue(){
+function clearPlaceText(){
   if(placeCaptureBusy)return;
-  captureQueueData=[];
-  renderCaptureQueue();
-  setCaptureStatus('대기열을 비웠습니다.');
-  capturePasteZone?.focus();
+  if(placeTextInput)placeTextInput.value='';
+  setPlaceCaptureBusy(false);
+  setCaptureStatus('입력 내용을 비웠습니다.');
+  placeTextInput?.focus();
 }
-function submitCaptureQueue(){
-  if(placeCaptureBusy||!captureQueueData.length)return;
-  const total=captureQueueData.reduce((n,x)=>n+x.dataUrl.length,0);
-  if(total>11500000){
-    setCaptureStatus('이미지 용량이 큽니다. 일부를 먼저 완료한 뒤 나머지를 처리해 주세요.','error');
-    return;
-  }
-  pendingPlaceCapture={
-    mode:'placeCapture',
-    imagesJson:JSON.stringify(captureQueueData.map(x=>x.dataUrl))
-  };
+function submitPlaceText(){
+  const rawText=String(placeTextInput?.value||'').trim();
+  if(placeCaptureBusy||!rawText)return;
+  pendingAiAction={kind:'placeText',fields:{mode:'placeText',rawText:rawText}};
   setPlaceCaptureBusy(true);
-  setCaptureStatus(captureQueueData.length+'장을 빠르게 판독 중입니다. 애매한 캡처만 자동으로 정밀 재판독합니다.');
-  submitPlaceCaptureForm(pendingPlaceCapture);
+  setCaptureStatus('식당명과 영업정보를 판독해서 DB와 매칭하는 중입니다.');
+  submitPlaceCaptureForm(pendingAiAction.fields);
 }
-function promptAndStoreOpenAiKey(){
-  const key=window.prompt('처음 한 번만 필요합니다. OpenAI API Key를 입력해 주세요.\n키는 Apps Script의 Script Properties에 저장되며 지도 코드에는 남지 않습니다.');
-  if(!key){
-    pendingPlaceCapture=null;
-    setPlaceCaptureBusy(false);
-    setCaptureStatus('API Key 입력이 취소되었습니다.','error');
-    return;
-  }
-  setCaptureStatus('API Key를 저장하는 중입니다.');
-  submitPlaceCaptureForm({mode:'openaiKeySet',apiKey:key.trim()});
-}
-function captureResultSummary(data){
+function placeTextResultSummary(data){
   const results=Array.isArray(data.results)?data.results:[];
   const skipped=Array.isArray(data.skipped)?data.skipped:[];
   const elapsed=Number(data.elapsedMs)||0;
-  const retries=Number(data.highRetryCount)||0;
   let text=results.length+'개 식당 반영 완료';
   if(elapsed)text+=' · '+(elapsed/1000).toFixed(1)+'초';
-  if(retries)text+=' · 정밀 재판독 '+retries+'장';
   if(results.length)text+=' · '+results.map(x=>x.name).join(', ');
   if(skipped.length)text+=' / '+skipped.length+'개 보류: '+skipped.map(x=>(x.name||'식당')+'('+x.reason+')').join(', ');
   return text;
 }
+function clearPendingAiAction(){
+  const kind=pendingAiAction&&pendingAiAction.kind;
+  pendingAiAction=null;
+  if(kind==='placeText')setPlaceCaptureBusy(false);
+  if(kind==='menuAuto')setMenuAutoBusy(false);
+}
+function promptAndStoreOpenAiKey(){
+  const key=window.prompt('처음 한 번만 필요합니다. OpenAI API Key를 입력해 주세요.\n키는 Apps Script의 Script Properties에 저장되며 지도 코드에는 남지 않습니다.');
+  if(!key){
+    if(pendingAiAction?.kind==='placeText')setCaptureStatus('API Key 입력이 취소되었습니다.','error');
+    if(pendingAiAction?.kind==='menuAuto')setMenuStatus('API Key 입력이 취소되었습니다.','error');
+    clearPendingAiAction();
+    return;
+  }
+  if(pendingAiAction?.kind==='placeText')setCaptureStatus('API Key를 저장하는 중입니다.');
+  if(pendingAiAction?.kind==='menuAuto')setMenuStatus('API Key를 저장하는 중입니다.');
+  submitPlaceCaptureForm({mode:'openaiKeySet',apiKey:key.trim()});
+}
+
+function renderMenuList(rows){
+  const menus=Array.isArray(rows)?rows:[];
+  if(!menuList||!menuMeta)return;
+  if(!menus.length){
+    menuMeta.textContent='등록된 메뉴 정보가 없습니다.';
+    menuList.innerHTML='<div class="comment-empty">아직 메뉴 정보가 없습니다.'+
+      (isCommentAdmin()?'<br>관리자는 ‘웹에서 자동찾기’로 수집할 수 있습니다.':'')+'</div>';
+    return;
+  }
+  const checked=[...new Set(menus.map(x=>String(x.checkedAt||'').trim()).filter(Boolean))].sort().reverse()[0]||'';
+  const sourceTypes=[...new Set(menus.map(x=>String(x.sourceType||'').trim()).filter(Boolean))];
+  menuMeta.textContent=[menus.length+'개 메뉴',checked?('확인 '+checked):'',sourceTypes.slice(0,2).join(' · ')].filter(Boolean).join(' · ');
+  menuList.innerHTML=menus.map(x=>{
+    const meta=[];
+    if(x.representative)meta.push('<span class="menu-rep">대표</span>');
+    if(x.sourceType)meta.push('<span>'+esc(x.sourceType)+'</span>');
+    if(x.sourceDate)meta.push('<span>'+esc(x.sourceDate)+'</span>');
+    if(x.sourceUrl)meta.push('<a href="'+esc(x.sourceUrl)+'" target="_blank" rel="noopener noreferrer">출처 보기</a>');
+    if(x.note)meta.push('<span>'+esc(x.note)+'</span>');
+    return '<article class="menu-item">'+
+      '<div class="menu-item-name">'+esc(x.menuName||'메뉴')+'</div>'+
+      '<div class="menu-item-price">'+esc(x.price||'-')+'</div>'+
+      '<div class="menu-item-meta">'+meta.join('')+'</div>'+
+    '</article>';
+  }).join('');
+}
+function fetchMenus(restaurant,timeoutMs=9000){
+  return new Promise((resolve,reject)=>{
+    if(!restaurant)return resolve([]);
+    const key=restaurantCommentKey(restaurant);
+    const callback='__lunchMenu'+Date.now()+Math.random().toString(36).slice(2);
+    const script=document.createElement('script');
+    let done=false;
+    const finish=(err,rows)=>{
+      if(done)return;
+      done=true;clearTimeout(timer);
+      try{delete window[callback];}catch(e){window[callback]=undefined;}
+      script.remove();
+      if(err)reject(err);else resolve(rows||[]);
+    };
+    const timer=setTimeout(()=>finish(new Error('메뉴 조회 시간이 초과되었습니다.')),timeoutMs);
+    window[callback]=payload=>{
+      if(payload&&payload.ok)finish(null,Array.isArray(payload.menus)?payload.menus:[]);
+      else finish(new Error(payload&&payload.message||'메뉴 조회에 실패했습니다.'));
+    };
+    script.onerror=()=>finish(new Error('메뉴 조회에 실패했습니다.'));
+    script.src=SUGGEST_URL+'?mode=menus&key='+encodeURIComponent(key)+'&callback='+encodeURIComponent(callback)+'&t='+Date.now();
+    script.async=true;
+    document.head.appendChild(script);
+  });
+}
+async function loadMenus(restaurant,force=false){
+  if(!restaurant)return;
+  const key=restaurantCommentKey(restaurant);
+  if(!force&&menuCache.has(key)){
+    renderMenuList(menuCache.get(key));
+    return;
+  }
+  const seq=++menuRequestSeq;
+  setMenuStatus('메뉴 정보를 불러오는 중입니다.');
+  try{
+    const rows=await fetchMenus(restaurant);
+    menuCache.set(key,rows);
+    if(seq===menuRequestSeq&&commentRestaurant&&restaurantCommentKey(commentRestaurant)===key){
+      renderMenuList(rows);
+      setMenuStatus('');
+    }
+  }catch(err){
+    if(seq===menuRequestSeq)setMenuStatus(String(err&&err.message||'메뉴 조회에 실패했습니다.'),'error');
+  }
+}
+function autoFindMenus(){
+  if(!commentRestaurant)return;
+  if(!isCommentAdmin()){
+    showToast('관리자 계정에서만 사용할 수 있습니다.');
+    return;
+  }
+  if(menuAutoBusy)return;
+  const restaurant=commentRestaurant;
+  pendingAiAction={
+    kind:'menuAuto',
+    fields:{mode:'menuAuto',name:restaurant.name||'',address:restaurant.address||''},
+    key:restaurantCommentKey(restaurant)
+  };
+  setMenuAutoBusy(true);
+  setMenuStatus('웹 검색과 메뉴판 이미지 검색으로 최신 메뉴·가격을 확인하는 중입니다.');
+  submitPlaceCaptureForm(pendingAiAction.fields);
+}
+
 placeCaptureButton?.addEventListener('click',openPlaceCaptureModal);
 detailCaptureButton?.addEventListener('click',openPlaceCaptureModal);
 placeCaptureClose?.addEventListener('click',closePlaceCaptureModal);
 placeCaptureModal?.addEventListener('click',e=>{if(e.target===placeCaptureModal)closePlaceCaptureModal();});
-captureClear?.addEventListener('click',clearCaptureQueue);
-captureDone?.addEventListener('click',submitCaptureQueue);
-captureFileAdd?.addEventListener('click',()=>placeCaptureInput?.click());
-placeCaptureInput?.addEventListener('change',()=>addPlaceCaptureFiles(placeCaptureInput.files));
-capturePasteZone?.addEventListener('click',()=>capturePasteZone.focus());
-capturePasteZone?.addEventListener('dragover',e=>{e.preventDefault();});
-capturePasteZone?.addEventListener('drop',e=>{
-  e.preventDefault();
-  addPlaceCaptureFiles(e.dataTransfer?.files||[]);
+captureClear?.addEventListener('click',clearPlaceText);
+captureDone?.addEventListener('click',submitPlaceText);
+placeTextInput?.addEventListener('input',()=>{
+  captureDone.disabled=placeCaptureBusy||!placeTextInput.value.trim();
+  captureClear.disabled=placeCaptureBusy||!placeTextInput.value.trim();
 });
-document.addEventListener('paste',e=>{
-  if(!placeCaptureModal?.classList.contains('open')||placeCaptureBusy)return;
-  const files=[...(e.clipboardData?.items||[])]
-    .filter(item=>item.kind==='file'&&/^image\//i.test(item.type||''))
-    .map(item=>item.getAsFile()).filter(Boolean);
-  if(!files.length)return;
-  e.preventDefault();
-  addPlaceCaptureFiles(files);
-});
+menuAutoButton?.addEventListener('click',autoFindMenus);
 
 window.addEventListener('message',e=>{
   const allowedOrigins=new Set(['https://script.google.com','https://script.googleusercontent.com']);
   if(!allowedOrigins.has(e.origin))return;
   const data=e.data||{};
+
   if(data.source==='lunch-map-openai-key'){
-    if(data.ok&&pendingPlaceCapture){
-      setCaptureStatus('API Key 저장 완료 · 캡처 분석을 계속합니다.');
-      submitPlaceCaptureForm(pendingPlaceCapture);
+    if(data.ok&&pendingAiAction){
+      if(pendingAiAction.kind==='placeText')setCaptureStatus('API Key 저장 완료 · 텍스트 판독을 계속합니다.');
+      if(pendingAiAction.kind==='menuAuto')setMenuStatus('API Key 저장 완료 · 메뉴 검색을 계속합니다.');
+      submitPlaceCaptureForm(pendingAiAction.fields);
     }else{
-      pendingPlaceCapture=null;
-      setPlaceCaptureBusy(false);
-      setCaptureStatus(data.message||'API Key 저장에 실패했습니다.','error');
+      if(pendingAiAction?.kind==='placeText')setCaptureStatus(data.message||'API Key 저장에 실패했습니다.','error');
+      if(pendingAiAction?.kind==='menuAuto')setMenuStatus(data.message||'API Key 저장에 실패했습니다.','error');
+      clearPendingAiAction();
     }
     return;
   }
-  if(data.source!=='lunch-map-place-capture')return;
-  if(data.needsApiKey){
-    promptAndStoreOpenAiKey();
-    return;
-  }
-  if(!data.ok){
-    pendingPlaceCapture=null;
-    setPlaceCaptureBusy(false);
-    const suffix=Array.isArray(data.skipped)&&data.skipped.length
-      ? ' · '+data.skipped.map(x=>(x.name||'식당')+': '+x.reason).join(', ')
-      : '';
-    setCaptureStatus((data.message||'캡처 반영에 실패했습니다.')+suffix,'error');
-    showToast(data.message||'캡처 반영에 실패했습니다.');
-    return;
-  }
 
-  const summary=captureResultSummary(data);
-  pendingPlaceCapture=null;
-  captureQueueData=[];
-  setPlaceCaptureBusy(false);
-  renderCaptureQueue();
-  setCaptureStatus(summary,Array.isArray(data.skipped)&&data.skipped.length?'':'success');
-  showToast(data.message||summary);
-
-  const selectedBefore=selectedRow;
-  liveDbPromise=loadLiveDb().then(ok=>{
-    if(!ok)return false;
-    if(selectedBefore!=null){
-      const updated=dataForRow(selectedBefore);
-      if(updated&&selectedRow===selectedBefore){
-        selectedRestaurantKey=selectionKeyFor(updated);
-        openComments(updated);
-        syncSelectedRowsUI();
-      }
+  if(data.source==='lunch-map-place-text'){
+    if(data.needsApiKey){promptAndStoreOpenAiKey();return;}
+    if(!data.ok){
+      setCaptureStatus(data.message||'텍스트 반영에 실패했습니다.','error');
+      showToast(data.message||'텍스트 반영에 실패했습니다.');
+      clearPendingAiAction();
+      return;
     }
-    return true;
-  }).catch(()=>false);
-  setTimeout(()=>capturePasteZone?.focus(),80);
+    const summary=placeTextResultSummary(data);
+    setCaptureStatus(summary,Array.isArray(data.skipped)&&data.skipped.length?'':'success');
+    showToast(data.message||summary);
+    if(placeTextInput)placeTextInput.value='';
+    clearPendingAiAction();
+    liveDbPromise=loadLiveDb().catch(()=>false);
+    return;
+  }
+
+  if(data.source==='lunch-map-menu-auto'){
+    if(data.needsApiKey){promptAndStoreOpenAiKey();return;}
+    const actionKey=pendingAiAction&&pendingAiAction.kind==='menuAuto'?pendingAiAction.key:'';
+    if(!data.ok){
+      setMenuStatus(data.message||'메뉴 자동검색에 실패했습니다.','error');
+      showToast(data.message||'메뉴 자동검색에 실패했습니다.');
+      clearPendingAiAction();
+      return;
+    }
+    const menus=Array.isArray(data.menus)?data.menus:[];
+    if(actionKey)menuCache.set(actionKey,menus);
+    if(commentRestaurant&&(!actionKey||restaurantCommentKey(commentRestaurant)===actionKey))renderMenuList(menus);
+    const elapsed=Number(data.elapsedMs)||0;
+    setMenuStatus((data.message||menus.length+'개 메뉴 반영 완료')+(elapsed?' · '+(elapsed/1000).toFixed(1)+'초':''),'success');
+    showToast(data.message||'메뉴 정보를 반영했습니다.');
+    clearPendingAiAction();
+    return;
+  }
 });
 
 function renderReviewSummary(rows){
