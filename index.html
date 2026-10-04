@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-night-contrast-v70">
+<meta name="lunch-map-build" content="2026-10-04-marker-capsule-v71">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -1068,38 +1068,52 @@ button,input,select,textarea{font:inherit}
 .marker-caption{
   position:absolute;
   left:50%;
-  top:calc(100% + 3px);
+  top:calc(100% + 7px);
   transform:translateX(-50%);
   display:none;
   align-items:center;
   justify-content:center;
   width:max-content;
-  max-width:190px;
+  max-width:204px;
   line-height:1;
   pointer-events:none;
+  z-index:2;
+}
+.marker-caption::before{
+  content:'';
+  position:absolute;
+  left:50%;
+  top:-4px;
+  width:8px;
+  height:8px;
+  transform:translateX(-50%) rotate(45deg);
+  border-left:1px solid rgba(25,32,37,.16);
+  border-top:1px solid rgba(25,32,37,.16);
+  background:rgba(255,255,255,.985);
+  box-shadow:-1px -1px 2px rgba(28,36,42,.03);
 }
 .marker-name{
+  position:relative;
+  z-index:1;
   display:inline-block;
-  max-width:175px;
+  max-width:190px;
   overflow:hidden;
   text-overflow:ellipsis;
-  padding:0;
-  border:0;
-  border-radius:0;
-  background:transparent;
-  box-shadow:none;
-  color:#111;
+  padding:6px 10px 6px;
+  border:1px solid rgba(25,32,37,.16);
+  border-radius:999px;
+  background:rgba(255,255,255,.985);
+  box-shadow:0 4px 12px rgba(27,35,41,.18);
+  color:#15191c;
   font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",Arial,sans-serif;
-  font-size:13.5px;
-  font-weight:650;
-  line-height:1.15;
-  letter-spacing:-.32px;
+  font-size:13px;
+  font-weight:750;
+  line-height:1.1;
+  letter-spacing:-.3px;
   text-align:center;
   -webkit-font-smoothing:antialiased;
   text-rendering:geometricPrecision;
-  text-shadow:
-    0 1px 1px rgba(255,255,255,.72),
-    0 0 2px rgba(255,255,255,.48);
+  text-shadow:none;
 }
 .marker-label:hover{
   transform:translateY(-4px);
@@ -1109,31 +1123,16 @@ button,input,select,textarea{font:inherit}
   transform:translateY(-7px);
   z-index:28;
 }
-.marker-label.list-hover::before{
-  content:'▼';
-  position:absolute;
-  left:50%;
-  top:-28px;
-  transform:translateX(-50%);
-  color:var(--marker-color);
-  font-size:25px;
-  font-weight:900;
-  line-height:1;
-  text-shadow:
-    0 1px 2px rgba(255,255,255,.98),
-    0 2px 6px rgba(22,31,36,.28);
-  pointer-events:none;
-}
+.marker-label.list-hover::before{display:none}
 .marker-label.list-hover .marker-pin{
   transform:scale(1.28);
   box-shadow:
     0 0 0 5px color-mix(in srgb,var(--marker-color) 20%,transparent),
     0 4px 10px rgba(24,34,40,.28);
 }
-.marker-label.list-hover .marker-caption{
-  display:flex;
-}
-.marker-label.selected .marker-caption{
+.marker-label.list-hover .marker-caption,
+.marker-label.selected .marker-caption,
+.marker-label:hover .marker-caption{
   display:flex;
 }
 .marker-label:hover .marker-pin{
@@ -1154,12 +1153,21 @@ button,input,select,textarea{font:inherit}
     0 0 0 6px color-mix(in srgb,var(--marker-color) 18%,transparent),
     0 4px 11px rgba(24,34,40,.30);
 }
+.marker-label.selected .marker-caption::before{
+  border-color:color-mix(in srgb,var(--marker-color) 42%,#ddd);
+  background:#fff;
+}
 .marker-label.selected .marker-name{
-  max-width:185px;
+  max-width:194px;
+  border-color:color-mix(in srgb,var(--marker-color) 48%,#d9dee2);
+  background:#fff;
   color:#0b0f12;
-  font-size:14.5px;
-  font-weight:750;
-  letter-spacing:-.36px;
+  font-size:13.5px;
+  font-weight:850;
+  letter-spacing:-.34px;
+  box-shadow:
+    0 0 0 2px color-mix(in srgb,var(--marker-color) 11%,transparent),
+    0 5px 14px rgba(24,34,40,.22);
 }
 .marker-label.nearby-split{position:relative}
 .marker-label.nearby-left::after,
@@ -2393,6 +2401,20 @@ html[data-theme="night"] .kakao-info{
 html[data-theme="night"] .popup-name{color:#8db7ff}
 html[data-theme="night"] .popup-meta,
 html[data-theme="night"] .popup-line{color:#c9d0d6}
+html[data-theme="night"] .marker-caption::before{
+  border-color:#424a53;background:#1b2026
+}
+html[data-theme="night"] .marker-name{
+  border-color:#424a53;background:rgba(27,32,38,.97);color:#fff;
+  box-shadow:0 6px 18px rgba(0,0,0,.42)
+}
+html[data-theme="night"] .marker-label.selected .marker-caption::before{
+  border-color:color-mix(in srgb,var(--marker-color) 55%,#4a5159);background:#1b2026
+}
+html[data-theme="night"] .marker-label.selected .marker-name{
+  border-color:color-mix(in srgb,var(--marker-color) 60%,#4a5159);
+  background:#1b2026;color:#fff
+}
 
 /* Editorial — restaurant guide / print-inspired layout */
 html[data-theme="editorial"]{
@@ -2512,6 +2534,20 @@ html[data-theme="editorial"] .suggest-tabs,
 html[data-theme="editorial"] .suggest-tab{background:#f8f2e8;border-color:#bfb4a6}
 html[data-theme="editorial"] .kakao-info{border:1px solid #201d19;border-radius:0;background:#f8f2e8;box-shadow:5px 5px 0 rgba(32,29,25,.18)}
 html[data-theme="editorial"] .popup-name{font-family:Georgia,"Times New Roman",serif;color:#201d19}
+html[data-theme="editorial"] .marker-caption::before{
+  border-color:#201d19;background:#f8f2e8
+}
+html[data-theme="editorial"] .marker-name{
+  border-color:#201d19;border-radius:2px;background:#f8f2e8;color:#201d19;
+  font-family:Georgia,"Times New Roman","Noto Serif KR",serif;
+  box-shadow:4px 4px 0 rgba(32,29,25,.16)
+}
+html[data-theme="editorial"] .marker-label.selected .marker-caption::before{
+  border-color:#201d19;background:#eee5d8
+}
+html[data-theme="editorial"] .marker-label.selected .marker-name{
+  border-color:#201d19;background:#eee5d8;color:#201d19
+}
 html[data-theme="editorial"] #map{filter:saturate(.78) sepia(.08)}
 
 @media(max-width:900px){
