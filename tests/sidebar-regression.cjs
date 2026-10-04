@@ -124,7 +124,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
  await check('no fabricated tags, missing rating, note escaping and aggregated rating count',async()=>{
    assert.deepEqual(await state(()=>cardFeatureParts({feature:'룸 없음'}).tags),['룸 없음']);
    assert.ok(await state(()=>{const a=aggregateRestaurantRows([{row:999,name:'검증',address:'주소',rating:5},{row:1000,name:'검증',address:'주소',rating:4}])[0];renderList([a]);return document.querySelector('.rating').textContent==='★ 4.5'&&document.querySelector('.card-evaluations').textContent==='평가 2'}));
-   assert.ok(await state(()=>{renderList([{row:999,name:'검증',feature:'룸 없음',note:'<img src=x onerror=alert(1)>',capacity:'~'}]);return !document.querySelector('.card .rating')&&!document.querySelector('.card img')&&getComputedStyle(document.querySelector('.card-stats')).display==='none'&&document.querySelector('.card-note').textContent.includes('<img')}));await reset();
+   assert.ok(await state(()=>{renderList([{row:999,name:'검증',feature:'룸 없음',note:'<img src=x onerror=alert(1)>',capacity:'~'}]);return !document.querySelector('.card .rating')&&!document.querySelector('.card img')&&getComputedStyle(document.querySelector('.card-stats')).display==='none'&&document.querySelector('.card-feature').textContent.includes('<img')}));await reset();
  });
  await check('search autocomplete, quick action bar, clustering helpers, review insight and hours parser',async()=>{
    await page.setViewportSize({width:1440,height:900});await reset();
@@ -146,6 +146,25 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    ]));
    assert.ok(!(await page.locator('#detailReviewInsight').evaluate(el=>el.hidden)));
    await state(()=>clearSelectedRows());
+ });
+ await check('place detail actions, related places, comparison and official directions link',async()=>{
+   await page.setViewportSize({width:1440,height:900});await reset();
+   const rows=await state(()=>getRows().slice(0,3).map(x=>x.row));
+   assert.ok(rows.length>=2);
+   await state(row=>selectRow(row,false,false),rows[0]);await page.waitForTimeout(160);
+   assert.ok(await page.locator('#commentPanel').evaluate(el=>el.classList.contains('open')));
+   assert.ok(await page.locator('#detailDirectionsLink').evaluate(el=>el.getAttribute('href')?.startsWith('https://map.kakao.com/link/to/')));
+   assert.ok(await page.locator('#detailShareButton').isVisible());
+   assert.ok(await page.locator('#detailCompareButton').isVisible());
+   assert.ok(await page.locator('#detailSimilar .related-place').count()>=1);
+   assert.ok(await page.locator('#detailNearby .related-place').count()>=1);
+   await state(rs=>{toggleCompareRestaurant(dataForRow(rs[0]));toggleCompareRestaurant(dataForRow(rs[1]));},rows);
+   assert.ok(await page.locator('#compareTray').isVisible());
+   await page.click('#compareOpen');await page.waitForTimeout(80);
+   assert.ok(await page.locator('#compareModal').evaluate(el=>el.classList.contains('open')));
+   assert.equal(await page.locator('#compareContent .compare-card').count(),2);
+   await page.click('#compareClose');
+   await state(()=>{compareKeys=[];syncCompareUI();clearSelectedRows();});
  });
  await check('roulette and proposal dialogs open and close',async()=>{
    await page.click('#rouletteOpen');assert.ok(await page.locator('#rouletteModal').evaluate(el=>el.classList.contains('open')));await page.click('#rouletteClose');
