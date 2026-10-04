@@ -147,6 +147,12 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(!(await page.locator('#detailReviewInsight').evaluate(el=>el.hidden)));
    await state(()=>clearSelectedRows());
  });
+ await check('admin place capture controls and upload helpers exist safely',async()=>{
+   assert.equal(await page.locator('#placeCaptureButton').count(),1);
+   assert.equal(await page.locator('#detailCaptureButton').count(),1);
+   assert.equal(await page.locator('#placeCaptureInput').count(),1);
+   assert.ok(await state(()=>typeof compressCaptureFile==='function'&&typeof processPlaceCaptureFiles==='function'&&typeof submitPlaceCaptureForm==='function'));
+ });
  await check('place detail actions, related places, comparison and official directions link',async()=>{
    await page.setViewportSize({width:1440,height:900});await reset();
    const rows=await state(()=>getRows().slice(0,3).map(x=>x.row));
