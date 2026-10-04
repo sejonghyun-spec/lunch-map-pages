@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-usability-pack-v80">
+<meta name="lunch-map-build" content="2026-10-04-usability-polish-v81">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -3049,6 +3049,46 @@ html[data-theme="editorial"] .marker-label.selected .marker-name{
   box-shadow:4px 4px 0 #ff4d3d
 }
 
+
+/* Usability surfaces follow each theme */
+html[data-theme="night"] .search-suggestions,
+html[data-theme="night"] .map-quick-bar{
+  border-color:#3a4149;background:rgba(27,32,38,.98);color:#f7f9fb;
+  box-shadow:0 14px 34px rgba(0,0,0,.42)
+}
+html[data-theme="night"] .search-suggestion{color:#f4f6f8}
+html[data-theme="night"] .search-suggestion:hover,
+html[data-theme="night"] .search-suggestion.active{background:#282e36}
+html[data-theme="night"] .search-suggestion small,
+html[data-theme="night"] .search-suggestion em,
+html[data-theme="night"] .map-quick-copy span{color:#bbc4cb}
+html[data-theme="night"] .map-quick-actions button{
+  border-color:#424a53;background:#242a31;color:#eef2f5
+}
+html[data-theme="night"] .map-quick-actions button:hover{background:#303740}
+html[data-theme="night"] .map-cluster{background:#1d232a;border-color:#f0a93d;color:#fff}
+html[data-theme="night"] .detail-review-insight{background:rgba(255,255,255,.08);color:#eef2f5}
+
+html[data-theme="editorial"] .search-suggestions,
+html[data-theme="editorial"] .map-quick-bar{
+  border:2px solid #111317;border-radius:0;background:#f7f4ea;color:#111317;
+  box-shadow:5px 5px 0 #111317
+}
+html[data-theme="editorial"] .search-suggestion{border-radius:0;color:#111317}
+html[data-theme="editorial"] .search-suggestion:hover,
+html[data-theme="editorial"] .search-suggestion.active{background:#efff54}
+html[data-theme="editorial"] .map-quick-actions button{
+  border:2px solid #111317;border-radius:0;background:#fffefa;color:#111317
+}
+html[data-theme="editorial"] .map-quick-actions button:hover{background:#efff54}
+html[data-theme="editorial"] .map-cluster{
+  border:2px solid #111317;border-radius:0;background:#315efb;color:#fff;
+  box-shadow:4px 4px 0 #111317
+}
+html[data-theme="editorial"] .detail-review-insight{
+  border:2px solid #111317;border-radius:0;background:#efff54;color:#111317
+}
+
 /* Bistro — quiet restaurant guide, warm paper + forest + burgundy */
 html[data-theme="bistro"]{
   --brand:#8a3d48;--brand-dark:#5c2830;--text:#27241f;--muted:#766e63;
@@ -3353,6 +3393,26 @@ html[data-theme="bistro"] .marker-label.selected .marker-caption::before{
 }
 html[data-theme="bistro"] .marker-label.selected .marker-name{
   border-color:#8a3d48;background:#f5e7e8;color:#4e232a
+}
+
+
+html[data-theme="bistro"] .search-suggestions,
+html[data-theme="bistro"] .map-quick-bar{
+  border:1px solid #756858;background:#faf6ee;color:#302a24;
+  box-shadow:5px 5px 0 rgba(72,57,43,.13)
+}
+html[data-theme="bistro"] .search-suggestion{border-radius:3px;color:#342e28}
+html[data-theme="bistro"] .search-suggestion:hover,
+html[data-theme="bistro"] .search-suggestion.active{background:#eee5d8}
+html[data-theme="bistro"] .map-quick-actions button{
+  border-color:#b9aa99;border-radius:3px;background:#fbf8f2;color:#514940
+}
+html[data-theme="bistro"] .map-cluster{
+  border-color:#faf6ee;background:#214a38;color:#fffaf0;
+  box-shadow:0 4px 12px rgba(54,42,31,.22)
+}
+html[data-theme="bistro"] .detail-review-insight{
+  border:1px solid rgba(255,250,240,.25);background:rgba(255,250,240,.10);color:#fffaf0
 }
 
 @media(max-width:900px){
