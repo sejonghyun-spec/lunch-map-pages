@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-place-experience-v82">
+<meta name="lunch-map-build" content="2026-10-04-place-experience-v83">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -854,8 +854,8 @@ button,input,select,textarea{font:inherit}
 .detail-edit-button:hover{background:#f5f7f8}
 .detail-decision{
   display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin-top:13px;
-  padding:10px 11px;border:1px solid rgba(255,255,255,.18);border-radius:10px;
-  background:rgba(255,255,255,.10);font-size:12px;font-weight:750;line-height:1.4
+  padding:10px 11px;border:1px solid #e1e6e9;border-radius:10px;
+  background:#f4f6f7;color:#505a60;font-size:12px;font-weight:750;line-height:1.4
 }
 .detail-decision[hidden]{display:none}
 .detail-decision .decision-primary{font-weight:900}
@@ -3178,6 +3178,9 @@ html[data-theme="editorial"] .detail-review-insight{
 }
 
 
+html[data-theme="night"] .detail-decision{
+  border-color:#3e464f;background:rgba(255,255,255,.07);color:#e5eaee
+}
 html[data-theme="night"] .detail-action,
 html[data-theme="night"] .detail-edit-button{
   border-color:#424a53;background:#242a31;color:#eef2f5
@@ -3193,6 +3196,9 @@ html[data-theme="night"] .compare-card h3{color:#f3f5f7}
 html[data-theme="night"] .compare-tray{border-color:#3a4149;background:rgba(27,32,38,.98);color:#f7f9fb}
 html[data-theme="night"] .compare-tray-copy span{color:#bbc4cb}
 
+html[data-theme="editorial"] .detail-decision{
+  border:2px solid #111317;border-radius:0;background:#efff54;color:#111317
+}
 html[data-theme="editorial"] .detail-action,
 html[data-theme="editorial"] .detail-edit-button{
   border:2px solid #111317;border-radius:0;background:#fffefa;color:#111317;box-shadow:2px 2px 0 #111317
@@ -3535,6 +3541,9 @@ html[data-theme="bistro"] .detail-review-insight{
 }
 
 
+html[data-theme="bistro"] .detail-decision{
+  border-color:rgba(255,250,240,.25);background:rgba(255,250,240,.10);color:#fffaf0
+}
 html[data-theme="bistro"] .detail-action,
 html[data-theme="bistro"] .detail-edit-button{
   border-color:#b9aa99;border-radius:4px;background:#fbf8f2;color:#514940
@@ -5468,16 +5477,29 @@ function minuteInRange(now,range){
   if(!range)return false;const [a,b]=range;
   return b>=a?(now>=a&&now<b):(now>=a||now<b);
 }
+function seoulWeekdayName(){
+  try{return new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',weekday:'long'}).format(new Date());}
+  catch(e){return ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'][new Date().getDay()];}
+}
+function isSimpleClosedToday(closedDays){
+  const text=String(closedDays||'').trim();
+  if(!text||/연중무휴|휴무 없음|무휴/.test(text))return false;
+  if(/둘째|셋째|넷째|첫째|격주|매월|공휴일|2주|3주|4주/.test(text))return false;
+  const today=seoulWeekdayName();
+  return text.includes(today)||text.includes(today.replace('요일',''));
+}
 function operatingInfo(row){
   const hours=firstField(row,['hours','openingHours','businessHours','영업시간']);
   const breakTime=firstField(row,['breakTime','breakHours','브레이크타임']);
-  if(!hours)return {status:'unknown',label:'',text:'',breakTime:''};
+  const closedDays=firstField(row,['closedDays','closedDay','휴무일']);
+  if(isSimpleClosedToday(closedDays))return {status:'closed',label:'오늘 휴무',text:hours,breakTime,closedDays};
+  if(!hours)return {status:'unknown',label:'',text:'',breakTime,closedDays};
   const now=seoulClockMinutes(),openRange=timeRangeMinutes(hours),breakRange=timeRangeMinutes(breakTime);
-  if(breakRange&&minuteInRange(now,breakRange))return {status:'break',label:'브레이크타임',text:hours,breakTime};
+  if(breakRange&&minuteInRange(now,breakRange))return {status:'break',label:'브레이크타임',text:hours,breakTime,closedDays};
   if(openRange)return minuteInRange(now,openRange)
-    ? {status:'open',label:'영업중',text:hours,breakTime}
-    : {status:'closed',label:'영업시간 외',text:hours,breakTime};
-  return {status:'unknown',label:'영업시간',text:hours,breakTime};
+    ? {status:'open',label:'영업중',text:hours,breakTime,closedDays}
+    : {status:'closed',label:'영업시간 외',text:hours,breakTime,closedDays};
+  return {status:'unknown',label:'영업시간',text:hours,breakTime,closedDays};
 }
 function renderRestaurantDetailInfo(row,place){
   if(!row)return;
