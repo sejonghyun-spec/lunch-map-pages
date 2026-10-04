@@ -152,7 +152,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.equal(await page.locator('#detailCaptureButton').count(),1);
    assert.equal(await page.locator('#placeCaptureModal').count(),1);
    assert.equal(await page.locator('#placeTextInput').count(),1);
-   assert.ok(await state(()=>typeof submitPlaceText==='function'&&typeof submitPlaceCaptureForm==='function'&&typeof placeTextResultSummary==='function'));
+   assert.ok(await state(()=>typeof submitPlaceText==='function'&&typeof submitPlaceCaptureForm==='function'&&typeof placeTextResultSummary==='function'&&typeof detectedDbNamesInText==='function'));
    await state(()=>{clearSelectedRows();currentAccount={email:'sejong.hyun@seah.co.kr',name:'qa'};syncPlaceCaptureUI();});
    assert.equal(await page.locator('#placeCaptureButton').isDisabled(),false);
    await page.click('#placeCaptureButton');
@@ -162,12 +162,12 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.equal(await page.locator('#captureDone').isDisabled(),false);
    await state(()=>{placeTextInput.value='';closePlaceCaptureModal();});
  });
- await check('menu tab and automatic web menu finder controls exist',async()=>{
+ await check('menu tab remains as manual DB viewer without auto collection',async()=>{
    assert.equal(await page.locator('[data-detail-tab="menu"]').count(),1);
    assert.equal(await page.locator('[data-detail-panel="menu"]').count(),1);
-   assert.equal(await page.locator('#menuAutoButton').count(),1);
+   assert.equal(await page.locator('#menuAutoButton').count(),0);
    assert.equal(await page.locator('#menuList').count(),1);
-   assert.ok(await state(()=>typeof fetchMenus==='function'&&typeof loadMenus==='function'&&typeof autoFindMenus==='function'&&typeof renderMenuList==='function'));
+   assert.ok(await state(()=>typeof fetchMenus==='function'&&typeof loadMenus==='function'&&typeof renderMenuList==='function'&&typeof autoFindMenus==='undefined'));
  });
  await check('place detail actions, related places, comparison and official directions link',async()=>{
    await page.setViewportSize({width:1440,height:900});await reset();
