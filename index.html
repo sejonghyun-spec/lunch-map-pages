@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-theme-system-v63">
+<meta name="lunch-map-build" content="2026-10-04-theme-header-fix-v64">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -64,7 +64,9 @@ button,input,select,textarea{font:inherit}
 .topbar{
   display:grid;
   grid-template-columns:var(--sidebar) minmax(0,1fr) auto auto;
+  grid-template-rows:minmax(0,1fr);
   align-items:center;
+  height:var(--header);
   background:var(--theme-header-bg);
   border-bottom:1px solid var(--line);
   z-index:40;
@@ -145,6 +147,7 @@ button,input,select,textarea{font:inherit}
 .theme-control{
   position:relative;
   grid-column:4;
+  grid-row:1;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -218,6 +221,7 @@ button,input,select,textarea{font:inherit}
 .theme-option.active .theme-check{visibility:visible}
 .header-actions{
   grid-column:3;
+  grid-row:1;
   display:flex;
   align-items:center;
   gap:9px;
