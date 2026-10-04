@@ -910,6 +910,51 @@ html[data-theme="bistro"] .map-capture-btn{
   width:min(720px,100%);max-height:min(820px,92dvh);overflow:hidden;
   border-radius:18px;background:var(--panel,#fff);box-shadow:0 24px 70px rgba(0,0,0,.28)
 }
+.text-import-body{grid-template-rows:minmax(280px,1fr) auto auto auto!important}
+.place-text-input{
+  width:100%;min-height:360px;resize:vertical;border:1px solid var(--line);border-radius:12px;
+  padding:14px 15px;background:var(--theme-card-bg,#fff);color:var(--text);font:500 13px/1.55 inherit;
+  outline:none;white-space:pre-wrap
+}
+.place-text-input:focus{border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 12%,transparent)}
+.text-import-help{color:var(--muted);font-size:11.5px;line-height:1.5}
+.capture-modal.busy .place-text-input{pointer-events:none;opacity:.62}
+.menu-section-head{align-items:flex-start}
+.menu-auto-button{
+  flex:0 0 auto;height:34px;border:1px solid var(--brand);border-radius:8px;padding:0 10px;
+  background:var(--brand);color:#fff;font-size:11.5px;font-weight:850;cursor:pointer
+}
+.menu-auto-button:disabled{opacity:.55;cursor:not-allowed}
+.menu-status{min-height:20px;margin:4px 0 8px;color:var(--muted);font-size:11.5px;line-height:1.45}
+.menu-status.error{color:#b33a32}.menu-status.success{color:#16724a}
+.menu-list{display:grid;gap:8px}
+.menu-item{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:10px 11px;
+  border:1px solid var(--line);border-radius:10px;background:var(--theme-card-bg,#fff)
+}
+.menu-item-name{min-width:0;color:var(--text);font-size:13.5px;font-weight:800}
+.menu-item-price{color:var(--text);font-size:13.5px;font-weight:900;white-space:nowrap}
+.menu-item-meta{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:5px 8px;color:var(--muted);font-size:10.5px}
+.menu-item-meta a{color:var(--brand-dark);font-weight:750;text-decoration:none}
+.menu-item-meta a:hover{text-decoration:underline}
+.menu-rep{
+  display:inline-flex;align-items:center;height:20px;border-radius:999px;padding:0 7px;
+  background:color-mix(in srgb,var(--brand) 10%,#fff);color:var(--brand-dark);font-size:10px;font-weight:850
+}
+html[data-theme="night"] .place-text-input,
+html[data-theme="night"] .menu-item{border-color:#3d454e;background:#20262d;color:#f2f5f7}
+html[data-theme="night"] .menu-item-name,html[data-theme="night"] .menu-item-price{color:#f3f5f7}
+html[data-theme="editorial"] .place-text-input,
+html[data-theme="editorial"] .menu-item{border:2px solid #111317;border-radius:0;background:#fffefa;box-shadow:2px 2px 0 #111317}
+html[data-theme="editorial"] .menu-auto-button{border:2px solid #111317;border-radius:0;background:#315efb;box-shadow:2px 2px 0 #111317}
+html[data-theme="bistro"] .place-text-input,
+html[data-theme="bistro"] .menu-item{border-color:#c8baa9;border-radius:4px;background:#faf6ee}
+html[data-theme="bistro"] .menu-auto-button{border-color:#214a38;border-radius:4px;background:#214a38}
+@media(max-width:900px){
+  .text-import-body{grid-template-rows:minmax(240px,1fr) auto auto auto!important}
+  .place-text-input{min-height:280px}
+}
+
 .capture-body{display:grid;grid-template-rows:auto auto minmax(100px,1fr) auto auto;gap:12px;max-height:calc(92dvh - 82px);padding:16px}
 .capture-paste-zone{
   display:grid;place-items:center;min-height:150px;border:2px dashed #cbd3d8;border-radius:14px;
@@ -4152,7 +4197,8 @@ let favoritesOnly=false,recentOnly=false,mapOnlyMode=false,reviewSortMode='lates
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',hoveredMarkerRow=null,searchTimer=null;
 let lastMapRows=[],lastClusterLevel=null,mapIdleRenderTimer=null,lastDetailRow=null,lastListSignature='';
 let compareKeys=[],deepLinkHandled=false;
-let pendingPlaceCapture=null,placeCaptureBusy=false,captureQueueData=[];
+let pendingAiAction=null,placeCaptureBusy=false,menuAutoBusy=false,menuRequestSeq=0;
+const menuCache=new Map();
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,selectedEditRestaurant=null,suggestMode='new',suggestPending=false,pendingSuggestionTemp=null,pendingEditUpdate=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
 let currentAccount=null,lastAuthRetry=0;
