@@ -48,6 +48,17 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    const missing=await page.evaluate(ids=>ids.filter(id=>!document.getElementById(id)),ids);
    assert.deepEqual([...new Set(missing)].filter(id=>!['commentConnect','commentRetry','suggestLookupStatus','openNaverLink','openGoogleLink'].includes(id)),[]);
  });
+ await check('theme selector defaults to Simple and switches all four themes',async()=>{
+   assert.equal(await state(()=>document.documentElement.dataset.theme),'simple');
+   assert.equal(await page.locator('[data-theme-option]').count(),4);
+   for(const theme of ['modern','foodie','warm','simple']){
+     await page.click('#themeButton');
+     await page.click('[data-theme-option="'+theme+'"]');
+     assert.equal(await state(()=>document.documentElement.dataset.theme),theme);
+     assert.equal(await state(()=>localStorage.getItem('lunch-map-theme-v1')),theme);
+     assert.equal(await page.locator('[data-theme-option="'+theme+'"]').getAttribute('aria-current'),'true');
+   }
+ });
  await check('search, four compact native selects, quick bar geometry',async()=>{
    assert.ok(await state(()=>{const boxes=[...document.querySelectorAll('.compact-filter')].map(x=>x.getBoundingClientRect());return boxes.every(b=>b.top===boxes[0].top&&b.width>60)&&document.getElementById('search').getBoundingClientRect().height>=48}));
  });
@@ -128,6 +139,13 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(!(await page.locator('#sidebar').isVisible()));
    assert.ok(await page.locator('#mobileSheet').isVisible());
    assert.ok(await page.locator('#mobileSearch').isVisible());
+   assert.ok(await page.locator('#themeButton').isVisible());
+   await page.click('#themeButton');
+   assert.ok(await page.locator('#themeMenu').isVisible());
+   await page.click('[data-theme-option="modern"]');
+   assert.equal(await state(()=>document.documentElement.dataset.theme),'modern');
+   await state(()=>applyTheme('simple',true));
+
    assert.ok(!(await page.locator('#mobileSearchOpen').isVisible())&&!(await page.locator('#mobileListOpen').isVisible()));
 
    const layout=await state(()=>{
