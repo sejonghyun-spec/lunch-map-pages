@@ -3773,6 +3773,7 @@ let allData=[],selectedCategories=new Set(),searchKeyword='',sortMode='default';
 let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all',distanceFilter='all';
 let favoritesOnly=false,recentOnly=false,mapOnlyMode=false,reviewSortMode='latest';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',hoveredMarkerRow=null,searchTimer=null;
+let lastMapRows=[],lastClusterLevel=null,mapIdleRenderTimer=null,lastDetailRow=null,lastListSignature='';
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,selectedEditRestaurant=null,suggestMode='new',suggestPending=false,pendingSuggestionTemp=null,pendingEditUpdate=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
 let currentAccount=null,lastAuthRetry=0;
@@ -3841,6 +3842,83 @@ function highlightMatch(value,query){
   return esc(text.slice(0,i))+'<mark class="search-hit">'+esc(text.slice(i,i+q.length))+'</mark>'+esc(text.slice(i+q.length));
 }
 
+
+
+function listUiSignature(){
+  return [
+    searchKeyword,sortMode,ratingFilter,capacityFilter,featureFilter,distanceFilter,
+    favoritesOnly,recentOnly,mapOnlyMode,[...selectedCategories].sort().join('|')
+  ].join('::');
+}
+function emptyListHtml(){
+  return '<div class="empty">조건에 맞는 식당이 없습니다.<br>검색어나 필터를 변경해 보세요.'+
+    '<br><button type="button" class="empty-reset">전체 조건 초기화</button></div>';
+}
+function bindEmptyReset(scope){
+  scope?.querySelectorAll?.('.empty-reset').forEach(btn=>btn.addEventListener('click',()=>showAll()));
+}
+function autocompleteMatches(query){
+  const q=String(query||'').trim().toLowerCase();
+  if(!q)return [];
+  return displayRestaurants().map(x=>{
+    const name=String(x.name||'');
+    const category=String(x.category||'');
+    const feature=String(x.feature||x.note||'');
+    const address=String(x.address||'');
+    const n=name.toLowerCase(),hay=[category,feature,address].join(' ').toLowerCase();
+    let score=0,why='';
+    if(n.startsWith(q)){score=400;why='식당명';}
+    else if(n.includes(q)){score=300;why='식당명';}
+    else if(category.toLowerCase().includes(q)){score=220;why=category;}
+    else if(feature.toLowerCase().includes(q)){score=180;why='특징';}
+    else if(address.toLowerCase().includes(q)){score=120;why='주소';}
+    if(!score)return null;
+    return {x,score,why,detail:feature||address||category};
+  }).filter(Boolean).sort((a,b)=>b.score-a.score||String(a.x.name).localeCompare(String(b.x.name),'ko')).slice(0,6);
+}
+function closeSearchSuggestions(){
+  document.querySelectorAll('.search-suggestions').forEach(el=>{el.classList.remove('open');el.innerHTML='';});
+}
+function renderSearchSuggestions(input,box){
+  if(!input||!box)return;
+  const matches=autocompleteMatches(input.value);
+  if(!matches.length){box.classList.remove('open');box.innerHTML='';return;}
+  box.innerHTML=matches.map(({x,why,detail})=>
+    '<button type="button" class="search-suggestion" role="option" data-row="'+Number(x.row)+'">'+
+      '<b>'+highlightMatch(x.name,input.value)+'</b><em>'+esc(why)+'</em>'+
+      '<small>'+esc(String(detail||x.category||'').slice(0,80))+'</small></button>'
+  ).join('');
+  box.classList.add('open');
+  box.querySelectorAll('.search-suggestion').forEach(btn=>btn.addEventListener('mousedown',e=>e.preventDefault()));
+  box.querySelectorAll('.search-suggestion').forEach(btn=>btn.addEventListener('click',()=>{
+    const row=Number(btn.dataset.row),x=dataForRow(row);
+    if(!x)return;
+    searchKeyword=String(x.name||'');
+    const desktop=document.getElementById('search'),mobile=document.getElementById('mobileSearch');
+    if(desktop)desktop.value=searchKeyword;if(mobile)mobile.value=searchKeyword;
+    closeSearchSuggestions();
+    render(true);
+    selectRow(row,true,false);
+  }));
+}
+function attachAutocomplete(inputId,boxId){
+  const input=document.getElementById(inputId),box=document.getElementById(boxId);
+  if(!input||!box)return;
+  input.addEventListener('focus',()=>renderSearchSuggestions(input,box));
+  input.addEventListener('input',()=>renderSearchSuggestions(input,box));
+  input.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){closeSearchSuggestions();input.blur();return;}
+    const items=[...box.querySelectorAll('.search-suggestion')];
+    if(!items.length||!['ArrowDown','ArrowUp','Enter'].includes(e.key))return;
+    e.preventDefault();
+    let idx=items.findIndex(el=>el.classList.contains('active'));
+    if(e.key==='ArrowDown')idx=(idx+1)%items.length;
+    else if(e.key==='ArrowUp')idx=(idx<=0?items.length:idx)-1;
+    else if(e.key==='Enter'&&idx>=0){items[idx].click();return;}
+    items.forEach((el,i)=>el.classList.toggle('active',i===idx));
+  });
+  input.addEventListener('blur',()=>setTimeout(()=>{if(!box.matches(':hover')){box.classList.remove('open');}},120));
+}
 
 function rawRatingValue(value){
   if(value==null||value==='')return 0;
@@ -4000,6 +4078,7 @@ function loadKakao(){return new Promise((resolve,reject)=>{if(window.kakao&&kaka
 function syncMarkerLabelVisibility(){
   const wrap=document.querySelector('.map-wrap');
   if(wrap)wrap.classList.remove('show-marker-labels');
+  syncMapQuickBar();
   requestAnimationFrame(syncMarkerCaptionCollisions);
 }
 function markerCaptionPriority(el){
@@ -4054,6 +4133,11 @@ function initMap(){
         updateFilterChipUI();
       }
       requestAnimationFrame(syncMarkerCaptionCollisions);
+      const level=map.getLevel();
+      if(level!==lastClusterLevel){
+        clearTimeout(mapIdleRenderTimer);
+        mapIdleRenderTimer=setTimeout(()=>renderMap(getRows().filter(hasValidCoords),false),40);
+      }
     });
 
     requestAnimationFrame(()=>{
@@ -4177,6 +4261,22 @@ function setListMarkerHover(row,on){
   }
   requestAnimationFrame(syncMarkerCaptionCollisions);
 }
+
+function syncMapQuickBar(){
+  if(!mapQuickBar)return;
+  const row=selectedRow==null?null:dataForRow(selectedRow);
+  if(!row){mapQuickBar.hidden=true;return;}
+  mapQuickBar.hidden=false;
+  mapQuickName.textContent=row.name||'선택한 식당';
+  const bits=[];
+  const score=ratingScore(row);if(score)bits.push('★ '+score.toFixed(1));
+  const distance=formatDistanceFromSeahTower(row);if(distance)bits.push(distance);
+  if(row.category)bits.push(row.category);
+  mapQuickMeta.textContent=bits.join(' · ');
+  const favorite=isFavorite(row);
+  mapQuickFavorite.textContent=favorite?'♥ 저장됨':'♡ 저장';
+  mapQuickFavorite.classList.toggle('active',favorite);
+}
 function syncSelectedRowsUI(){
   document.querySelectorAll('.marker-label').forEach(el=>{
     const row=Number(el.dataset.row);
@@ -4222,6 +4322,7 @@ function selectRow(row,pan=true,toggle=true){
 
   selectedRestaurantKey=key;
   selectedRow=row;
+  lastDetailRow=row;
   syncSelectedRowsUI();
   openComments(data);
 
@@ -4319,11 +4420,43 @@ function nearbyPlacements(rows,thresholdMeters=5){
   return result;
 }
 
+
+function clusterDistanceForLevel(level){
+  if(level<=3)return 0;
+  if(level===4)return 55;
+  if(level===5)return 95;
+  if(level===6)return 165;
+  if(level===7)return 280;
+  return 450*Math.pow(1.35,Math.max(0,level-8));
+}
+function clusterGroupsForMap(rows){
+  const level=map&&typeof map.getLevel==='function'?map.getLevel():3;
+  const threshold=clusterDistanceForLevel(level);
+  if(!threshold||rows.length<8)return rows.map(x=>[x]);
+  const groups=[];
+  const used=new Set();
+  rows.forEach((row,i)=>{
+    if(used.has(i))return;
+    if(isRowSelected(row.row)){groups.push([row]);used.add(i);return;}
+    const group=[row];used.add(i);
+    for(let j=i+1;j<rows.length;j++){
+      if(used.has(j)||isRowSelected(rows[j].row))continue;
+      if(group.some(base=>distanceMeters(base,rows[j])<=threshold)){group.push(rows[j]);used.add(j);}
+    }
+    groups.push(group);
+  });
+  return groups;
+}
+function clusterHtml(group){
+  return '<button type="button" class="map-cluster" aria-label="식당 '+group.length+'곳 확대 보기">'+group.length+'</button>';
+}
 function renderMap(rows,fit=true){
   const validRows=(Array.isArray(rows)?rows:[]).filter(hasValidCoords);
+  lastMapRows=validRows.slice();
   if(!mapReady){pendingRows=validRows;return;}
 
   clearMarkers();
+  lastClusterLevel=map.getLevel();
 
   if(!validRows.length){
     map.setCenter(new kakao.maps.LatLng(HOME_LAT,HOME_LNG));
@@ -4333,8 +4466,29 @@ function renderMap(rows,fit=true){
 
   const bounds=new kakao.maps.LatLngBounds();
   const placements=nearbyPlacements(validRows,5);
+  const groups=clusterGroupsForMap(validRows);
 
-  validRows.forEach(x=>{
+  groups.forEach(group=>{
+    group.forEach(x=>bounds.extend(new kakao.maps.LatLng(Number(x.lat),Number(x.lng))));
+    if(group.length>1){
+      const lat=group.reduce((s,x)=>s+Number(x.lat),0)/group.length;
+      const lng=group.reduce((s,x)=>s+Number(x.lng),0)/group.length;
+      const position=new kakao.maps.LatLng(lat,lng);
+      const wrap=document.createElement('div');
+      wrap.innerHTML=clusterHtml(group);
+      const content=wrap.firstElementChild;
+      const overlay=new kakao.maps.CustomOverlay({map,position,content,xAnchor:.5,yAnchor:.5,zIndex:12});
+      content.addEventListener('pointerdown',e=>e.stopPropagation());
+      content.addEventListener('click',e=>{
+        e.preventDefault();e.stopPropagation();
+        map.panTo(position);
+        map.setLevel(Math.max(2,map.getLevel()-2));
+      });
+      overlays.push({overlay,position,data:null,content,baseZIndex:12,cluster:true});
+      return;
+    }
+
+    const x=group[0];
     const position=new kakao.maps.LatLng(Number(x.lat),Number(x.lng));
     const wrap=document.createElement('div');
     wrap.innerHTML=markerHtml(x);
@@ -4348,16 +4502,13 @@ function renderMap(rows,fit=true){
     }
 
     const overlay=new kakao.maps.CustomOverlay({
-      map,
-      position,
-      content,
+      map,position,content,
       xAnchor:placement?placement.xAnchor:.5,
       yAnchor:placement?placement.yAnchor:.30,
       zIndex:placement?placement.zIndex:5
     });
 
     const item={overlay,position,data:x,content,baseZIndex:placement?placement.zIndex:5};
-    // Kakao map drag/click handlers must not consume marker interaction.
     content.addEventListener('pointerdown',e=>e.stopPropagation());
     content.addEventListener('mousedown',e=>e.stopPropagation());
     content.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
@@ -4372,27 +4523,24 @@ function renderMap(rows,fit=true){
       hideMarkerInfo(x.row);
       const card=document.querySelector('.card[data-row="'+Number(x.row)+'"]');
       if(card)card.classList.remove('map-hover');
-      if(overlay&&typeof overlay.setZIndex==='function'){
-        overlay.setZIndex(isRowSelected(x.row)?60:(placement?placement.zIndex:5));
-      }
+      if(overlay&&typeof overlay.setZIndex==='function')overlay.setZIndex(isRowSelected(x.row)?60:(placement?placement.zIndex:5));
       requestAnimationFrame(syncMarkerCaptionCollisions);
     });
     content.addEventListener('click',e=>{
-      e.preventDefault();
-      e.stopPropagation();
+      e.preventDefault();e.stopPropagation();
       const wasSelected=isRowSelected(x.row);
       selectRow(x.row,false,true);
       if(!wasSelected&&!isMobile())focusRestaurantInList(x.row);
     });
     overlays.push(item);
     markerByRow.set(x.row,item);
-    bounds.extend(position);
   });
 
   syncSelectedRowsUI();
 
   if(validRows.length===1){
-    map.setCenter(overlays[0].position);
+    const only=validRows[0];
+    map.setCenter(new kakao.maps.LatLng(Number(only.lat),Number(only.lng)));
     map.setLevel(3);
   }else if(fit){
     map.setBounds(bounds,46,46,46,46);
@@ -4528,9 +4676,9 @@ function updateListHeading(count){
 function renderMobileList(rows){
   const el=document.getElementById('mobileList');
   if(!el)return;
+  const signature=listUiSignature(),keepScroll=signature===lastListSignature,oldScroll=el.scrollTop;
   if(!rows.length){
-    el.innerHTML='<div class="empty">조건에 맞는 식당이 없습니다.<br>검색어나 필터를 변경해 보세요.</div>';
-    return;
+    el.innerHTML=emptyListHtml();bindEmptyReset(el);return;
   }
   el.innerHTML=rows.map((x,index)=>{
     const distance=formatDistanceFromSeahTower(x);
@@ -4556,6 +4704,7 @@ function renderMobileList(rows){
       (tags.length?'<div class="mobile-card-tags">'+tags.map(t=>'<span class="mobile-card-tag">'+esc(t)+'</span>').join('')+'</div>':'')+
     '</div>';
   }).join('');
+  if(keepScroll)requestAnimationFrame(()=>{el.scrollTop=oldScroll;});
   el.querySelectorAll('.mobile-card').forEach(card=>{
     const row=Number(card.dataset.row);
     card.addEventListener('mouseenter',()=>setListMarkerHover(row,true));
@@ -4565,7 +4714,8 @@ function renderMobileList(rows){
       event.stopPropagation();
       const restaurant=rows.find(x=>Number(x.row)===row);
       if(!restaurant)return;
-      toggleFavorite(restaurant);
+      const active=toggleFavorite(restaurant);
+      showToast(active?'즐겨찾기에 저장했습니다.':'즐겨찾기에서 해제했습니다.');
       updateFavoriteButton();
       setListMarkerHover(row,false);
       render(false);
@@ -4575,9 +4725,10 @@ function renderMobileList(rows){
 }
 function renderList(rows){
   const el=document.getElementById('list');
+  const signature=listUiSignature(),keepScroll=signature===lastListSignature,oldScroll=el.scrollTop;
   updateListHeading(rows.length);
   renderMobileList(rows);
-  if(!rows.length){el.innerHTML='<div class="empty">조건에 맞는 식당이 없습니다.<br>검색어나 필터를 변경해 보세요.</div>';return;}
+  if(!rows.length){el.innerHTML=emptyListHtml();bindEmptyReset(el);lastListSignature=signature;return;}
 
   const q=searchKeyword.trim();
   el.innerHTML=rows.map((x,index)=>{
@@ -4607,6 +4758,8 @@ function renderList(rows){
     '</div>';
   }).join('');
 
+  if(keepScroll)requestAnimationFrame(()=>{el.scrollTop=oldScroll;});
+  lastListSignature=signature;
   el.querySelectorAll('.card').forEach(card=>{
     const row=Number(card.dataset.row);
     card.addEventListener('mouseenter',()=>setListMarkerHover(row,true));
@@ -4616,7 +4769,8 @@ function renderList(rows){
       event.stopPropagation();
       const restaurant=rows.find(x=>Number(x.row)===row);
       if(!restaurant)return;
-      toggleFavorite(restaurant);
+      const active=toggleFavorite(restaurant);
+      showToast(active?'즐겨찾기에 저장했습니다.':'즐겨찾기에서 해제했습니다.');
       updateFavoriteButton();
       setListMarkerHover(row,false);
       if(favoritesOnly)render(false);
@@ -4860,6 +5014,37 @@ async function resolveKakaoPlaceUrl(row){
   return direct;
 }
 
+
+function firstField(row,names){
+  for(const name of names){const v=row&&row[name];if(v!=null&&String(v).trim())return String(v).trim();}
+  return '';
+}
+function seoulClockMinutes(){
+  try{
+    const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date()).map(x=>[x.type,x.value]));
+    return (Number(parts.hour)%24)*60+Number(parts.minute);
+  }catch(e){const d=new Date();return d.getHours()*60+d.getMinutes();}
+}
+function timeRangeMinutes(text){
+  const m=String(text||'').match(/(\d{1,2}):(\d{2})\s*(?:~|-|–|—)\s*(\d{1,2}):(\d{2})/);
+  if(!m)return null;
+  return [Number(m[1])*60+Number(m[2]),Number(m[3])*60+Number(m[4])];
+}
+function minuteInRange(now,range){
+  if(!range)return false;const [a,b]=range;
+  return b>=a?(now>=a&&now<b):(now>=a||now<b);
+}
+function operatingInfo(row){
+  const hours=firstField(row,['hours','openingHours','businessHours','영업시간']);
+  const breakTime=firstField(row,['breakTime','breakHours','브레이크타임']);
+  if(!hours)return {status:'unknown',label:'',text:'',breakTime:''};
+  const now=seoulClockMinutes(),openRange=timeRangeMinutes(hours),breakRange=timeRangeMinutes(breakTime);
+  if(breakRange&&minuteInRange(now,breakRange))return {status:'break',label:'브레이크타임',text:hours,breakTime};
+  if(openRange)return minuteInRange(now,openRange)
+    ? {status:'open',label:'영업중',text:hours,breakTime}
+    : {status:'closed',label:'영업시간 외',text:hours,breakTime};
+  return {status:'unknown',label:'영업시간',text:hours,breakTime};
+}
 function renderRestaurantDetailInfo(row,place){
   if(!row)return;
   const distance=formatDistanceFromSeahTower(row);
@@ -4867,27 +5052,32 @@ function renderRestaurantDetailInfo(row,place){
   const phone=String(place&&place.phone||'').trim();
   const roadAddress=String(place&&place.road_address_name||'').trim();
   const address=roadAddress||String(row.address||'').trim();
+  const hours=operatingInfo(row);
+  const placeUrl=String(place&&place.place_url||row._placeUrl||'').trim().replace(/^http:/i,'https:');
 
   const infoRows=[
-    ['특징',row.feature],
-    ['비고',row.note],
-    ['수용인원',row.capacity],
-    ['거리',distance?('세아타워 기준 '+distance):''],
-    ['카카오 업종',kakaoCategory],
-    ['전화',phone],
-    ['주소',address]
+    ['특징',row.feature],['비고',row.note],['수용인원',row.capacity],
+    ['거리',distance?('세아타워 기준 '+distance):''],['카카오 업종',kakaoCategory],
+    ['전화',phone],['영업시간',hours.text],['주소',address]
   ].filter(x=>String(x[1]||'').trim());
 
-  detailInfo.innerHTML=infoRows.length
-    ? infoRows.map(([label,value])=>{
-        let rendered=esc(value);
-        if(label==='전화'){
-          const tel=String(value||'').replace(/[^0-9+]/g,'');
-          if(tel)rendered='<a class="detail-info-link" href="tel:'+esc(tel)+'">'+esc(value)+'</a>';
-        }
-        return '<div class="detail-info-row"><div class="detail-info-label">'+esc(label)+'</div><div class="detail-info-value">'+rendered+'</div></div>';
-      }).join('')
-    : '<div class="comment-empty">등록된 상세 정보가 없습니다.</div>';
+  let html=infoRows.map(([label,value])=>{
+    let rendered=esc(value);
+    if(label==='전화'){
+      const tel=String(value||'').replace(/[^0-9+]/g,'');
+      if(tel)rendered='<a class="detail-info-link" href="tel:'+esc(tel)+'">'+esc(value)+'</a>';
+    }
+    if(label==='영업시간'){
+      rendered=(hours.label?'<span class="hours-state '+esc(hours.status)+'">'+esc(hours.label)+'</span> · ':'')+esc(hours.text)+
+        (hours.breakTime?'<br><span class="detail-info-sub">브레이크 '+esc(hours.breakTime)+'</span>':'');
+    }
+    return '<div class="detail-info-row"><div class="detail-info-label">'+esc(label)+'</div><div class="detail-info-value">'+rendered+'</div></div>';
+  }).join('');
+
+  if(!hours.text&&placeUrl){
+    html+='<div class="detail-info-row"><div class="detail-info-label">영업시간</div><div class="detail-info-value"><a class="detail-info-link" href="'+esc(placeUrl)+'" target="_blank" rel="noopener noreferrer">카카오맵에서 최신 영업시간 확인</a></div></div>';
+  }
+  detailInfo.innerHTML=html||'<div class="comment-empty">등록된 상세 정보가 없습니다.</div>';
 }
 
 async function prepareKakaoPlaceLink(row){
@@ -5294,6 +5484,11 @@ const detailTags=document.getElementById('detailTags');
 const detailFavoriteButton=document.getElementById('detailFavoriteButton');
 const kakaoMapLink=document.getElementById('kakaoMapLink');
 const reviewSummary=document.getElementById('reviewSummary');
+const detailReviewInsight=document.getElementById('detailReviewInsight');
+const mapQuickBar=document.getElementById('mapQuickBar');
+const mapQuickName=document.getElementById('mapQuickName');
+const mapQuickMeta=document.getElementById('mapQuickMeta');
+const mapQuickFavorite=document.getElementById('mapQuickFavorite');
 const reviewSortLatest=document.getElementById('reviewSortLatest');
 const reviewSortHelpful=document.getElementById('reviewSortHelpful');
 const mapHint=document.getElementById('mapHint');
@@ -5341,12 +5536,29 @@ function canDeleteComment(row){
   return isCommentAdmin()&&isAnonymousComment(row);
 }
 function renderReviewSummary(rows){
+  const base=Array.isArray(rows)?rows:[];
   const fields=[['taste','맛'],['amount','양'],['price','가격'],['wait','대기']];
-  reviewSummary.innerHTML=fields.map(([key,label])=>{
-    const nums=rows.map(x=>Number(x&&x[key])).filter(v=>v>=1&&v<=5);
-    const avg=nums.length?nums.reduce((a,b)=>a+b,0)/nums.length:0;
-    return '<div class="review-score"><b>'+(avg?avg.toFixed(1):'-')+'</b><span>'+label+(nums.length?' · '+nums.length:'')+'</span></div>';
-  }).join('');
+  const stats=fields.map(([key,label])=>{
+    const nums=base.map(x=>Number(x&&x[key])).filter(v=>v>=1&&v<=5);
+    return {key,label,count:nums.length,avg:nums.length?nums.reduce((a,b)=>a+b,0)/nums.length:0};
+  });
+  reviewSummary.innerHTML=stats.map(s=>
+    '<div class="review-score"><b>'+(s.avg?s.avg.toFixed(1):'-')+'</b><span>'+s.label+(s.count?' · '+s.count:'')+'</span></div>'
+  ).join('');
+  if(detailReviewInsight){
+    const usable=stats.filter(s=>s.count>=2&&s.avg>0).sort((a,b)=>b.avg-a.avg);
+    if(base.length>=3&&usable.length>=2){
+      const best=usable[0],low=usable[usable.length-1];
+      let text=best.label+' 만족도가 가장 높습니다.';
+      if(best.avg-low.avg>=.35)text+=' '+low.label+' 평가는 상대적으로 낮습니다.';
+      else text+=' 항목별 평가가 전반적으로 고른 편입니다.';
+      detailReviewInsight.textContent='후기 요약 · '+text;
+      detailReviewInsight.hidden=false;
+    }else{
+      detailReviewInsight.hidden=true;
+      detailReviewInsight.textContent='';
+    }
+  }
 }
 function renderComments(comments){
   const base=Array.isArray(comments)?comments:[];
@@ -5634,7 +5846,8 @@ function updateFavoriteButton(){
 }
 detailFavoriteButton.addEventListener('click',()=>{
   if(!commentRestaurant)return;
-  toggleFavorite(commentRestaurant);
+  const active=toggleFavorite(commentRestaurant);
+  showToast(active?'즐겨찾기에 저장했습니다.':'즐겨찾기에서 해제했습니다.');
   updateFavoriteButton();
   updateFilterChipUI();
   render(false);
@@ -5695,6 +5908,8 @@ function adjustMapForDetail(position){
 
 function openComments(restaurant){
   commentRestaurant=restaurant;
+  lastDetailRow=Number(restaurant.row);
+  if(detailReviewInsight){detailReviewInsight.hidden=true;detailReviewInsight.textContent='';}
   rememberRecent(restaurant);
   reviewSortMode='latest';
   setDetailTab('home');
@@ -6669,6 +6884,35 @@ if(mobileDetailedFilterToggle&&mobileSheet){
 document.getElementById('mobileFilterReset')?.addEventListener('click',()=>{resetMultiFilters();render(true);});
 document.getElementById('mobileSort')?.addEventListener('change',e=>{sortMode=e.target.value||'default';syncSortUI();render(false);});
 
+
+attachAutocomplete('search','searchSuggestions');
+attachAutocomplete('mobileSearch','mobileSearchSuggestions');
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('.search-field,.mobile-search-field'))closeSearchSuggestions();});
+
+mapQuickFavorite?.addEventListener('click',()=>{
+  const row=selectedRow==null?null:dataForRow(selectedRow);if(!row)return;
+  const active=toggleFavorite(row);
+  showToast(active?'즐겨찾기에 저장했습니다.':'즐겨찾기에서 해제했습니다.');
+  renderList(getRows());syncSelectedRowsUI();
+});
+document.getElementById('mapQuickKakao')?.addEventListener('click',()=>{
+  const row=selectedRow==null?null:dataForRow(selectedRow);if(!row)return;
+  const direct=String(row._placeUrl||'').trim()||'https://map.kakao.com/?q='+encodeURIComponent([row.name,row.address].filter(Boolean).join(' '));
+  window.open(direct,'_blank','noopener');
+});
+document.getElementById('mapQuickReview')?.addEventListener('click',()=>{
+  if(selectedRow==null)return;
+  const row=dataForRow(selectedRow);if(!row)return;
+  if(!commentPanel.classList.contains('open'))openComments(row);
+  setDetailTab('reviews',true);
+});
+document.getElementById('mapQuickNext')?.addEventListener('click',()=>{
+  const rows=getRows();if(!rows.length)return;
+  const idx=rows.findIndex(x=>selectionKeyFor(x)===selectedRestaurantKey);
+  const next=rows[(idx+1+rows.length)%rows.length];
+  if(next)selectRow(next.row,true,false);
+});
+
 window.addEventListener('resize',()=>{
   if(!isMobile()){
     setSheetState('peek');
@@ -6686,7 +6930,11 @@ window.addEventListener('resize',()=>{
   }
 });
 
-document.getElementById('search').addEventListener('input',e=>{searchKeyword=e.target.value||'';clearTimeout(searchTimer);searchTimer=setTimeout(()=>render(true),120);});
+document.getElementById('search').addEventListener('input',e=>{
+  searchKeyword=e.target.value||'';
+  if(mobileSearch)mobileSearch.value=searchKeyword;
+  clearTimeout(searchTimer);searchTimer=setTimeout(()=>render(true),120);
+});
 document.getElementById('search').addEventListener('focus',()=>{if(isMobile())setSheetState('full');});
 const mobileMyLocation=document.getElementById('mobileMyLocation');
 if(mobileMyLocation)mobileMyLocation.addEventListener('click',locateMe);
@@ -6756,7 +7004,11 @@ window.addEventListener('popstate',()=>{
   if(commentPanel.classList.contains('open')){
     detailHistoryPushed=false;
     clearSelectedRows();
-    if(isMobile())setSheetState('mid');
+    if(isMobile()){
+      setSheetState('mid');
+      const restoreRow=lastDetailRow;
+      requestAnimationFrame(()=>focusMobileListCard(restoreRow));
+    }
   }
 });
 
