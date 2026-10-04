@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-place-capture-v84">
+<meta name="lunch-map-build" content="2026-10-04-clipboard-capture-v85">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -905,6 +905,62 @@ html[data-theme="bistro"] .map-capture-btn{
 .related-place b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#30383d;font-size:13.5px}
 .related-place span{color:#737d83;font-size:11.5px;font-weight:650}
 .related-place em{grid-row:1/3;grid-column:2;align-self:center;color:var(--brand-dark);font-size:11.5px;font-style:normal;font-weight:800}
+
+.capture-modal{
+  width:min(720px,100%);max-height:min(820px,92dvh);overflow:hidden;
+  border-radius:18px;background:var(--panel,#fff);box-shadow:0 24px 70px rgba(0,0,0,.28)
+}
+.capture-body{display:grid;grid-template-rows:auto auto minmax(100px,1fr) auto auto;gap:12px;max-height:calc(92dvh - 82px);padding:16px}
+.capture-paste-zone{
+  display:grid;place-items:center;min-height:150px;border:2px dashed #cbd3d8;border-radius:14px;
+  padding:22px;background:#f8fafb;color:#475158;text-align:center;outline:none;cursor:text
+}
+.capture-paste-zone:focus{border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 12%,transparent)}
+.capture-paste-zone strong{font-size:18px;color:var(--text)}
+.capture-paste-zone span{max-width:520px;margin-top:7px;font-size:13px;line-height:1.5}
+.capture-paste-zone small{margin-top:7px;color:#858e93;font-size:11.5px}
+.capture-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.capture-toolbar button{
+  height:34px;border:1px solid var(--line);border-radius:8px;padding:0 11px;background:var(--theme-control-bg,#fff);
+  color:var(--text);font-size:11.5px;font-weight:800;cursor:pointer
+}
+.capture-toolbar span{color:var(--muted);font-size:11.5px;font-weight:750}
+.capture-queue{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;align-content:start;
+  min-height:110px;max-height:320px;overflow:auto;padding:2px
+}
+.capture-empty{grid-column:1/-1;display:grid;place-items:center;min-height:100px;color:#8a9398;font-size:12px}
+.capture-item{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:10px;background:#fff;aspect-ratio:4/3}
+.capture-item img{width:100%;height:100%;object-fit:cover;display:block}
+.capture-item b{
+  position:absolute;left:6px;bottom:6px;display:grid;place-items:center;min-width:24px;height:22px;border-radius:6px;
+  padding:0 5px;background:rgba(22,28,32,.78);color:#fff;font-size:10px
+}
+.capture-item button{
+  position:absolute;right:5px;top:5px;width:26px;height:26px;border:0;border-radius:50%;
+  background:rgba(22,28,32,.78);color:#fff;font-size:16px;cursor:pointer
+}
+.capture-status{min-height:20px;color:var(--muted);font-size:12px;line-height:1.45}
+.capture-status.error{color:#b33a32}.capture-status.success{color:#16724a}
+.capture-actions{display:flex;justify-content:flex-end;gap:8px}
+.capture-actions .modal-btn{min-width:120px}
+.capture-modal.busy .capture-paste-zone,.capture-modal.busy .capture-toolbar,.capture-modal.busy .capture-queue{pointer-events:none;opacity:.58}
+html[data-theme="night"] .capture-modal{background:#1b2026;color:#f3f5f7}
+html[data-theme="night"] .capture-paste-zone{border-color:#4a535d;background:#222930;color:#dce2e6}
+html[data-theme="night"] .capture-paste-zone strong{color:#fff}
+html[data-theme="night"] .capture-item{border-color:#3a424b;background:#20262d}
+html[data-theme="editorial"] .capture-modal{border:3px solid #111317;border-radius:0;background:#f7f4ea;box-shadow:8px 8px 0 #111317}
+html[data-theme="editorial"] .capture-paste-zone{border:2px dashed #111317;border-radius:0;background:#fffefa;color:#111317}
+html[data-theme="editorial"] .capture-item{border:2px solid #111317;border-radius:0;box-shadow:2px 2px 0 #111317}
+html[data-theme="bistro"] .capture-modal{border:1px solid #64584c;border-radius:6px;background:#faf6ee}
+html[data-theme="bistro"] .capture-paste-zone{border-color:#a89886;border-radius:4px;background:#f4eee4;color:#514940}
+@media(max-width:900px){
+  .capture-modal{width:100%;max-height:calc(100dvh - var(--mobile-safe-top) - 12px);border-radius:20px 20px 12px 12px}
+  .capture-body{max-height:calc(100dvh - var(--mobile-safe-top) - 88px);padding:14px}
+  .capture-paste-zone{min-height:128px;padding:16px}
+  .capture-queue{grid-template-columns:repeat(3,minmax(0,1fr));max-height:34dvh}
+  .capture-actions .modal-btn{min-width:0;flex:1}
+}
 .compare-tray{
   position:fixed;right:18px;bottom:18px;z-index:80;display:flex;align-items:center;gap:8px;
   max-width:min(520px,calc(100vw - 36px));padding:8px 9px 8px 12px;border:1px solid #dbe0e3;
@@ -3763,7 +3819,7 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
       <div id="map"></div>
       <div id="mapStatus" class="map-status">카카오 지도를 준비하는 중입니다.</div>
       <button id="mapBoundsButton" class="map-area-filter" type="button">이 지역에서 보기</button>
-      <button id="placeCaptureButton" class="map-capture-btn" type="button" hidden disabled>📷 플레이스 캡처</button>
+      <button id="placeCaptureButton" class="map-capture-btn" type="button" hidden disabled>📋 플레이스 캡처 입력</button>
       <input id="placeCaptureInput" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
       <button id="mobileMyLocation" class="mobile-map-location" type="button" aria-label="내 위치로 이동">◎</button>
       <div id="mapHint" class="map-hint">상단 분류는 여러 개를 동시에 선택할 수 있습니다.</div>
@@ -3786,7 +3842,7 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
             <button id="detailNext" type="button" aria-label="다음 식당">›</button>
           </div>
           <div class="detail-topbar-actions">
-            <button id="detailCaptureButton" class="detail-edit-button detail-capture-button" type="button" hidden>📷 캡처</button>
+            <button id="detailCaptureButton" class="detail-edit-button detail-capture-button" type="button" hidden>📋 캡처</button>
             <button id="detailEditButton" class="detail-edit-button" type="button" hidden>정보 수정</button>
             <button id="commentClose" class="comment-close" type="button" aria-label="상세 페이지 닫기">×</button>
           </div>
@@ -3859,6 +3915,37 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
   </main>
 </div>
 
+
+<div id="placeCaptureModal" class="modal-backdrop" aria-hidden="true">
+  <section class="capture-modal" role="dialog" aria-modal="true" aria-labelledby="placeCaptureTitle">
+    <div class="modal-head">
+      <div>
+        <div id="placeCaptureTitle" class="modal-title">플레이스 캡처 자동 반영</div>
+        <div class="modal-sub">식당을 선택할 필요 없이 네이버 플레이스 캡처를 계속 붙여넣은 뒤 완료를 누르세요.</div>
+      </div>
+      <button id="placeCaptureClose" class="modal-close" type="button" aria-label="닫기">×</button>
+    </div>
+    <div class="capture-body">
+      <div id="capturePasteZone" class="capture-paste-zone" tabindex="0">
+        <strong>Ctrl+V로 캡처 붙여넣기</strong>
+        <span>여기를 클릭한 뒤 클립보드 이미지를 반복해서 붙여넣으세요. 서로 다른 식당이 섞여 있어도 됩니다.</span>
+        <small>식당명·주소를 이미지에서 읽어 현재 DB와 자동 매칭합니다. 최대 10장.</small>
+      </div>
+      <div class="capture-toolbar">
+        <button id="captureFileAdd" type="button">파일 추가</button>
+        <span id="captureCount">0장 대기 중</span>
+      </div>
+      <div id="captureQueue" class="capture-queue">
+        <div class="capture-empty">붙여넣은 캡처가 여기에 쌓입니다.</div>
+      </div>
+      <div id="captureStatus" class="capture-status" role="status" aria-live="polite"></div>
+      <div class="capture-actions">
+        <button id="captureClear" class="modal-btn secondary" type="button">전체 비우기</button>
+        <button id="captureDone" class="modal-btn primary" type="button" disabled>완료 · 자동 반영</button>
+      </div>
+    </div>
+  </section>
+</div>
 
 <div id="compareTray" class="compare-tray" hidden>
   <div class="compare-tray-copy">
