@@ -4135,7 +4135,7 @@ let favoritesOnly=false,recentOnly=false,mapOnlyMode=false,reviewSortMode='lates
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',hoveredMarkerRow=null,searchTimer=null;
 let lastMapRows=[],lastClusterLevel=null,mapIdleRenderTimer=null,lastDetailRow=null,lastListSignature='';
 let compareKeys=[],deepLinkHandled=false;
-let pendingPlaceCapture=null,placeCaptureBusy=false;
+let pendingPlaceCapture=null,placeCaptureBusy=false,captureQueueData=[];
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,selectedEditRestaurant=null,suggestMode='new',suggestPending=false,pendingSuggestionTemp=null,pendingEditUpdate=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
 let currentAccount=null,lastAuthRetry=0;
@@ -6139,25 +6139,40 @@ function canDeleteComment(row){
   return isCommentAdmin()&&isAnonymousComment(row);
 }
 
+const placeCaptureModal=document.getElementById('placeCaptureModal');
+const placeCaptureClose=document.getElementById('placeCaptureClose');
+const capturePasteZone=document.getElementById('capturePasteZone');
+const captureFileAdd=document.getElementById('captureFileAdd');
+const captureQueue=document.getElementById('captureQueue');
+const captureCount=document.getElementById('captureCount');
+const captureStatus=document.getElementById('captureStatus');
+const captureClear=document.getElementById('captureClear');
+const captureDone=document.getElementById('captureDone');
+
 function syncPlaceCaptureUI(){
   if(!placeCaptureButton||!detailCaptureButton)return;
   const admin=isCommentAdmin();
-  const row=commentRestaurant||(selectedRow==null?null:dataForRow(selectedRow));
   placeCaptureButton.hidden=!admin;
   detailCaptureButton.hidden=!admin;
-  placeCaptureButton.disabled=!admin||!row||placeCaptureBusy;
-  detailCaptureButton.disabled=!admin||!row||placeCaptureBusy;
-  const label=placeCaptureBusy?'분석 중…':'📷 플레이스 캡처';
-  placeCaptureButton.textContent=label;
-  detailCaptureButton.textContent=placeCaptureBusy?'분석 중…':'📷 캡처';
+  placeCaptureButton.disabled=!admin||placeCaptureBusy;
+  detailCaptureButton.disabled=!admin||placeCaptureBusy;
+  placeCaptureButton.textContent=placeCaptureBusy?'분석 중…':'📋 플레이스 캡처 입력';
+  detailCaptureButton.textContent=placeCaptureBusy?'분석 중…':'📋 캡처';
   placeCaptureButton.classList.toggle('busy',placeCaptureBusy);
-  placeCaptureButton.title=row
-    ? String(row.name||'')+' 네이버 플레이스 캡처 반영'
-    : '식당을 먼저 선택해 주세요.';
+  placeCaptureButton.title='네이버 플레이스 캡처를 붙여넣어 DB를 자동 반영합니다.';
 }
 function setPlaceCaptureBusy(on){
   placeCaptureBusy=!!on;
   syncPlaceCaptureUI();
+  placeCaptureModal?.querySelector('.capture-modal')?.classList.toggle('busy',placeCaptureBusy);
+  if(captureDone)captureDone.disabled=placeCaptureBusy||!captureQueueData.length;
+  if(captureClear)captureClear.disabled=placeCaptureBusy||!captureQueueData.length;
+  if(captureFileAdd)captureFileAdd.disabled=placeCaptureBusy;
+}
+function setCaptureStatus(message,type=''){
+  if(!captureStatus)return;
+  captureStatus.textContent=String(message||'');
+  captureStatus.className='capture-status'+(type?' '+type:'');
 }
 function submitPlaceCaptureForm(fields){
   const form=document.createElement('form');
@@ -6192,10 +6207,10 @@ function loadCaptureImage(dataUrl){
   });
 }
 async function compressCaptureFile(file){
-  if(!file||!/^image\/(?:png|jpeg|jpg|webp)$/i.test(file.type||''))throw new Error('PNG/JPG/WEBP 이미지만 올릴 수 있습니다.');
+  if(!file||!/^image\/(?:png|jpeg|jpg|webp)$/i.test(file.type||''))throw new Error('PNG/JPG/WEBP 이미지만 사용할 수 있습니다.');
   const source=await readCaptureFile(file);
   const img=await loadCaptureImage(source);
-  const maxSide=1800;
+  const maxSide=1600;
   const ratio=Math.min(1,maxSide/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height));
   const width=Math.max(1,Math.round((img.naturalWidth||img.width)*ratio));
   const height=Math.max(1,Math.round((img.naturalHeight||img.height)*ratio));
@@ -6204,53 +6219,138 @@ async function compressCaptureFile(file){
   const ctx=canvas.getContext('2d',{alpha:false});
   ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);
   ctx.drawImage(img,0,0,width,height);
-  return canvas.toDataURL('image/jpeg',.86);
+  return canvas.toDataURL('image/jpeg',.82);
 }
-async function processPlaceCaptureFiles(fileList){
-  const row=commentRestaurant||(selectedRow==null?null:dataForRow(selectedRow));
-  if(!isCommentAdmin()){showToast('관리자 계정에서만 사용할 수 있습니다.');return;}
-  if(!row){showToast('캡처를 반영할 식당을 먼저 선택해 주세요.');return;}
-  const files=[...(fileList||[])].slice(0,4);
-  if(!files.length)return;
-  if(fileList.length>4){showToast('한 번에 최대 4장까지 반영합니다.');}
-  setPlaceCaptureBusy(true);
-  showToast(row.name+' 캡처를 분석할 준비 중입니다.');
+function renderCaptureQueue(){
+  if(!captureQueue)return;
+  captureCount.textContent=captureQueueData.length+'장 대기 중';
+  captureDone.disabled=placeCaptureBusy||!captureQueueData.length;
+  captureClear.disabled=placeCaptureBusy||!captureQueueData.length;
+  if(!captureQueueData.length){
+    captureQueue.innerHTML='<div class="capture-empty">붙여넣은 캡처가 여기에 쌓입니다.</div>';
+    return;
+  }
+  captureQueue.innerHTML=captureQueueData.map((x,i)=>
+    '<div class="capture-item" data-index="'+i+'">'+
+      '<img src="'+x.dataUrl+'" alt="캡처 '+(i+1)+'">'+
+      '<b>'+(i+1)+'</b>'+
+      '<button type="button" aria-label="캡처 '+(i+1)+' 삭제">×</button>'+
+    '</div>'
+  ).join('');
+  captureQueue.querySelectorAll('.capture-item button').forEach(btn=>btn.addEventListener('click',()=>{
+    const idx=Number(btn.closest('.capture-item').dataset.index);
+    if(Number.isFinite(idx)){captureQueueData.splice(idx,1);renderCaptureQueue();}
+  }));
+}
+async function addPlaceCaptureFiles(files){
+  if(placeCaptureBusy)return;
+  const incoming=[...(files||[])].filter(f=>/^image\//i.test(f.type||''));
+  if(!incoming.length){
+    setCaptureStatus('클립보드에서 이미지가 확인되지 않았습니다.','error');
+    return;
+  }
+  const room=Math.max(0,10-captureQueueData.length);
+  if(!room){
+    setCaptureStatus('한 번에 최대 10장까지 처리할 수 있습니다.','error');
+    return;
+  }
+  const selected=incoming.slice(0,room);
+  if(incoming.length>room)setCaptureStatus('최대 10장까지만 대기열에 추가했습니다.','error');
+  else setCaptureStatus('이미지를 준비하는 중입니다.');
   try{
-    const images=await Promise.all(files.map(compressCaptureFile));
-    if(images.reduce((n,x)=>n+x.length,0)>8500000)throw new Error('압축 후에도 이미지 용량이 큽니다. 장수를 줄여 주세요.');
-    pendingPlaceCapture={
-      mode:'placeCapture',
-      row:Number(row.row),
-      keyName:String(row.name||''),
-      keyAddress:String(row.address||''),
-      imagesJson:JSON.stringify(images)
-    };
-    submitPlaceCaptureForm(pendingPlaceCapture);
+    for(const file of selected){
+      const dataUrl=await compressCaptureFile(file);
+      captureQueueData.push({dataUrl:dataUrl});
+      renderCaptureQueue();
+    }
+    setCaptureStatus('계속 Ctrl+V로 붙여넣거나 완료를 눌러 자동 반영하세요.');
   }catch(err){
-    pendingPlaceCapture=null;
-    setPlaceCaptureBusy(false);
-    showToast(String(err&&err.message||'캡처 처리에 실패했습니다.'));
+    setCaptureStatus(String(err&&err.message||'이미지를 준비하지 못했습니다.'),'error');
   }finally{
     if(placeCaptureInput)placeCaptureInput.value='';
   }
 }
-function openPlaceCapturePicker(){
+function openPlaceCaptureModal(){
+  if(!isCommentAdmin()){
+    showToast('관리자 계정에서만 사용할 수 있습니다.');
+    return;
+  }
   if(placeCaptureBusy)return;
-  const row=commentRestaurant||(selectedRow==null?null:dataForRow(selectedRow));
-  if(!row){showToast('식당을 먼저 선택해 주세요.');return;}
-  placeCaptureInput?.click();
+  placeCaptureModal.classList.add('open');
+  placeCaptureModal.setAttribute('aria-hidden','false');
+  setCaptureStatus(captureQueueData.length?'계속 붙여넣거나 완료를 눌러 주세요.':'클립보드의 네이버 플레이스 캡처를 Ctrl+V로 붙여넣으세요.');
+  renderCaptureQueue();
+  setTimeout(()=>capturePasteZone?.focus(),60);
+}
+function closePlaceCaptureModal(){
+  if(placeCaptureBusy)return;
+  placeCaptureModal.classList.remove('open');
+  placeCaptureModal.setAttribute('aria-hidden','true');
+}
+function clearCaptureQueue(){
+  if(placeCaptureBusy)return;
+  captureQueueData=[];
+  renderCaptureQueue();
+  setCaptureStatus('대기열을 비웠습니다.');
+  capturePasteZone?.focus();
+}
+function submitCaptureQueue(){
+  if(placeCaptureBusy||!captureQueueData.length)return;
+  const total=captureQueueData.reduce((n,x)=>n+x.dataUrl.length,0);
+  if(total>14500000){
+    setCaptureStatus('이미지 용량이 큽니다. 일부를 먼저 완료한 뒤 나머지를 처리해 주세요.','error');
+    return;
+  }
+  pendingPlaceCapture={
+    mode:'placeCapture',
+    imagesJson:JSON.stringify(captureQueueData.map(x=>x.dataUrl))
+  };
+  setPlaceCaptureBusy(true);
+  setCaptureStatus(captureQueueData.length+'장의 식당명과 영업정보를 자동 판별하는 중입니다.');
+  submitPlaceCaptureForm(pendingPlaceCapture);
 }
 function promptAndStoreOpenAiKey(){
   const key=window.prompt('처음 한 번만 필요합니다. OpenAI API Key를 입력해 주세요.\n키는 Apps Script의 Script Properties에 저장되며 지도 코드에는 남지 않습니다.');
-  if(!key){pendingPlaceCapture=null;setPlaceCaptureBusy(false);return;}
+  if(!key){
+    pendingPlaceCapture=null;
+    setPlaceCaptureBusy(false);
+    setCaptureStatus('API Key 입력이 취소되었습니다.','error');
+    return;
+  }
+  setCaptureStatus('API Key를 저장하는 중입니다.');
   submitPlaceCaptureForm({mode:'openaiKeySet',apiKey:key.trim()});
 }
-function captureFieldLabel(key){
-  return ({hours:'영업시간',breakTime:'브레이크타임',closedDays:'휴무일',lastOrder:'라스트오더',hoursNote:'영업시간비고',phone:'전화번호'})[key]||key;
+function captureResultSummary(data){
+  const results=Array.isArray(data.results)?data.results:[];
+  const skipped=Array.isArray(data.skipped)?data.skipped:[];
+  let text=results.length+'개 식당 반영 완료';
+  if(results.length)text+=' · '+results.map(x=>x.name).join(', ');
+  if(skipped.length)text+=' / '+skipped.length+'개 보류: '+skipped.map(x=>(x.name||'식당')+'('+x.reason+')').join(', ');
+  return text;
 }
-placeCaptureButton?.addEventListener('click',openPlaceCapturePicker);
-detailCaptureButton?.addEventListener('click',openPlaceCapturePicker);
-placeCaptureInput?.addEventListener('change',()=>processPlaceCaptureFiles(placeCaptureInput.files));
+placeCaptureButton?.addEventListener('click',openPlaceCaptureModal);
+detailCaptureButton?.addEventListener('click',openPlaceCaptureModal);
+placeCaptureClose?.addEventListener('click',closePlaceCaptureModal);
+placeCaptureModal?.addEventListener('click',e=>{if(e.target===placeCaptureModal)closePlaceCaptureModal();});
+captureClear?.addEventListener('click',clearCaptureQueue);
+captureDone?.addEventListener('click',submitCaptureQueue);
+captureFileAdd?.addEventListener('click',()=>placeCaptureInput?.click());
+placeCaptureInput?.addEventListener('change',()=>addPlaceCaptureFiles(placeCaptureInput.files));
+capturePasteZone?.addEventListener('click',()=>capturePasteZone.focus());
+capturePasteZone?.addEventListener('dragover',e=>{e.preventDefault();});
+capturePasteZone?.addEventListener('drop',e=>{
+  e.preventDefault();
+  addPlaceCaptureFiles(e.dataTransfer?.files||[]);
+});
+document.addEventListener('paste',e=>{
+  if(!placeCaptureModal?.classList.contains('open')||placeCaptureBusy)return;
+  const files=[...(e.clipboardData?.items||[])]
+    .filter(item=>item.kind==='file'&&/^image\//i.test(item.type||''))
+    .map(item=>item.getAsFile()).filter(Boolean);
+  if(!files.length)return;
+  e.preventDefault();
+  addPlaceCaptureFiles(files);
+});
 
 window.addEventListener('message',e=>{
   const allowedOrigins=new Set(['https://script.google.com','https://script.googleusercontent.com']);
@@ -6258,12 +6358,12 @@ window.addEventListener('message',e=>{
   const data=e.data||{};
   if(data.source==='lunch-map-openai-key'){
     if(data.ok&&pendingPlaceCapture){
-      showToast('API Key를 저장했습니다. 캡처 분석을 계속합니다.');
+      setCaptureStatus('API Key 저장 완료 · 캡처 분석을 계속합니다.');
       submitPlaceCaptureForm(pendingPlaceCapture);
     }else{
       pendingPlaceCapture=null;
       setPlaceCaptureBusy(false);
-      showToast(data.message||'API Key 저장에 실패했습니다.');
+      setCaptureStatus(data.message||'API Key 저장에 실패했습니다.','error');
     }
     return;
   }
@@ -6275,25 +6375,36 @@ window.addEventListener('message',e=>{
   if(!data.ok){
     pendingPlaceCapture=null;
     setPlaceCaptureBusy(false);
+    const suffix=Array.isArray(data.skipped)&&data.skipped.length
+      ? ' · '+data.skipped.map(x=>(x.name||'식당')+': '+x.reason).join(', ')
+      : '';
+    setCaptureStatus((data.message||'캡처 반영에 실패했습니다.')+suffix,'error');
     showToast(data.message||'캡처 반영에 실패했습니다.');
     return;
   }
-  const appliedRow=Number(data.row);
-  const labels=(Array.isArray(data.fields)?data.fields:[]).map(captureFieldLabel);
+
+  const summary=captureResultSummary(data);
   pendingPlaceCapture=null;
+  captureQueueData=[];
   setPlaceCaptureBusy(false);
-  showToast((labels.length?labels.join(' · ')+' 반영 완료':'플레이스 정보 반영 완료')+(data.confidence?' · 신뢰도 '+data.confidence:''));
+  renderCaptureQueue();
+  setCaptureStatus(summary,Array.isArray(data.skipped)&&data.skipped.length?'':'success');
+  showToast(data.message||summary);
+
+  const selectedBefore=selectedRow;
   liveDbPromise=loadLiveDb().then(ok=>{
     if(!ok)return false;
-    const updated=dataForRow(appliedRow);
-    if(updated&&selectedRow===appliedRow){
-      selectedRestaurantKey=selectionKeyFor(updated);
-      selectedRow=appliedRow;
-      openComments(updated);
-      syncSelectedRowsUI();
+    if(selectedBefore!=null){
+      const updated=dataForRow(selectedBefore);
+      if(updated&&selectedRow===selectedBefore){
+        selectedRestaurantKey=selectionKeyFor(updated);
+        openComments(updated);
+        syncSelectedRowsUI();
+      }
     }
     return true;
   }).catch(()=>false);
+  setTimeout(()=>capturePasteZone?.focus(),80);
 });
 
 function renderReviewSummary(rows){
@@ -7227,6 +7338,7 @@ suggestModal.addEventListener('click',e=>{if(e.target===suggestModal)closeSugges
 document.addEventListener('keydown',e=>{
   if(e.key!=='Escape')return;
   closeMobileMenu();
+  if(placeCaptureModal?.classList.contains('open')){closePlaceCaptureModal();return;}
   if(compareModal?.classList.contains('open')){closeCompareModal();return;}
   if(suggestModal.classList.contains('open')){closeSuggestModal();return;}
   if(rouletteModal.classList.contains('open')){closeRoulette();return;}
