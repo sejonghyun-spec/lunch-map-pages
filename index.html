@@ -4048,6 +4048,7 @@ let favoritesOnly=false,recentOnly=false,mapOnlyMode=false,reviewSortMode='lates
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',hoveredMarkerRow=null,searchTimer=null;
 let lastMapRows=[],lastClusterLevel=null,mapIdleRenderTimer=null,lastDetailRow=null,lastListSignature='';
 let compareKeys=[],deepLinkHandled=false;
+let pendingPlaceCapture=null,placeCaptureBusy=false;
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,selectedEditRestaurant=null,suggestMode='new',suggestPending=false,pendingSuggestionTemp=null,pendingEditUpdate=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
 let currentAccount=null,lastAuthRetry=0;
@@ -4755,6 +4756,7 @@ function syncSelectedRowsUI(){
   const mapWrap=document.querySelector('.map-wrap');
   if(mapWrap)mapWrap.classList.toggle('has-selection',!!selectedRestaurantKey);
   syncMapQuickBar();
+  syncPlaceCaptureUI();
   requestAnimationFrame(syncMarkerCaptionCollisions);
 }
 function clearSelectedRows(){
@@ -5734,6 +5736,7 @@ function updateAccountUI(user,needsAuth=false){
     if(needsAuth)accountButton.classList.add('needs-auth');
   }
   syncDetailAdminAction();
+  syncPlaceCaptureUI();
   if(commentPanel&&commentPanel.classList.contains('open')){
     renderComments(currentCommentRows);
   }
@@ -5999,6 +6002,9 @@ const mapQuickBar=document.getElementById('mapQuickBar');
 const mapQuickName=document.getElementById('mapQuickName');
 const mapQuickMeta=document.getElementById('mapQuickMeta');
 const mapQuickFavorite=document.getElementById('mapQuickFavorite');
+const placeCaptureButton=document.getElementById('placeCaptureButton');
+const placeCaptureInput=document.getElementById('placeCaptureInput');
+const detailCaptureButton=document.getElementById('detailCaptureButton');
 const reviewSortLatest=document.getElementById('reviewSortLatest');
 const reviewSortHelpful=document.getElementById('reviewSortHelpful');
 const mapHint=document.getElementById('mapHint');
@@ -6045,6 +6051,164 @@ function canDeleteComment(row){
   // Separate admin privilege: the designated admin may delete anonymous comments.
   return isCommentAdmin()&&isAnonymousComment(row);
 }
+
+function syncPlaceCaptureUI(){
+  if(!placeCaptureButton||!detailCaptureButton)return;
+  const admin=isCommentAdmin();
+  const row=commentRestaurant||(selectedRow==null?null:dataForRow(selectedRow));
+  placeCaptureButton.hidden=!admin;
+  detailCaptureButton.hidden=!admin;
+  placeCaptureButton.disabled=!admin||!row||placeCaptureBusy;
+  detailCaptureButton.disabled=!admin||!row||placeCaptureBusy;
+  const label=placeCaptureBusy?'분석 중…':'📷 플레이스 캡처';
+  placeCaptureButton.textContent=label;
+  detailCaptureButton.textContent=placeCaptureBusy?'분석 중…':'📷 캡처';
+  placeCaptureButton.classList.toggle('busy',placeCaptureBusy);
+  placeCaptureButton.title=row
+    ? String(row.name||'')+' 네이버 플레이스 캡처 반영'
+    : '식당을 먼저 선택해 주세요.';
+}
+function setPlaceCaptureBusy(on){
+  placeCaptureBusy=!!on;
+  syncPlaceCaptureUI();
+}
+function submitPlaceCaptureForm(fields){
+  const form=document.createElement('form');
+  form.method='post';
+  form.action=SUGGEST_URL;
+  form.target='placeCaptureSink';
+  form.style.display='none';
+  Object.entries(fields).forEach(([name,value])=>{
+    const input=document.createElement('textarea');
+    input.name=name;
+    input.value=String(value??'');
+    form.appendChild(input);
+  });
+  document.body.appendChild(form);
+  form.submit();
+  setTimeout(()=>form.remove(),100);
+}
+function readCaptureFile(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||''));
+    reader.onerror=()=>reject(new Error('이미지를 읽지 못했습니다.'));
+    reader.readAsDataURL(file);
+  });
+}
+function loadCaptureImage(dataUrl){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>resolve(img);
+    img.onerror=()=>reject(new Error('이미지를 열지 못했습니다.'));
+    img.src=dataUrl;
+  });
+}
+async function compressCaptureFile(file){
+  if(!file||!/^image\/(?:png|jpeg|jpg|webp)$/i.test(file.type||''))throw new Error('PNG/JPG/WEBP 이미지만 올릴 수 있습니다.');
+  const source=await readCaptureFile(file);
+  const img=await loadCaptureImage(source);
+  const maxSide=1800;
+  const ratio=Math.min(1,maxSide/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height));
+  const width=Math.max(1,Math.round((img.naturalWidth||img.width)*ratio));
+  const height=Math.max(1,Math.round((img.naturalHeight||img.height)*ratio));
+  const canvas=document.createElement('canvas');
+  canvas.width=width;canvas.height=height;
+  const ctx=canvas.getContext('2d',{alpha:false});
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);
+  ctx.drawImage(img,0,0,width,height);
+  return canvas.toDataURL('image/jpeg',.86);
+}
+async function processPlaceCaptureFiles(fileList){
+  const row=commentRestaurant||(selectedRow==null?null:dataForRow(selectedRow));
+  if(!isCommentAdmin()){showToast('관리자 계정에서만 사용할 수 있습니다.');return;}
+  if(!row){showToast('캡처를 반영할 식당을 먼저 선택해 주세요.');return;}
+  const files=[...(fileList||[])].slice(0,4);
+  if(!files.length)return;
+  if(fileList.length>4){showToast('한 번에 최대 4장까지 반영합니다.');}
+  setPlaceCaptureBusy(true);
+  showToast(row.name+' 캡처를 분석할 준비 중입니다.');
+  try{
+    const images=await Promise.all(files.map(compressCaptureFile));
+    if(images.reduce((n,x)=>n+x.length,0)>8500000)throw new Error('압축 후에도 이미지 용량이 큽니다. 장수를 줄여 주세요.');
+    pendingPlaceCapture={
+      mode:'placeCapture',
+      row:Number(row.row),
+      keyName:String(row.name||''),
+      keyAddress:String(row.address||''),
+      imagesJson:JSON.stringify(images)
+    };
+    submitPlaceCaptureForm(pendingPlaceCapture);
+  }catch(err){
+    pendingPlaceCapture=null;
+    setPlaceCaptureBusy(false);
+    showToast(String(err&&err.message||'캡처 처리에 실패했습니다.'));
+  }finally{
+    if(placeCaptureInput)placeCaptureInput.value='';
+  }
+}
+function openPlaceCapturePicker(){
+  if(placeCaptureBusy)return;
+  const row=commentRestaurant||(selectedRow==null?null:dataForRow(selectedRow));
+  if(!row){showToast('식당을 먼저 선택해 주세요.');return;}
+  placeCaptureInput?.click();
+}
+function promptAndStoreOpenAiKey(){
+  const key=window.prompt('처음 한 번만 필요합니다. OpenAI API Key를 입력해 주세요.\n키는 Apps Script의 Script Properties에 저장되며 지도 코드에는 남지 않습니다.');
+  if(!key){pendingPlaceCapture=null;setPlaceCaptureBusy(false);return;}
+  submitPlaceCaptureForm({mode:'openaiKeySet',apiKey:key.trim()});
+}
+function captureFieldLabel(key){
+  return ({hours:'영업시간',breakTime:'브레이크타임',closedDays:'휴무일',lastOrder:'라스트오더',hoursNote:'영업시간비고',phone:'전화번호'})[key]||key;
+}
+placeCaptureButton?.addEventListener('click',openPlaceCapturePicker);
+detailCaptureButton?.addEventListener('click',openPlaceCapturePicker);
+placeCaptureInput?.addEventListener('change',()=>processPlaceCaptureFiles(placeCaptureInput.files));
+
+window.addEventListener('message',e=>{
+  const allowedOrigins=new Set(['https://script.google.com','https://script.googleusercontent.com']);
+  if(!allowedOrigins.has(e.origin))return;
+  const data=e.data||{};
+  if(data.source==='lunch-map-openai-key'){
+    if(data.ok&&pendingPlaceCapture){
+      showToast('API Key를 저장했습니다. 캡처 분석을 계속합니다.');
+      submitPlaceCaptureForm(pendingPlaceCapture);
+    }else{
+      pendingPlaceCapture=null;
+      setPlaceCaptureBusy(false);
+      showToast(data.message||'API Key 저장에 실패했습니다.');
+    }
+    return;
+  }
+  if(data.source!=='lunch-map-place-capture')return;
+  if(data.needsApiKey){
+    promptAndStoreOpenAiKey();
+    return;
+  }
+  if(!data.ok){
+    pendingPlaceCapture=null;
+    setPlaceCaptureBusy(false);
+    showToast(data.message||'캡처 반영에 실패했습니다.');
+    return;
+  }
+  const appliedRow=Number(data.row);
+  const labels=(Array.isArray(data.fields)?data.fields:[]).map(captureFieldLabel);
+  pendingPlaceCapture=null;
+  setPlaceCaptureBusy(false);
+  showToast((labels.length?labels.join(' · ')+' 반영 완료':'플레이스 정보 반영 완료')+(data.confidence?' · 신뢰도 '+data.confidence:''));
+  liveDbPromise=loadLiveDb().then(ok=>{
+    if(!ok)return false;
+    const updated=dataForRow(appliedRow);
+    if(updated&&selectedRow===appliedRow){
+      selectedRestaurantKey=selectionKeyFor(updated);
+      selectedRow=appliedRow;
+      openComments(updated);
+      syncSelectedRowsUI();
+    }
+    return true;
+  }).catch(()=>false);
+});
+
 function renderReviewSummary(rows){
   const base=Array.isArray(rows)?rows:[];
   const fields=[['taste','맛'],['amount','양'],['price','가격'],['wait','대기']];
