@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-theme-trim-v78">
+<meta name="lunch-map-build" content="2026-10-04-editorial-city-zine-v79">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@500;600;700&display=swap">
 <style>
 :root{
   --brand:#9a4f31;
@@ -214,7 +214,7 @@ button,input,select,textarea{font:inherit}
 }
 .theme-preview.simple{background:linear-gradient(135deg,#fff 0 55%,#9a4f31 55% 70%,#eee7e1 70%)}
 .theme-preview.night{background:linear-gradient(135deg,#0d1117 0 52%,#171b22 52% 68%,#9ca3af 68%)}
-.theme-preview.editorial{background:linear-gradient(135deg,#fffdf7 0 44%,#123b6d 44% 66%,#e14c3f 66% 84%,#f1c94d 84%)}
+.theme-preview.editorial{background:linear-gradient(135deg,#f7f4ea 0 42%,#111 42% 58%,#ff4d3d 58% 74%,#efff54 74% 88%,#315efb 88%)}
 .theme-preview.bistro{background:linear-gradient(135deg,#f3ecdf 0 48%,#214a38 48% 66%,#8a3d48 66% 82%,#c6a66a 82%)}
 .theme-option-copy{min-width:0}
 .theme-option-copy b{display:block;font-size:13px;font-weight:850}
@@ -466,6 +466,7 @@ button,input,select,textarea{font:inherit}
 }
 .list::-webkit-scrollbar{width:5px}
 .list::-webkit-scrollbar-thumb{background:#d7cfc8;border-radius:999px}
+.zine-index{display:none}
 .card{
   position:relative;padding:13px 10px 13px;border-bottom:1px solid #f0ece8;
   border-radius:10px;cursor:pointer;
@@ -2518,415 +2519,467 @@ html[data-theme="night"] .marker-name{
   border-radius:5px
 }
 
-/* Editorial — magazine / poster-inspired layout */
+/* Editorial — City Zine / independent magazine */
 html[data-theme="editorial"]{
-  --brand:#e14c3f;--brand-dark:#a82f27;--text:#172033;--muted:#657083;
-  --line:#c8cfda;--soft:#eef2f7;--panel:#fffdf8;
-  --theme-control-bg:#fffdf8;--theme-header-bg:#123b6d;--theme-sidebar-bg:#f7f5ef;
-  --theme-sheet-bg:#f7f5ef;--theme-card-bg:#fff;--theme-chip-bg:#eaf0f8;
+  --brand:#ff4d3d;--brand-dark:#b9241b;--text:#111317;--muted:#666b73;
+  --line:#c8c9c3;--soft:#ecece5;--panel:#f7f4ea;
+  --theme-control-bg:#f7f4ea;--theme-header-bg:#f7f4ea;--theme-sidebar-bg:#f7f4ea;
+  --theme-sheet-bg:#f7f4ea;--theme-card-bg:#fffefa;--theme-chip-bg:#efff54;
 }
 html[data-theme="editorial"] body{
-  background:#f2efe7;
-  color:#172033;
+  background:#e8e7df;
+  color:#111317;
   font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",Arial,sans-serif
 }
 html[data-theme="editorial"] .topbar{
-  border-bottom:4px solid #e14c3f;
-  background:#123b6d;
+  border-bottom:4px solid #111317;
+  background:#f7f4ea;
   box-shadow:none
 }
-html[data-theme="editorial"] .brand{border-right:1px solid rgba(255,255,255,.24)}
-html[data-theme="editorial"] .brand-title{
-  color:#fff;
-  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
-  font-size:24px;
-  font-weight:900;
-  letter-spacing:-.7px
+html[data-theme="editorial"] .brand{
+  position:relative;
+  border-right:3px solid #111317;
+  background:#efff54
 }
-html[data-theme="editorial"] .brand-sub{color:#dbe7f5}
-html[data-theme="editorial"] .filter-btn,
+html[data-theme="editorial"] .brand::after{
+  content:'SEOUL LUNCH ZINE';
+  position:absolute;
+  right:10px;
+  bottom:5px;
+  color:#111317;
+  font-size:8.5px;
+  font-weight:900;
+  letter-spacing:.13em
+}
+html[data-theme="editorial"] .brand-title{
+  color:#111317;
+  font-family:"Black Han Sans","Pretendard Variable",Pretendard,sans-serif;
+  font-size:23px;
+  font-weight:400;
+  letter-spacing:-.5px
+}
+html[data-theme="editorial"] .brand-sub{color:#35383d;font-weight:750}
+html[data-theme="editorial"] .filter-btn{
+  min-height:36px;
+  border:2px solid #111317;
+  border-radius:0;
+  background:#fffefa;
+  color:#111317;
+  box-shadow:2px 2px 0 #111317;
+  font-weight:850;
+  transform:none
+}
+html[data-theme="editorial"] .filter-btn:hover{
+  background:#efff54;
+  border-color:#111317;
+  transform:translate(-1px,-1px);
+  box-shadow:3px 3px 0 #111317
+}
+html[data-theme="editorial"] .filter-btn.active{
+  border-color:#111317;
+  background:#ff4d3d;
+  color:#fff;
+  filter:none;
+  box-shadow:3px 3px 0 #111317
+}
 html[data-theme="editorial"] .theme-button,
 html[data-theme="editorial"] .account-btn,
 html[data-theme="editorial"] .roulette-btn{
-  border:1px solid rgba(255,255,255,.34);
-  border-radius:2px;
-  background:rgba(255,255,255,.10);
-  color:#fff;
-  box-shadow:none
+  border:2px solid #111317;
+  border-radius:0;
+  background:#fffefa;
+  color:#111317;
+  box-shadow:2px 2px 0 #111317
 }
-html[data-theme="editorial"] .filter-btn:hover,
-html[data-theme="editorial"] .theme-button:hover,
-html[data-theme="editorial"] .account-btn:hover,
-html[data-theme="editorial"] .roulette-btn:hover{
-  background:rgba(255,255,255,.18)
-}
-html[data-theme="editorial"] .filter-btn.active{
-  border-color:#f1c94d;
-  background:#f1c94d;
-  color:#172033;
-  filter:none
-}
+html[data-theme="editorial"] .roulette-btn{background:#315efb;color:#fff}
 html[data-theme="editorial"] .suggest-btn{
-  border:1px solid #e14c3f;
-  border-radius:2px;
-  background:#e14c3f;
+  border:2px solid #111317;
+  border-radius:0;
+  background:#ff4d3d;
   color:#fff;
+  box-shadow:3px 3px 0 #111317
+}
+html[data-theme="editorial"] .sidebar{
+  border-right:3px solid #111317;
+  background:#f7f4ea;
   box-shadow:none
 }
-html[data-theme="editorial"] .theme-orb{filter:saturate(1.2)}
+html[data-theme="editorial"] .search-wrap{padding:15px 14px 10px}
 html[data-theme="editorial"] .search,
 html[data-theme="editorial"] #mobileSearch{
-  border:2px solid #123b6d;
-  border-radius:2px;
-  background:#fff;
-  box-shadow:none
+  border:2px solid #111317;
+  border-radius:0;
+  background:#fffefa;
+  color:#111317;
+  box-shadow:3px 3px 0 #111317;
+  font-weight:700
 }
 html[data-theme="editorial"] .search:focus,
 html[data-theme="editorial"] #mobileSearch:focus{
-  border-color:#e14c3f;
-  box-shadow:0 0 0 2px rgba(225,76,63,.12)
+  border-color:#315efb;
+  box-shadow:3px 3px 0 #315efb
 }
 html[data-theme="editorial"] .search-icon,
-html[data-theme="editorial"] .mobile-search-icon{color:#123b6d}
+html[data-theme="editorial"] .mobile-search-icon{color:#111317}
 html[data-theme="editorial"] .search::placeholder,
-html[data-theme="editorial"] #mobileSearch::placeholder{color:#6f7e8f}
-html[data-theme="editorial"] .filter-chip-row{
-  border:1px solid #c9d2df;
-  border-radius:2px;
-  background:#eaf0f8
-}
-html[data-theme="editorial"] .filter-chip{
-  border-radius:1px;
-  color:#29435f;
-  font-weight:800
-}
-html[data-theme="editorial"] .filter-chip.active{
-  border-color:#123b6d;
-  background:#123b6d;
-  color:#fff
-}
-html[data-theme="editorial"] .sidebar{
-  border-right:4px solid #123b6d;
-  background:#f7f5ef;
-  box-shadow:none
-}
+html[data-theme="editorial"] #mobileSearch::placeholder{color:#72767c}
 html[data-theme="editorial"] .sidebar .compact-filter-label{
-  border:1px solid #9fb0c3;
-  border-radius:2px;
-  background:#fff;
-  color:#183a60;
-  font-weight:800;
+  border:2px solid #111317;
+  border-radius:0;
+  background:#fffefa;
+  color:#111317;
+  font-weight:850;
   box-shadow:none
 }
 html[data-theme="editorial"] .sidebar .compact-filter:has(.multi-filter-select:hover) .compact-filter-label{
-  border-color:#123b6d;
-  background:#eef4fb;
-  color:#123b6d
+  background:#efff54;
+  border-color:#111317;
+  color:#111317
 }
 html[data-theme="editorial"] .sidebar .compact-filter:has(.multi-filter-select.active) .compact-filter-label{
-  border-color:#e14c3f;
-  background:#fff3df;
-  color:#9f3028
-}
-html[data-theme="editorial"] .sidebar .multi-filter-reset{
-  color:#53667a;
-  font-weight:750
-}
-html[data-theme="editorial"] .sidebar .multi-filter-reset:hover{
-  background:#e7edf4;
-  color:#123b6d
-}
-html[data-theme="editorial"] .sidebar .quick-row{
-  border-top:1px solid #cbd4df
-}
-html[data-theme="editorial"] .sidebar .map-tools-label{
-  color:#5b6d80;
-  font-weight:750
-}
-html[data-theme="editorial"] .sidebar .quick-btn{
-  border:1px solid #a9b8c8;
-  border-radius:2px;
-  background:#fff;
-  color:#183a60;
-  font-weight:800;
-  box-shadow:none
-}
-html[data-theme="editorial"] .sidebar .quick-btn:hover{
-  border-color:#123b6d;
-  background:#eaf1f8;
-  color:#123b6d
-}
-html[data-theme="editorial"] .sidebar .filter-chip-row{
-  border-color:#b8c6d5;
-  background:#dfe8f2
-}
-html[data-theme="editorial"] .sidebar .filter-chip{
-  color:#29435f
-}
-html[data-theme="editorial"] .sidebar .filter-chip:hover{
-  background:#cfdbe8;
-  color:#123b6d
-}
-html[data-theme="editorial"] .sidebar .filter-chip.active{
-  border-color:#123b6d;
-  background:#123b6d;
+  background:#315efb;
+  border-color:#111317;
   color:#fff
 }
+html[data-theme="editorial"] .sidebar .multi-filter-reset{
+  color:#555b62;
+  font-weight:800
+}
+html[data-theme="editorial"] .filter-chip-row{
+  border:2px solid #111317;
+  border-radius:0;
+  background:#fffefa;
+  padding:4px
+}
+html[data-theme="editorial"] .filter-chip{
+  border-radius:0;
+  color:#111317;
+  font-weight:850
+}
+html[data-theme="editorial"] .filter-chip:hover{background:#efff54}
+html[data-theme="editorial"] .filter-chip.active{
+  border-color:#111317;
+  background:#111317;
+  color:#fff
+}
+html[data-theme="editorial"] .quick-row{
+  border-top:2px solid #111317
+}
+html[data-theme="editorial"] .map-tools-label{
+  color:#4d5157;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase
+}
+html[data-theme="editorial"] .quick-btn{
+  border:2px solid #111317;
+  border-radius:0;
+  background:#fffefa;
+  color:#111317;
+  font-weight:850
+}
+html[data-theme="editorial"] .quick-btn:hover{background:#efff54;border-color:#111317}
 html[data-theme="editorial"] .list-head{
-  border-top:0;
-  border-bottom:3px solid #123b6d
+  padding:11px 14px 9px;
+  border-top:2px solid #111317;
+  border-bottom:2px solid #111317;
+  background:#315efb
 }
 html[data-theme="editorial"] .list-title,
 html[data-theme="editorial"] .mobile-list-heading strong{
-  color:#123b6d;
-  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
-  font-size:19px;
-  font-weight:900;
-  letter-spacing:-.45px
+  color:#fff;
+  font-family:"Black Han Sans","Pretendard Variable",Pretendard,sans-serif;
+  font-size:18px;
+  font-weight:400;
+  letter-spacing:-.25px
 }
-html[data-theme="editorial"] .list-sub{color:#64748b}
+html[data-theme="editorial"] .list-sub{color:#dce4ff;font-weight:800}
+html[data-theme="editorial"] .sort-btn{
+  border:2px solid #111317;
+  border-radius:0;
+  background:#efff54;
+  color:#111317;
+  font-weight:900
+}
+html[data-theme="editorial"] .sort-menu,
+html[data-theme="editorial"] .theme-menu{
+  border:2px solid #111317;
+  border-radius:0;
+  background:#f7f4ea;
+  box-shadow:6px 6px 0 #111317
+}
+html[data-theme="editorial"] .sort-option,
+html[data-theme="editorial"] .theme-option{
+  border-radius:0;
+  background:transparent;
+  color:#111317
+}
+html[data-theme="editorial"] .sort-option:hover,
+html[data-theme="editorial"] .theme-option:hover{background:#efff54}
+html[data-theme="editorial"] .sort-option.active,
+html[data-theme="editorial"] .theme-option.active{background:#111317;color:#fff}
+html[data-theme="editorial"] .theme-option.active small{color:#dfe1dd}
+html[data-theme="editorial"] .theme-option-copy small{color:#666b73}
+html[data-theme="editorial"] .list{padding:8px 10px 14px}
 html[data-theme="editorial"] .card{
-  margin:8px 2px;
-  padding:15px 12px;
-  border:2px solid #d7dde6;
-  border-radius:2px;
-  background:#fff;
-  box-shadow:4px 4px 0 #dfe5ee
+  position:relative;
+  margin:7px 1px;
+  padding:15px 10px 14px 54px;
+  border:2px solid #111317;
+  border-radius:0;
+  background:#fffefa;
+  box-shadow:4px 4px 0 #cfd0ca
 }
 html[data-theme="editorial"] .card:hover{
-  border-color:#123b6d;
-  background:#f8fbff;
-  box-shadow:4px 4px 0 #b8c7d9
+  background:#fff;
+  box-shadow:4px 4px 0 #315efb
 }
 html[data-theme="editorial"] .card.active{
-  border-color:#e14c3f;
-  background:#fff8e1;
-  box-shadow:5px 5px 0 #e14c3f
+  border-color:#111317;
+  background:#efff54;
+  box-shadow:5px 5px 0 #ff4d3d
 }
 html[data-theme="editorial"] .card.active::before{display:none}
+html[data-theme="editorial"] .zine-index{
+  display:block;
+  position:absolute;
+  left:10px;
+  top:11px;
+  color:#111317;
+  font-family:"Black Han Sans","Arial Black",sans-serif;
+  font-size:25px;
+  font-weight:400;
+  line-height:1
+}
+html[data-theme="editorial"] .card.active .zine-index{color:#ff4d3d}
 html[data-theme="editorial"] .name,
 html[data-theme="editorial"] .mobile-card-name{
-  color:#172033;
-  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
-  font-size:18px;
-  font-weight:900;
-  letter-spacing:-.45px
+  color:#111317;
+  font-family:"Black Han Sans","Pretendard Variable",Pretendard,sans-serif;
+  font-size:17.5px;
+  font-weight:400;
+  line-height:1.25;
+  letter-spacing:-.15px
 }
 html[data-theme="editorial"] .badge,
 html[data-theme="editorial"] .mobile-card-category{
-  border:0!important;
-  border-radius:1px!important;
+  border:2px solid #111317!important;
+  border-radius:0!important;
   padding:3px 6px!important;
-  background:#123b6d!important;
+  background:#ff4d3d!important;
   color:#fff!important;
+  font-size:10.5px!important;
   font-weight:900!important;
-  letter-spacing:.5px
+  letter-spacing:.04em
 }
 html[data-theme="editorial"] .badge-dot{display:none}
 html[data-theme="editorial"] .rating,
 html[data-theme="editorial"] .mobile-card-rating{
-  color:#e14c3f;
+  color:#ff4d3d;
   font-weight:900
 }
 html[data-theme="editorial"] .card-stats,
 html[data-theme="editorial"] .card-evaluations,
 html[data-theme="editorial"] .card-review,
-html[data-theme="editorial"] .card-distance,
-html[data-theme="editorial"] .card-note,
-html[data-theme="editorial"] .card-feature,
-html[data-theme="editorial"] .card-address{
-  color:#4d5f72
+html[data-theme="editorial"] .card-distance{
+  color:#4f555c;
+  font-weight:700
 }
 html[data-theme="editorial"] .card-tag,
 html[data-theme="editorial"] .mobile-card-tag{
-  border:1px solid #c7d1de;
-  border-radius:1px;
-  background:#edf3f8;
-  color:#29435f;
+  border:1px solid #111317;
+  border-radius:0;
+  background:#e9edff;
+  color:#111317;
   font-weight:800
 }
-html[data-theme="editorial"] .sort-btn,
-html[data-theme="editorial"] .mobile-sort{
-  border:1px solid #123b6d;
-  border-radius:2px;
-  background:#fff;
-  color:#123b6d
+html[data-theme="editorial"] .card-feature,
+html[data-theme="editorial"] .card-note,
+html[data-theme="editorial"] .card-address{color:#555a60}
+html[data-theme="editorial"] .card-note-label{
+  color:#315efb;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.04em
 }
-html[data-theme="editorial"] .sort-menu,
-html[data-theme="editorial"] .theme-menu{
-  border:2px solid #123b6d;
-  border-radius:2px;
-  background:#fffdf8;
-  box-shadow:6px 6px 0 rgba(18,59,109,.22)
-}
-html[data-theme="editorial"] .theme-option,
-html[data-theme="editorial"] .sort-option{
-  border-radius:1px;
-  background:transparent
-}
-html[data-theme="editorial"] .theme-option:hover,
-html[data-theme="editorial"] .sort-option:hover{background:#edf3f8}
-html[data-theme="editorial"] .theme-option.active,
-html[data-theme="editorial"] .sort-option.active{
-  background:#123b6d;
-  color:#fff
-}
-html[data-theme="editorial"] .theme-option.active small{color:#dbe7f5}
 html[data-theme="editorial"] .mobile-sheet{
-  border-top:4px solid #123b6d;
+  border-top:3px solid #111317;
   border-radius:0!important;
-  background:#f7f5ef;
+  background:#f7f4ea;
   box-shadow:none
 }
 html[data-theme="editorial"] .mobile-sheet-handle::before{
-  height:3px;
+  height:4px;
   border-radius:0;
-  background:#e14c3f
+  background:#ff4d3d
 }
 html[data-theme="editorial"] .mobile-sheet-quick button{
-  border:1px solid #123b6d;
-  border-radius:2px;
-  background:#fff;
-  color:#123b6d;
-  font-weight:800
+  border:2px solid #111317;
+  border-radius:0;
+  background:#fffefa;
+  color:#111317;
+  font-weight:900
 }
 html[data-theme="editorial"] .mobile-sheet-quick button.active{
-  background:#123b6d;
+  background:#315efb;
   color:#fff
 }
-html[data-theme="editorial"] .mobile-card{
-  margin:8px 3px;
-  padding:15px 12px;
-  border:2px solid #d7dde6;
-  border-radius:2px;
-  background:#fff;
-  box-shadow:3px 3px 0 #dfe5ee
+html[data-theme="editorial"] .mobile-list-head{
+  border-top:2px solid #111317;
+  border-bottom:2px solid #111317;
+  background:#315efb
 }
-html[data-theme="editorial"] .mobile-card.map-hover{
-  border-color:#123b6d;
-  background:#f8fbff
+html[data-theme="editorial"] .mobile-list-heading span{color:#dce4ff}
+html[data-theme="editorial"] .mobile-sort{
+  border:2px solid #111317;
+  border-radius:0;
+  background:#efff54;
+  color:#111317;
+  font-weight:900
+}
+html[data-theme="editorial"] .mobile-card{
+  position:relative;
+  margin:7px 1px;
+  padding:14px 8px 14px 52px;
+  border:2px solid #111317;
+  border-radius:0;
+  background:#fffefa;
+  box-shadow:3px 3px 0 #cfd0ca
+}
+html[data-theme="editorial"] .mobile-card.active{
+  background:#efff54;
+  box-shadow:4px 4px 0 #ff4d3d
 }
 html[data-theme="editorial"] .map-area-filter,
-html[data-theme="editorial"] .mobile-map-location{
-  border:2px solid #123b6d;
-  border-radius:2px;
-  background:#fffdf8;
-  color:#123b6d;
-  font-weight:900;
-  box-shadow:4px 4px 0 rgba(18,59,109,.22)
+html[data-theme="editorial"] .mobile-map-location,
+html[data-theme="editorial"] .selection-bar{
+  border:2px solid #111317;
+  border-radius:0;
+  background:#efff54;
+  color:#111317;
+  box-shadow:4px 4px 0 #111317;
+  font-weight:900
 }
-html[data-theme="editorial"] .comment-panel,
+html[data-theme="editorial"] .comment-panel{
+  border-right:3px solid #111317;
+  background:#f7f4ea;
+  box-shadow:none
+}
+html[data-theme="editorial"] .detail-hero{
+  border-bottom:4px solid #111317;
+  background:#ff4d3d
+}
+html[data-theme="editorial"] .comment-name{
+  color:#fff;
+  font-family:"Black Han Sans","Pretendard Variable",Pretendard,sans-serif;
+  font-size:30px;
+  font-weight:400;
+  letter-spacing:-.3px
+}
+html[data-theme="editorial"] .comment-sub{color:#fff2ef;font-weight:700}
 html[data-theme="editorial"] .detail-scroll,
 html[data-theme="editorial"] .detail-topbar,
 html[data-theme="editorial"] .detail-tabs,
 html[data-theme="editorial"] .detail-tab,
 html[data-theme="editorial"] .detail-section,
 html[data-theme="editorial"] .comment-compose{
-  background:#fffdf8;
-  border-color:#cbd3dd
+  background:#f7f4ea;
+  border-color:#111317
 }
-html[data-theme="editorial"] .detail-hero{
-  border-bottom:4px solid #e14c3f;
-  background:#123b6d
-}
-html[data-theme="editorial"] .comment-name{
-  color:#fff;
-  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
-  font-size:29px;
-  font-weight:900;
-  letter-spacing:-.7px
-}
-html[data-theme="editorial"] .comment-sub{color:#dbe7f5}
+html[data-theme="editorial"] .detail-section{border-bottom:3px solid #111317}
 html[data-theme="editorial"] .detail-section-title{
-  color:#123b6d;
-  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
+  color:#111317;
+  font-family:"Black Han Sans","Pretendard Variable",Pretendard,sans-serif;
+  font-weight:400;
+  letter-spacing:-.2px
+}
+html[data-theme="editorial"] .detail-tab{
+  color:#111317;
   font-weight:900
+}
+html[data-theme="editorial"] .detail-tab.active{
+  border-color:#315efb;
+  background:#efff54;
+  color:#111317
 }
 html[data-theme="editorial"] .detail-category,
 html[data-theme="editorial"] .detail-tag,
 html[data-theme="editorial"] .review-score{
-  border:1px solid #c8d2df;
-  border-radius:2px;
-  background:#edf3f8;
-  color:#29435f
-}
-html[data-theme="editorial"] .detail-tab{
+  border:2px solid #111317;
   border-radius:0;
-  color:#52657b;
-  font-weight:800
-}
-html[data-theme="editorial"] .detail-tab.active{
-  border-color:#e14c3f;
-  background:#fff8e1;
-  color:#123b6d
+  background:#fffefa;
+  color:#111317
 }
 html[data-theme="editorial"] .review-sort button,
 html[data-theme="editorial"] .comment-helpful{
-  border:1px solid #123b6d;
-  border-radius:2px;
-  background:#fff;
-  color:#123b6d
+  border:2px solid #111317;
+  border-radius:0;
+  background:#fffefa;
+  color:#111317;
+  font-weight:850
 }
 html[data-theme="editorial"] .suggest-modal,
 html[data-theme="editorial"] .roulette-modal{
-  border:3px solid #123b6d;
-  border-radius:2px;
-  background:#fffdf8;
-  box-shadow:8px 8px 0 rgba(18,59,109,.24)
+  border:3px solid #111317;
+  border-radius:0;
+  background:#f7f4ea;
+  box-shadow:8px 8px 0 #111317
 }
 html[data-theme="editorial"] .modal-head{
-  border-bottom:4px solid #e14c3f;
-  background:#123b6d;
+  border-bottom:4px solid #111317;
+  background:#315efb;
   color:#fff
 }
 html[data-theme="editorial"] .modal-title{
-  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
-  font-weight:900
+  font-family:"Black Han Sans","Pretendard Variable",Pretendard,sans-serif;
+  font-weight:400
 }
-html[data-theme="editorial"] .modal-sub{color:#dbe7f5}
+html[data-theme="editorial"] .modal-sub{color:#dce4ff}
 html[data-theme="editorial"] .modal-close{
-  border-radius:2px;
-  background:#fff;
-  color:#123b6d
+  border:2px solid #111317;
+  border-radius:0;
+  background:#efff54;
+  color:#111317
 }
 html[data-theme="editorial"] .suggest-tabs,
 html[data-theme="editorial"] .suggest-tab{
-  background:#fffdf8;
-  border-color:#cbd3dd
+  background:#f7f4ea;
+  border-color:#111317
 }
 html[data-theme="editorial"] .kakao-info{
-  border:2px solid #123b6d;
-  border-radius:2px;
-  background:#fffdf8;
-  box-shadow:5px 5px 0 rgba(18,59,109,.20)
+  border:2px solid #111317;
+  border-radius:0;
+  background:#fffefa;
+  box-shadow:5px 5px 0 #111317
 }
 html[data-theme="editorial"] .popup-name{
-  color:#123b6d;
-  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
-  font-weight:900
+  color:#315efb;
+  font-family:"Black Han Sans","Pretendard Variable",Pretendard,sans-serif;
+  font-weight:400
 }
 html[data-theme="editorial"] .marker-caption::before{
-  border-color:#123b6d;
-  background:#fffdf8
+  border-color:#111317;
+  background:#fffefa
 }
 html[data-theme="editorial"] .marker-name{
-  border:2px solid #123b6d;
-  border-radius:2px;
-  background:#fffdf8;
-  color:#123b6d;
-  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
-  font-weight:900;
-  box-shadow:4px 4px 0 rgba(18,59,109,.20)
+  border:2px solid #111317;
+  border-radius:0;
+  background:#fffefa;
+  color:#111317;
+  font-family:"Black Han Sans","Pretendard Variable",Pretendard,sans-serif;
+  font-weight:400;
+  box-shadow:4px 4px 0 #111317
 }
 html[data-theme="editorial"] .marker-label.selected .marker-caption::before{
-  border-color:#e14c3f;
-  background:#fff8e1
+  border-color:#111317;
+  background:#efff54
 }
 html[data-theme="editorial"] .marker-label.selected .marker-name{
-  border-color:#e14c3f;
-  background:#fff8e1;
-  color:#123b6d;
-  box-shadow:4px 4px 0 rgba(225,76,63,.26)
+  border-color:#111317;
+  background:#efff54;
+  color:#111317;
+  box-shadow:4px 4px 0 #ff4d3d
 }
 
 /* Bistro — quiet restaurant guide, warm paper + forest + burgundy */
@@ -3266,7 +3319,7 @@ html[data-theme="bistro"] .marker-label.selected .marker-name{
         </button>
         <button class="theme-option" type="button" data-theme-option="editorial" role="menuitem">
           <span class="theme-preview editorial" aria-hidden="true"></span>
-          <span class="theme-option-copy"><b>에디토리얼</b><small>매거진 & 포스터 스타일</small></span>
+          <span class="theme-option-copy"><b>에디토리얼</b><small>City Zine · 그래픽 매거진</small></span>
           <span class="theme-check">✓</span>
         </button>
         <button class="theme-option" type="button" data-theme-option="bistro" role="menuitem">
@@ -4407,7 +4460,7 @@ function renderMobileList(rows){
     el.innerHTML='<div class="empty">조건에 맞는 식당이 없습니다.<br>검색어나 필터를 변경해 보세요.</div>';
     return;
   }
-  el.innerHTML=rows.map(x=>{
+  el.innerHTML=rows.map((x,index)=>{
     const distance=formatDistanceFromSeahTower(x);
     const favorite=isFavorite(x);
     const score=ratingScore(x);
@@ -4417,6 +4470,7 @@ function renderMobileList(rows){
     if(capacity&&/[\p{L}\p{N}]/u.test(capacity))rawTags.push('인원 '+capacity);
     const tags=[...new Set(rawTags)].slice(0,2);
     return '<div class="card mobile-card" data-row="'+x.row+'" style="--card-color:'+colorFor(x.category)+';--mobile-card-color:'+colorFor(x.category)+'">'+
+      '<span class="zine-index">'+String(index+1).padStart(2,'0')+'</span>'+
       '<div class="mobile-card-head">'+
         '<button type="button" class="mobile-card-name" title="'+esc(x.name)+'">'+esc(x.name)+'</button>'+
         '<span class="mobile-card-category">'+esc(x.category||'기타')+'</span>'+
@@ -4454,7 +4508,7 @@ function renderList(rows){
   if(!rows.length){el.innerHTML='<div class="empty">조건에 맞는 식당이 없습니다.<br>검색어나 필터를 변경해 보세요.</div>';return;}
 
   const q=searchKeyword.trim();
-  el.innerHTML=rows.map(x=>{
+  el.innerHTML=rows.map((x,index)=>{
     const distance=formatDistanceFromSeahTower(x);
     const favorite=isFavorite(x);
     const score=ratingScore(x);
@@ -4465,6 +4519,7 @@ function renderList(rows){
     if(capacity&&/[\p{L}\p{N}]/u.test(capacity))rawTags.push('인원 '+capacity);
     const tags=[...new Set(rawTags)].slice(0,3);
     return '<div class="card" data-row="'+x.row+'" style="--card-color:'+colorFor(x.category)+'">'+
+      '<span class="zine-index">'+String(index+1).padStart(2,'0')+'</span>'+
       '<div class="card-head"><button type="button" class="name card-open" title="'+esc(x.name)+'">'+highlightMatch(x.name,q)+'</button>'+
         '<div class="badge" style="--badge-color:'+colorFor(x.category)+'"><span class="badge-dot"></span>'+esc(x.category)+'</div>'+
         '<button type="button" class="card-favorite" aria-label="'+esc(x.name)+' 즐겨찾기" aria-pressed="'+favorite+'">'+(favorite?'♥':'♡')+'</button></div>'+
