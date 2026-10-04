@@ -18,7 +18,7 @@ bundle[key(data.rows[0])]=[{id:'qa-1',nickname:'검증',comment:'테스트 후�
 const results=[];
 let browser,page,errors=[],apiRequests=[];
 async function check(name,fn){await fn();results.push(name);console.log('PASS',name);}
-async function state(fn){return page.evaluate(fn);}
+async function state(fn,arg){return page.evaluate(fn,arg);}
 async function reset(){await state(()=>{clearSelectedRows();showAll();});await page.waitForTimeout(160);}
 async function choose(id,value){await page.selectOption('#'+id,value);}
 async function menu(id){await page.locator('#mobileMenuButton').click();await page.locator('#'+id).click();await page.waitForTimeout(280);}
