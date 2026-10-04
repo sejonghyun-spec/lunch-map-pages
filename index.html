@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-clipboard-capture-v85">
+<meta name="lunch-map-build" content="2026-10-04-fast-capture-v86">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -6210,7 +6210,7 @@ async function compressCaptureFile(file){
   if(!file||!/^image\/(?:png|jpeg|jpg|webp)$/i.test(file.type||''))throw new Error('PNG/JPG/WEBP 이미지만 사용할 수 있습니다.');
   const source=await readCaptureFile(file);
   const img=await loadCaptureImage(source);
-  const maxSide=1600;
+  const maxSide=1200;
   const ratio=Math.min(1,maxSide/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height));
   const width=Math.max(1,Math.round((img.naturalWidth||img.width)*ratio));
   const height=Math.max(1,Math.round((img.naturalHeight||img.height)*ratio));
@@ -6219,7 +6219,7 @@ async function compressCaptureFile(file){
   const ctx=canvas.getContext('2d',{alpha:false});
   ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);
   ctx.drawImage(img,0,0,width,height);
-  return canvas.toDataURL('image/jpeg',.82);
+  return canvas.toDataURL('image/jpeg',.76);
 }
 function renderCaptureQueue(){
   if(!captureQueue)return;
@@ -6297,7 +6297,7 @@ function clearCaptureQueue(){
 function submitCaptureQueue(){
   if(placeCaptureBusy||!captureQueueData.length)return;
   const total=captureQueueData.reduce((n,x)=>n+x.dataUrl.length,0);
-  if(total>14500000){
+  if(total>11500000){
     setCaptureStatus('이미지 용량이 큽니다. 일부를 먼저 완료한 뒤 나머지를 처리해 주세요.','error');
     return;
   }
@@ -6306,7 +6306,7 @@ function submitCaptureQueue(){
     imagesJson:JSON.stringify(captureQueueData.map(x=>x.dataUrl))
   };
   setPlaceCaptureBusy(true);
-  setCaptureStatus(captureQueueData.length+'장의 식당명과 영업정보를 자동 판별하는 중입니다.');
+  setCaptureStatus(captureQueueData.length+'장을 빠르게 판독 중입니다. 애매한 캡처만 자동으로 정밀 재판독합니다.');
   submitPlaceCaptureForm(pendingPlaceCapture);
 }
 function promptAndStoreOpenAiKey(){
@@ -6323,7 +6323,11 @@ function promptAndStoreOpenAiKey(){
 function captureResultSummary(data){
   const results=Array.isArray(data.results)?data.results:[];
   const skipped=Array.isArray(data.skipped)?data.skipped:[];
+  const elapsed=Number(data.elapsedMs)||0;
+  const retries=Number(data.highRetryCount)||0;
   let text=results.length+'개 식당 반영 완료';
+  if(elapsed)text+=' · '+(elapsed/1000).toFixed(1)+'초';
+  if(retries)text+=' · 정밀 재판독 '+retries+'장';
   if(results.length)text+=' · '+results.map(x=>x.name).join(', ');
   if(skipped.length)text+=' / '+skipped.length+'개 보류: '+skipped.map(x=>(x.name||'식당')+'('+x.reason+')').join(', ');
   return text;
