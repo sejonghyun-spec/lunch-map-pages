@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-night-serif-v74">
+<meta name="lunch-map-build" content="2026-10-04-editorial-magazine-v75">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -214,7 +214,7 @@ button,input,select,textarea{font:inherit}
 }
 .theme-preview.simple{background:linear-gradient(135deg,#fff 0 55%,#9a4f31 55% 70%,#eee7e1 70%)}
 .theme-preview.night{background:linear-gradient(135deg,#0d1117 0 52%,#171b22 52% 68%,#9ca3af 68%)}
-.theme-preview.editorial{background:linear-gradient(135deg,#f2eadc 0 58%,#151515 58% 64%,#b08b57 64%)}
+.theme-preview.editorial{background:linear-gradient(135deg,#fffdf7 0 44%,#123b6d 44% 66%,#e14c3f 66% 84%,#f1c94d 84%)}
 .theme-option-copy{min-width:0}
 .theme-option-copy b{display:block;font-size:13px;font-weight:850}
 .theme-option-copy small{display:block;margin-top:2px;color:#7b726b;font-size:11.5px;font-weight:550}
@@ -2517,97 +2517,231 @@ html[data-theme="night"] .marker-name{
   border-radius:5px
 }
 
-/* Editorial — restaurant guide / print-inspired layout */
+/* Editorial — magazine / poster-inspired layout */
 html[data-theme="editorial"]{
-  --brand:#7f5c36;--brand-dark:#3d2c1d;--text:#191714;--muted:#726a61;
-  --line:#cfc5b8;--soft:#eee7dc;--panel:#f8f2e8;
-  --theme-control-bg:#f8f2e8;--theme-header-bg:#eee5d8;--theme-sidebar-bg:#f5efe5;
-  --theme-sheet-bg:#f5efe5;--theme-card-bg:#f8f2e8;--theme-chip-bg:#ebe2d5;
+  --brand:#e14c3f;--brand-dark:#a82f27;--text:#172033;--muted:#657083;
+  --line:#c8cfda;--soft:#eef2f7;--panel:#fffdf8;
+  --theme-control-bg:#fffdf8;--theme-header-bg:#123b6d;--theme-sidebar-bg:#f7f5ef;
+  --theme-sheet-bg:#f7f5ef;--theme-card-bg:#fff;--theme-chip-bg:#eaf0f8;
 }
-html[data-theme="editorial"] body{background:#e8dfd1}
-html[data-theme="editorial"] .topbar{border-bottom:1px solid #201d19;box-shadow:none}
-html[data-theme="editorial"] .brand{border-right:1px solid #201d19}
-html[data-theme="editorial"] .brand-title,
-html[data-theme="editorial"] .name,
-html[data-theme="editorial"] .mobile-card-name,
-html[data-theme="editorial"] .comment-name,
-html[data-theme="editorial"] .detail-section-title,
-html[data-theme="editorial"] .modal-title{
-  font-family:Georgia,"Times New Roman","Noto Serif KR",serif
+html[data-theme="editorial"] body{
+  background:#f2efe7;
+  color:#172033;
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",Arial,sans-serif
 }
-html[data-theme="editorial"] .brand-title{font-size:25px;font-weight:700;letter-spacing:-.8px}
+html[data-theme="editorial"] .topbar{
+  border-bottom:4px solid #e14c3f;
+  background:#123b6d;
+  box-shadow:none
+}
+html[data-theme="editorial"] .brand{border-right:1px solid rgba(255,255,255,.24)}
+html[data-theme="editorial"] .brand-title{
+  color:#fff;
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
+  font-size:24px;
+  font-weight:900;
+  letter-spacing:-.7px
+}
+html[data-theme="editorial"] .brand-sub{color:#dbe7f5}
 html[data-theme="editorial"] .filter-btn,
 html[data-theme="editorial"] .theme-button,
 html[data-theme="editorial"] .account-btn,
 html[data-theme="editorial"] .roulette-btn,
 html[data-theme="editorial"] .quick-btn,
 html[data-theme="editorial"] .compact-filter-label{
-  border-color:#bfb3a4;border-radius:3px;background:#f8f2e8;color:#3d362f;box-shadow:none
+  border:1px solid rgba(255,255,255,.34);
+  border-radius:2px;
+  background:rgba(255,255,255,.10);
+  color:#fff;
+  box-shadow:none
+}
+html[data-theme="editorial"] .filter-btn:hover,
+html[data-theme="editorial"] .theme-button:hover,
+html[data-theme="editorial"] .account-btn:hover,
+html[data-theme="editorial"] .roulette-btn:hover{
+  background:rgba(255,255,255,.18)
 }
 html[data-theme="editorial"] .filter-btn.active{
-  border-color:#201d19;background:#201d19;color:#f6efe4;filter:none
+  border-color:#f1c94d;
+  background:#f1c94d;
+  color:#172033;
+  filter:none
 }
-html[data-theme="editorial"] .suggest-btn{border-radius:3px;background:#201d19;color:#f7f0e6;box-shadow:none}
+html[data-theme="editorial"] .suggest-btn{
+  border:1px solid #e14c3f;
+  border-radius:2px;
+  background:#e14c3f;
+  color:#fff;
+  box-shadow:none
+}
+html[data-theme="editorial"] .theme-orb{filter:saturate(1.2)}
 html[data-theme="editorial"] .search,
 html[data-theme="editorial"] #mobileSearch{
-  border:0;border-bottom:2px solid #201d19;border-radius:0;background:transparent;box-shadow:none
+  border:2px solid #123b6d;
+  border-radius:2px;
+  background:#fff;
+  box-shadow:none
+}
+html[data-theme="editorial"] .search:focus,
+html[data-theme="editorial"] #mobileSearch:focus{
+  border-color:#e14c3f;
+  box-shadow:0 0 0 2px rgba(225,76,63,.12)
 }
 html[data-theme="editorial"] .search-icon,
-html[data-theme="editorial"] .mobile-search-icon{color:#201d19}
+html[data-theme="editorial"] .mobile-search-icon{color:#123b6d}
 html[data-theme="editorial"] .filter-chip-row{
-  border-top:1px solid #bfb4a6;border-bottom:1px solid #bfb4a6;border-radius:0;background:transparent
+  border:1px solid #c9d2df;
+  border-radius:2px;
+  background:#eaf0f8
 }
-html[data-theme="editorial"] .filter-chip{border-radius:0;color:#4a4138}
-html[data-theme="editorial"] .filter-chip.active{border-color:#201d19;background:#201d19;color:#f8f2e8}
-html[data-theme="editorial"] .sidebar{border-right:1px solid #201d19;box-shadow:none}
-html[data-theme="editorial"] .list-head{border-top:1px solid #bdb2a4}
+html[data-theme="editorial"] .filter-chip{
+  border-radius:1px;
+  color:#29435f;
+  font-weight:800
+}
+html[data-theme="editorial"] .filter-chip.active{
+  border-color:#123b6d;
+  background:#123b6d;
+  color:#fff
+}
+html[data-theme="editorial"] .sidebar{
+  border-right:4px solid #123b6d;
+  background:#f7f5ef;
+  box-shadow:none
+}
+html[data-theme="editorial"] .list-head{
+  border-top:0;
+  border-bottom:3px solid #123b6d
+}
 html[data-theme="editorial"] .list-title,
 html[data-theme="editorial"] .mobile-list-heading strong{
-  font-family:Georgia,"Times New Roman","Noto Serif KR",serif;font-size:19px;font-weight:700
+  color:#123b6d;
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
+  font-size:19px;
+  font-weight:900;
+  letter-spacing:-.45px
 }
+html[data-theme="editorial"] .list-sub{color:#64748b}
 html[data-theme="editorial"] .card{
-  padding-top:17px;padding-bottom:17px;border-bottom:1px solid #bfb4a6;border-radius:0;background:transparent;box-shadow:none
+  margin:8px 2px;
+  padding:15px 12px;
+  border:2px solid #d7dde6;
+  border-radius:2px;
+  background:#fff;
+  box-shadow:4px 4px 0 #dfe5ee
 }
-html[data-theme="editorial"] .card:hover{background:#eee6da}
-html[data-theme="editorial"] .card.active{background:#e8ddcd}
-html[data-theme="editorial"] .card.active::before{width:2px;background:#201d19}
-html[data-theme="editorial"] .name{font-size:19px;font-weight:700}
+html[data-theme="editorial"] .card:hover{
+  border-color:#123b6d;
+  background:#f8fbff;
+  box-shadow:4px 4px 0 #b8c7d9
+}
+html[data-theme="editorial"] .card.active{
+  border-color:#e14c3f;
+  background:#fff8e1;
+  box-shadow:5px 5px 0 #e14c3f
+}
+html[data-theme="editorial"] .card.active::before{display:none}
+html[data-theme="editorial"] .name,
+html[data-theme="editorial"] .mobile-card-name{
+  color:#172033;
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:-.45px
+}
 html[data-theme="editorial"] .badge,
 html[data-theme="editorial"] .mobile-card-category{
-  border:0!important;border-radius:0!important;padding-left:0!important;padding-right:0!important;
-  background:transparent!important;color:#77695d!important;text-transform:uppercase;letter-spacing:.8px
+  border:0!important;
+  border-radius:1px!important;
+  padding:3px 6px!important;
+  background:#123b6d!important;
+  color:#fff!important;
+  font-weight:900!important;
+  letter-spacing:.5px
 }
 html[data-theme="editorial"] .badge-dot{display:none}
 html[data-theme="editorial"] .rating,
-html[data-theme="editorial"] .mobile-card-rating{color:#7f5c36}
+html[data-theme="editorial"] .mobile-card-rating{
+  color:#e14c3f;
+  font-weight:900
+}
 html[data-theme="editorial"] .card-tag,
 html[data-theme="editorial"] .mobile-card-tag{
-  border:1px solid #bfb3a4;border-radius:0;background:transparent;color:#4d443b
+  border:1px solid #c7d1de;
+  border-radius:1px;
+  background:#edf3f8;
+  color:#29435f;
+  font-weight:800
 }
 html[data-theme="editorial"] .sort-btn,
-html[data-theme="editorial"] .mobile-sort{border:0;border-bottom:1px solid #73695f;border-radius:0;background:transparent}
+html[data-theme="editorial"] .mobile-sort{
+  border:1px solid #123b6d;
+  border-radius:2px;
+  background:#fff;
+  color:#123b6d
+}
 html[data-theme="editorial"] .sort-menu,
 html[data-theme="editorial"] .theme-menu{
-  border:1px solid #201d19;border-radius:0;background:#f8f2e8;box-shadow:7px 7px 0 rgba(32,29,25,.18)
+  border:2px solid #123b6d;
+  border-radius:2px;
+  background:#fffdf8;
+  box-shadow:6px 6px 0 rgba(18,59,109,.22)
 }
 html[data-theme="editorial"] .theme-option,
-html[data-theme="editorial"] .sort-option{border-radius:0;background:transparent}
-html[data-theme="editorial"] .theme-option:hover,
-html[data-theme="editorial"] .sort-option:hover{background:#ece2d4}
-html[data-theme="editorial"] .mobile-sheet{
-  border-top:1px solid #201d19;border-radius:0!important;box-shadow:none
+html[data-theme="editorial"] .sort-option{
+  border-radius:1px;
+  background:transparent
 }
-html[data-theme="editorial"] .mobile-sheet-handle::before{height:2px;border-radius:0;background:#201d19}
+html[data-theme="editorial"] .theme-option:hover,
+html[data-theme="editorial"] .sort-option:hover{background:#edf3f8}
+html[data-theme="editorial"] .theme-option.active,
+html[data-theme="editorial"] .sort-option.active{
+  background:#123b6d;
+  color:#fff
+}
+html[data-theme="editorial"] .theme-option.active small{color:#dbe7f5}
+html[data-theme="editorial"] .mobile-sheet{
+  border-top:4px solid #123b6d;
+  border-radius:0!important;
+  background:#f7f5ef;
+  box-shadow:none
+}
+html[data-theme="editorial"] .mobile-sheet-handle::before{
+  height:3px;
+  border-radius:0;
+  background:#e14c3f
+}
 html[data-theme="editorial"] .mobile-sheet-quick button{
-  border-color:#bfb3a4;border-radius:3px;background:#f8f2e8;color:#403831
+  border:1px solid #123b6d;
+  border-radius:2px;
+  background:#fff;
+  color:#123b6d;
+  font-weight:800
+}
+html[data-theme="editorial"] .mobile-sheet-quick button.active{
+  background:#123b6d;
+  color:#fff
 }
 html[data-theme="editorial"] .mobile-card{
-  padding-top:16px;padding-bottom:16px;border-bottom:1px solid #bfb4a6;border-radius:0;background:transparent
+  margin:8px 3px;
+  padding:15px 12px;
+  border:2px solid #d7dde6;
+  border-radius:2px;
+  background:#fff;
+  box-shadow:3px 3px 0 #dfe5ee
 }
-html[data-theme="editorial"] .mobile-card-name{font-size:19px;font-weight:700}
+html[data-theme="editorial"] .mobile-card.map-hover{
+  border-color:#123b6d;
+  background:#f8fbff
+}
 html[data-theme="editorial"] .map-area-filter,
 html[data-theme="editorial"] .mobile-map-location{
-  border:1px solid #201d19;border-radius:2px;background:#f8f2e8;color:#201d19;box-shadow:4px 4px 0 rgba(32,29,25,.16)
+  border:2px solid #123b6d;
+  border-radius:2px;
+  background:#fffdf8;
+  color:#123b6d;
+  font-weight:900;
+  box-shadow:4px 4px 0 rgba(18,59,109,.22)
 }
 html[data-theme="editorial"] .comment-panel,
 html[data-theme="editorial"] .detail-scroll,
@@ -2616,41 +2750,112 @@ html[data-theme="editorial"] .detail-tabs,
 html[data-theme="editorial"] .detail-tab,
 html[data-theme="editorial"] .detail-section,
 html[data-theme="editorial"] .comment-compose{
-  background:#f8f2e8;border-color:#bfb4a6
+  background:#fffdf8;
+  border-color:#cbd3dd
 }
-html[data-theme="editorial"] .detail-hero{border-color:#201d19;background:#eee5d8}
-html[data-theme="editorial"] .comment-name{font-size:29px}
+html[data-theme="editorial"] .detail-hero{
+  border-bottom:4px solid #e14c3f;
+  background:#123b6d
+}
+html[data-theme="editorial"] .comment-name{
+  color:#fff;
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
+  font-size:29px;
+  font-weight:900;
+  letter-spacing:-.7px
+}
+html[data-theme="editorial"] .comment-sub{color:#dbe7f5}
+html[data-theme="editorial"] .detail-section-title{
+  color:#123b6d;
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
+  font-weight:900
+}
 html[data-theme="editorial"] .detail-category,
 html[data-theme="editorial"] .detail-tag,
 html[data-theme="editorial"] .review-score{
-  border:1px solid #b9ae9f;border-radius:0;background:transparent;color:#423a33
+  border:1px solid #c8d2df;
+  border-radius:2px;
+  background:#edf3f8;
+  color:#29435f
 }
-html[data-theme="editorial"] .detail-tab.active{background:#e9dfd1;color:#201d19;border-color:#201d19}
+html[data-theme="editorial"] .detail-tab{
+  border-radius:0;
+  color:#52657b;
+  font-weight:800
+}
+html[data-theme="editorial"] .detail-tab.active{
+  border-color:#e14c3f;
+  background:#fff8e1;
+  color:#123b6d
+}
 html[data-theme="editorial"] .review-sort button,
-html[data-theme="editorial"] .comment-helpful{border-radius:0;background:transparent}
+html[data-theme="editorial"] .comment-helpful{
+  border:1px solid #123b6d;
+  border-radius:2px;
+  background:#fff;
+  color:#123b6d
+}
 html[data-theme="editorial"] .suggest-modal,
-html[data-theme="editorial"] .roulette-modal{border:1px solid #201d19;border-radius:0;background:#f8f2e8;box-shadow:9px 9px 0 rgba(32,29,25,.24)}
-html[data-theme="editorial"] .modal-head,
+html[data-theme="editorial"] .roulette-modal{
+  border:3px solid #123b6d;
+  border-radius:2px;
+  background:#fffdf8;
+  box-shadow:8px 8px 0 rgba(18,59,109,.24)
+}
+html[data-theme="editorial"] .modal-head{
+  border-bottom:4px solid #e14c3f;
+  background:#123b6d;
+  color:#fff
+}
+html[data-theme="editorial"] .modal-title{
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
+  font-weight:900
+}
+html[data-theme="editorial"] .modal-sub{color:#dbe7f5}
+html[data-theme="editorial"] .modal-close{
+  border-radius:2px;
+  background:#fff;
+  color:#123b6d
+}
 html[data-theme="editorial"] .suggest-tabs,
-html[data-theme="editorial"] .suggest-tab{background:#f8f2e8;border-color:#bfb4a6}
-html[data-theme="editorial"] .kakao-info{border:1px solid #201d19;border-radius:0;background:#f8f2e8;box-shadow:5px 5px 0 rgba(32,29,25,.18)}
-html[data-theme="editorial"] .popup-name{font-family:Georgia,"Times New Roman",serif;color:#201d19}
+html[data-theme="editorial"] .suggest-tab{
+  background:#fffdf8;
+  border-color:#cbd3dd
+}
+html[data-theme="editorial"] .kakao-info{
+  border:2px solid #123b6d;
+  border-radius:2px;
+  background:#fffdf8;
+  box-shadow:5px 5px 0 rgba(18,59,109,.20)
+}
+html[data-theme="editorial"] .popup-name{
+  color:#123b6d;
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
+  font-weight:900
+}
 html[data-theme="editorial"] .marker-caption::before{
-  border-color:#201d19;background:#f8f2e8
+  border-color:#123b6d;
+  background:#fffdf8
 }
 html[data-theme="editorial"] .marker-name{
-  border-color:#201d19;border-radius:2px;background:#f8f2e8;color:#201d19;
-  font-family:Georgia,"Times New Roman","Noto Serif KR",serif;
-  box-shadow:4px 4px 0 rgba(32,29,25,.16)
+  border:2px solid #123b6d;
+  border-radius:2px;
+  background:#fffdf8;
+  color:#123b6d;
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
+  font-weight:900;
+  box-shadow:4px 4px 0 rgba(18,59,109,.20)
 }
 html[data-theme="editorial"] .marker-label.selected .marker-caption::before{
-  border-color:#201d19;background:#eee5d8
+  border-color:#e14c3f;
+  background:#fff8e1
 }
 html[data-theme="editorial"] .marker-label.selected .marker-name{
-  border-color:#201d19;background:#eee5d8;color:#201d19
+  border-color:#e14c3f;
+  background:#fff8e1;
+  color:#123b6d;
+  box-shadow:4px 4px 0 rgba(225,76,63,.26)
 }
-html[data-theme="editorial"] #map{filter:saturate(.78) sepia(.08)}
-
 @media(max-width:900px){
   html[data-theme="night"] .mobile-sheet{border-radius:22px 22px 0 0}
   html[data-theme="editorial"] .mobile-sheet{border-radius:0}
@@ -2681,7 +2886,7 @@ html[data-theme="editorial"] #map{filter:saturate(.78) sepia(.08)}
         </button>
         <button class="theme-option" type="button" data-theme-option="editorial" role="menuitem">
           <span class="theme-preview editorial" aria-hidden="true"></span>
-          <span class="theme-option-copy"><b>에디토리얼</b><small>맛집 가이드북 스타일</small></span>
+          <span class="theme-option-copy"><b>에디토리얼</b><small>매거진 & 포스터 스타일</small></span>
           <span class="theme-check">✓</span>
         </button>
       </div>
