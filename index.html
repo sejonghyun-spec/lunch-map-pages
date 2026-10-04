@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-usability-polish-v81">
+<meta name="lunch-map-build" content="2026-10-04-place-experience-v82">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -841,6 +841,90 @@ button,input,select,textarea{font:inherit}
   font-weight:550;
   line-height:1.45;
   word-break:keep-all;
+}
+
+.detail-topbar-actions{display:flex;align-items:center;gap:7px}
+.detail-edit-button{
+  height:32px;border:1px solid #d9dfe2;border-radius:8px;padding:0 9px;background:#fff;
+  color:#5f686d;font-size:11.5px;font-weight:800;cursor:pointer
+}
+.detail-edit-button:hover{background:#f5f7f8}
+.detail-decision{
+  display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin-top:13px;
+  padding:10px 11px;border:1px solid rgba(255,255,255,.18);border-radius:10px;
+  background:rgba(255,255,255,.10);font-size:12px;font-weight:750;line-height:1.4
+}
+.detail-decision[hidden]{display:none}
+.detail-decision .decision-primary{font-weight:900}
+.detail-decision .decision-dot{opacity:.55}
+.detail-action-grid{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px!important
+}
+.detail-action{
+  display:inline-flex;align-items:center;justify-content:center;min-width:0;height:39px;
+  border:1px solid #d6dde1;border-radius:9px;padding:0 8px;background:#fff;color:#3f484d;
+  font-size:12.5px;font-weight:800;text-decoration:none;cursor:pointer;white-space:nowrap
+}
+.detail-action:hover{border-color:#bdc6cb;background:#f7f9fa}
+.detail-action[aria-disabled="true"]{opacity:.45;pointer-events:none}
+.detail-action.detail-kakao-link{height:39px;border-color:#f1cf00;background:#fee500;color:#2a2419}
+.detail-favorite-btn.active{border-color:#e7bd42!important;background:#fff9df!important;color:#9a7100!important}
+.detail-compare-btn.active{border-color:var(--brand)!important;background:color-mix(in srgb,var(--brand) 9%,#fff)!important;color:var(--brand-dark)!important}
+.detail-section-note{color:#8a9297;font-size:11.5px;font-weight:650}
+.related-places{display:grid;gap:7px}
+.related-place{
+  width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;
+  border:1px solid #e5e9eb;border-radius:10px;padding:10px 11px;background:#fff;text-align:left;cursor:pointer
+}
+.related-place:hover{border-color:#cbd3d8;background:#f8fafb}
+.related-place b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#30383d;font-size:13.5px}
+.related-place span{color:#737d83;font-size:11.5px;font-weight:650}
+.related-place em{grid-row:1/3;grid-column:2;align-self:center;color:var(--brand-dark);font-size:11.5px;font-style:normal;font-weight:800}
+.compare-tray{
+  position:fixed;right:18px;bottom:18px;z-index:80;display:flex;align-items:center;gap:8px;
+  max-width:min(520px,calc(100vw - 36px));padding:8px 9px 8px 12px;border:1px solid #dbe0e3;
+  border-radius:13px;background:rgba(255,255,255,.98);box-shadow:0 10px 28px rgba(35,43,48,.18);
+  backdrop-filter:blur(12px)
+}
+.compare-tray[hidden]{display:none}
+.compare-tray-copy{display:grid;min-width:0;max-width:260px}
+.compare-tray-copy strong{font-size:12.5px}
+.compare-tray-copy span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;color:#798287;font-size:10.5px}
+.compare-tray button{
+  height:31px;border:1px solid #d5dcdf;border-radius:8px;padding:0 9px;background:#fff;color:#4d585e;
+  font-size:11.5px;font-weight:800;cursor:pointer
+}
+.compare-tray button:disabled{opacity:.42;cursor:not-allowed}
+#compareOpen{border-color:var(--brand);background:var(--brand);color:#fff}
+#compareClear{width:31px;padding:0;font-size:17px}
+.compare-modal{
+  width:min(820px,100%);max-height:min(820px,92dvh);overflow:auto;background:var(--panel,#fff);
+  border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.28)
+}
+.compare-content{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:16px}
+.compare-card{
+  min-width:0;border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--theme-card-bg,#fff)
+}
+.compare-card h3{margin:0;color:var(--text);font-size:17px;letter-spacing:-.25px}
+.compare-card .compare-category{margin-top:4px;color:var(--muted);font-size:11.5px;font-weight:700}
+.compare-metrics{display:grid;gap:0;margin-top:12px;border-top:1px solid var(--line)}
+.compare-metric{
+  display:grid;grid-template-columns:68px minmax(0,1fr);gap:8px;padding:8px 0;border-bottom:1px solid var(--line);
+  color:var(--text);font-size:12px;line-height:1.4
+}
+.compare-metric span:first-child{color:var(--muted);font-weight:700}
+.compare-card-actions{display:flex;gap:6px;margin-top:12px}
+.compare-card-actions button{
+  flex:1;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--theme-control-bg,#fff);
+  color:var(--text);font-size:11.5px;font-weight:800;cursor:pointer
+}
+.compare-card-actions .primary{border-color:var(--brand);background:var(--brand);color:#fff}
+.detail-info-sub{color:#7b858a;font-size:12px}
+@media(max-width:900px){
+  .detail-action-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .compare-tray{left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));max-width:none}
+  .compare-content{grid-template-columns:1fr;padding:12px}
+  .compare-modal{width:min(560px,100%);max-height:94dvh;border-radius:16px}
 }
 .detail-actions{
   display:flex;
@@ -3619,7 +3703,10 @@ html[data-theme="bistro"] .detail-review-insight{
             <button id="detailPrev" type="button" aria-label="이전 식당">‹</button>
             <button id="detailNext" type="button" aria-label="다음 식당">›</button>
           </div>
-          <button id="commentClose" class="comment-close" type="button" aria-label="상세 페이지 닫기">×</button>
+          <div class="detail-topbar-actions">
+            <button id="detailEditButton" class="detail-edit-button" type="button" hidden>정보 수정</button>
+            <button id="commentClose" class="comment-close" type="button" aria-label="상세 페이지 닫기">×</button>
+          </div>
         </div>
         <div class="detail-scroll">
           <div class="detail-hero">
@@ -3628,10 +3715,15 @@ html[data-theme="bistro"] .detail-review-insight{
             <div id="detailRating" class="detail-rating"></div>
             <div id="commentSub" class="comment-sub"></div>
             <div id="detailTags" class="detail-tags"></div>
+            <div id="detailDecision" class="detail-decision" hidden></div>
             <div id="detailReviewInsight" class="detail-review-insight" hidden></div>
-            <div class="detail-actions">
-              <button id="detailFavoriteButton" class="comment-photo-btn detail-favorite-btn" type="button">♡ 즐겨찾기</button>
-              <a id="kakaoMapLink" class="detail-kakao-link" href="https://map.kakao.com/" target="_blank" rel="noopener noreferrer">카카오맵</a>
+            <div class="detail-actions detail-action-grid">
+              <a id="detailPhoneLink" class="detail-action" href="#" aria-disabled="true">전화</a>
+              <a id="detailDirectionsLink" class="detail-action" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true">길찾기</a>
+              <a id="kakaoMapLink" class="detail-action detail-kakao-link" href="https://map.kakao.com/" target="_blank" rel="noopener noreferrer">카카오맵</a>
+              <button id="detailShareButton" class="detail-action" type="button">공유</button>
+              <button id="detailFavoriteButton" class="detail-action detail-favorite-btn" type="button">♡ 저장</button>
+              <button id="detailCompareButton" class="detail-action detail-compare-btn" type="button">비교 +</button>
             </div>
           </div>
           <div class="detail-tabs" role="tablist">
@@ -3639,9 +3731,17 @@ html[data-theme="bistro"] .detail-review-insight{
             <button class="detail-tab" type="button" data-detail-tab="reviews">후기</button>
           </div>
           <div class="detail-tab-panel active" data-detail-panel="home">
-            <section class="detail-section">
+            <section class="detail-section detail-info-section">
               <div class="detail-section-head"><div class="detail-section-title">식당 정보</div></div>
               <div id="detailInfo" class="detail-info"></div>
+            </section>
+            <section class="detail-section">
+              <div class="detail-section-head"><div class="detail-section-title">비슷한 식당</div><div class="detail-section-note">취향이 비슷한 후보</div></div>
+              <div id="detailSimilar" class="related-places"></div>
+            </section>
+            <section class="detail-section">
+              <div class="detail-section-head"><div class="detail-section-title">근처 식당</div><div class="detail-section-note">가까운 순</div></div>
+              <div id="detailNearby" class="related-places"></div>
             </section>
           </div>
           <div class="detail-tab-panel" data-detail-panel="reviews">
@@ -3676,6 +3776,28 @@ html[data-theme="bistro"] .detail-review-insight{
   </main>
 </div>
 
+
+<div id="compareTray" class="compare-tray" hidden>
+  <div class="compare-tray-copy">
+    <strong id="compareTrayTitle">비교 0/3</strong>
+    <span id="compareTrayNames"></span>
+  </div>
+  <button id="compareOpen" type="button" disabled>비교하기</button>
+  <button id="compareClear" type="button" aria-label="비교 목록 비우기">×</button>
+</div>
+
+<div id="compareModal" class="modal-backdrop" aria-hidden="true">
+  <section class="compare-modal" role="dialog" aria-modal="true" aria-labelledby="compareTitle">
+    <div class="modal-head">
+      <div>
+        <div id="compareTitle" class="modal-title">식당 비교</div>
+        <div class="modal-sub">최대 3곳의 핵심 정보를 한눈에 비교합니다.</div>
+      </div>
+      <button id="compareClose" class="modal-close" type="button" aria-label="닫기">×</button>
+    </div>
+    <div id="compareContent" class="compare-content"></div>
+  </section>
+</div>
 
 <div id="rouletteModal" class="modal-backdrop" aria-hidden="true">
   <section class="roulette-modal" role="dialog" aria-modal="true" aria-labelledby="rouletteTitle">
