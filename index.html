@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-night-font-v73">
+<meta name="lunch-map-build" content="2026-10-04-night-serif-v74">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@500;600;700&display=swap">
 <style>
 :root{
   --brand:#9a4f31;
@@ -2425,9 +2425,35 @@ html[data-theme="night"] select,
 html[data-theme="night"] textarea{
   font-family:"IBM Plex Sans KR","Noto Sans KR","Malgun Gothic",Arial,sans-serif
 }
-html[data-theme="night"] .brand-title{
+html[data-theme="night"] .brand-title,
+html[data-theme="night"] .name,
+html[data-theme="night"] .mobile-card-name,
+html[data-theme="night"] .comment-name,
+html[data-theme="night"] .detail-section-title,
+html[data-theme="night"] .list-title,
+html[data-theme="night"] .mobile-list-heading strong,
+html[data-theme="night"] .modal-title{
+  font-family:"Noto Serif KR","Nanum Myeongjo",serif;
   font-weight:700;
   letter-spacing:-.35px
+}
+html[data-theme="night"] .brand-title{
+  font-size:25px;
+  letter-spacing:-.55px
+}
+html[data-theme="night"] .name,
+html[data-theme="night"] .mobile-card-name{
+  font-size:17.5px;
+  letter-spacing:-.28px
+}
+html[data-theme="night"] .comment-name{
+  font-size:27px;
+  letter-spacing:-.5px
+}
+html[data-theme="night"] .detail-section-title,
+html[data-theme="night"] .list-title,
+html[data-theme="night"] .mobile-list-heading strong{
+  letter-spacing:-.25px
 }
 html[data-theme="night"] .brand-sub,
 html[data-theme="night"] .filter-btn,
@@ -2441,13 +2467,6 @@ html[data-theme="night"] .filter-chip,
 html[data-theme="night"] .sort-btn{
   letter-spacing:.02em
 }
-html[data-theme="night"] .name,
-html[data-theme="night"] .mobile-card-name,
-html[data-theme="night"] .comment-name,
-html[data-theme="night"] .detail-section-title{
-  font-weight:700;
-  letter-spacing:-.15px
-}
 html[data-theme="night"] .card-stats,
 html[data-theme="night"] .card-evaluations,
 html[data-theme="night"] .card-review,
@@ -2459,9 +2478,43 @@ html[data-theme="night"] .detail-info-value{
   font-variant-numeric:tabular-nums
 }
 html[data-theme="night"] .marker-name{
-  font-family:"IBM Plex Sans KR","Noto Sans KR","Malgun Gothic",Arial,sans-serif;
+  font-family:"Noto Serif KR","Nanum Myeongjo",serif;
   font-weight:600;
-  letter-spacing:-.12px
+  letter-spacing:-.18px
+}
+html[data-theme="night"] .card{
+  border-radius:8px;
+  box-shadow:0 3px 10px rgba(0,0,0,.14)
+}
+html[data-theme="night"] .mobile-card{
+  border-radius:8px
+}
+html[data-theme="night"] .search,
+html[data-theme="night"] #mobileSearch,
+html[data-theme="night"] .theme-button,
+html[data-theme="night"] .account-btn,
+html[data-theme="night"] .roulette-btn,
+html[data-theme="night"] .suggest-btn,
+html[data-theme="night"] .quick-btn,
+html[data-theme="night"] .compact-filter-label,
+html[data-theme="night"] .sort-btn,
+html[data-theme="night"] .mobile-sheet-quick button,
+html[data-theme="night"] .mobile-sort{
+  border-radius:7px
+}
+html[data-theme="night"] .filter-chip-row{
+  border-radius:8px
+}
+html[data-theme="night"] .filter-chip{
+  border-radius:6px
+}
+html[data-theme="night"] .card-tag,
+html[data-theme="night"] .mobile-card-tag,
+html[data-theme="night"] .detail-tag{
+  border-radius:5px
+}
+html[data-theme="night"] .marker-name{
+  border-radius:5px
 }
 
 /* Editorial — restaurant guide / print-inspired layout */
