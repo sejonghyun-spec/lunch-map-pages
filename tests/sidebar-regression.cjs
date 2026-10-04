@@ -48,10 +48,10 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    const missing=await page.evaluate(ids=>ids.filter(id=>!document.getElementById(id)),ids);
    assert.deepEqual([...new Set(missing)].filter(id=>!['commentConnect','commentRetry','suggestLookupStatus','openNaverLink','openGoogleLink'].includes(id)),[]);
  });
- await check('theme selector defaults to Simple and switches all five themes',async()=>{
+ await check('theme selector defaults to Simple and switches all three themes',async()=>{
    assert.equal(await state(()=>document.documentElement.dataset.theme),'simple');
-   assert.equal(await page.locator('[data-theme-option]').count(),5);
-   for(const theme of ['night','mono','foodpop','editorial','simple']){
+   assert.equal(await page.locator('[data-theme-option]').count(),3);
+   for(const theme of ['night','editorial','simple']){
      await page.click('#themeButton');
      await page.click('[data-theme-option="'+theme+'"]');
      assert.equal(await state(()=>document.documentElement.dataset.theme),theme);
