@@ -3963,6 +3963,7 @@ let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='a
 let favoritesOnly=false,recentOnly=false,mapOnlyMode=false,reviewSortMode='latest';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',hoveredMarkerRow=null,searchTimer=null;
 let lastMapRows=[],lastClusterLevel=null,mapIdleRenderTimer=null,lastDetailRow=null,lastListSignature='';
+let compareKeys=[],deepLinkHandled=false;
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,selectedEditRestaurant=null,suggestMode='new',suggestPending=false,pendingSuggestionTemp=null,pendingEditUpdate=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
 let currentAccount=null,lastAuthRetry=0;
@@ -3979,6 +3980,7 @@ const FAVORITES_KEY='lunchMapFavoritesV1';
 const RECENTS_KEY='lunchMapRecentsV1';
 const ROULETTE_HISTORY_KEY='lunchMapRouletteHistoryV1';
 const DETAIL_WIDTH_KEY='lunchMapDetailWidthV1';
+const COMPARE_MAX=3;
 let detailHistoryPushed=false;
 
 function readLocalJson(key,fallback){
@@ -4410,6 +4412,191 @@ function selectionKeyFor(x){
 function dataForRow(row){
   row=Number(row);
   return displayRestaurants().find(x=>Number(x.row)===row)||null;
+}
+
+function restaurantByKey(key){
+  return displayRestaurants().find(x=>restaurantKey(x)===String(key||''))||null;
+}
+function betweenDistance(a,b){
+  return hasValidCoords(a)&&hasValidCoords(b)?distanceMeters(a,b):Number.POSITIVE_INFINITY;
+}
+function formatMeters(meters){
+  if(!Number.isFinite(meters))return '';
+  return meters<1000?Math.round(meters)+'m':(meters/1000).toFixed(meters<10000?1:0)+'km';
+}
+function relatedTokens(row){
+  return [...new Set([row&&row.feature,row&&row.note,row&&row.locationHint]
+    .filter(Boolean).join(' ').toLowerCase().split(/[\s,·|/()]+/)
+    .map(x=>x.trim()).filter(x=>x.length>=2&&x.length<=12))];
+}
+function relatedCandidates(row){
+  const currentKey=restaurantKey(row);
+  const tokens=relatedTokens(row);
+  const candidates=displayRestaurants().filter(x=>restaurantKey(x)!==currentKey);
+  const similar=candidates.map(x=>{
+    const otherTokens=relatedTokens(x);
+    const shared=tokens.filter(t=>otherTokens.includes(t)).length;
+    const distance=betweenDistance(row,x);
+    const score=(x.category===row.category?60:0)+shared*12+
+      (Number.isFinite(distance)?Math.max(0,18-distance/80):0)+
+      Math.max(0,8-Math.abs(ratingScore(row)-ratingScore(x))*4);
+    return {x,score,distance};
+  }).sort((a,b)=>b.score-a.score||a.distance-b.distance).slice(0,3).map(v=>v.x);
+  const similarKeys=new Set(similar.map(restaurantKey));
+  const nearby=candidates.filter(x=>!similarKeys.has(restaurantKey(x))&&Number.isFinite(betweenDistance(row,x)))
+    .sort((a,b)=>betweenDistance(row,a)-betweenDistance(row,b)).slice(0,3);
+  return {similar,nearby};
+}
+function renderRelatedPlaces(row){
+  if(!detailSimilar||!detailNearby||!row)return;
+  const groups=relatedCandidates(row);
+  const html=(rows,kind)=>rows.length?rows.map(x=>{
+    const score=ratingScore(x);
+    const distance=formatMeters(betweenDistance(row,x));
+    const meta=[x.category,score?'★ '+score.toFixed(1):'',distance].filter(Boolean).join(' · ');
+    return '<button type="button" class="related-place" data-row="'+Number(x.row)+'">'+
+      '<b>'+esc(x.name)+'</b><span>'+esc(meta)+'</span><em>'+esc(kind)+'</em></button>';
+  }).join(''):'<div class="comment-empty">추천할 식당이 아직 없습니다.</div>';
+  detailSimilar.innerHTML=html(groups.similar,'비슷함');
+  detailNearby.innerHTML=html(groups.nearby,'근처');
+  [detailSimilar,detailNearby].forEach(el=>el.querySelectorAll('.related-place').forEach(btn=>{
+    btn.addEventListener('click',()=>selectRow(Number(btn.dataset.row),true,false));
+  }));
+}
+function kakaoDirectionUrl(row,place){
+  const placeId=String(place&&place.id||row&&row._placeId||row&&row.placeId||'').trim();
+  if(placeId)return 'https://map.kakao.com/link/to/'+encodeURIComponent(placeId);
+  if(hasValidCoords(row)){
+    return 'https://map.kakao.com/link/to/'+encodeURIComponent(row.name||'식당')+','+Number(row.lat)+','+Number(row.lng);
+  }
+  return 'https://map.kakao.com/link/search/'+encodeURIComponent([row&&row.name,row&&row.address].filter(Boolean).join(' '));
+}
+function shareUrlFor(row){
+  const url=new URL(location.href);
+  url.searchParams.set('place',restaurantKey(row));
+  return url.toString();
+}
+async function shareRestaurant(row){
+  if(!row)return;
+  const url=shareUrlFor(row);
+  try{
+    if(navigator.share){
+      await navigator.share({title:row.name+' · 막냉이 합정 점심',text:row.name+' 여기 어때요?',url});
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    showToast('식당 링크를 복사했습니다.');
+  }catch(err){
+    if(err&&err.name==='AbortError')return;
+    try{
+      const ta=document.createElement('textarea');ta.value=url;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();
+      showToast('식당 링크를 복사했습니다.');
+    }catch(e){showToast('공유 링크를 복사하지 못했습니다.');}
+  }
+}
+function openDeepLinkedPlace(){
+  if(deepLinkHandled||!allData.length)return;
+  const token=new URL(location.href).searchParams.get('place');
+  if(!token)return;
+  const row=displayRestaurants().find(x=>restaurantKey(x)===token||String(x.name||'')===token);
+  if(!row)return;
+  deepLinkHandled=true;
+  setTimeout(()=>selectRow(row.row,true,false),0);
+}
+function compareRows(){
+  return compareKeys.map(restaurantByKey).filter(Boolean).slice(0,COMPARE_MAX);
+}
+function syncCompareUI(){
+  const rows=compareRows();
+  compareKeys=rows.map(restaurantKey);
+  const current=commentRestaurant&&compareKeys.includes(restaurantKey(commentRestaurant));
+  if(detailCompareButton){
+    detailCompareButton.classList.toggle('active',!!current);
+    detailCompareButton.textContent=current?'비교 ✓':'비교 +';
+  }
+  if(compareTray){
+    compareTray.hidden=!rows.length;
+    compareTrayTitle.textContent='비교 '+rows.length+'/'+COMPARE_MAX;
+    compareTrayNames.textContent=rows.map(x=>x.name).join(' · ');
+    compareOpen.disabled=rows.length<2;
+  }
+}
+function toggleCompareRestaurant(row){
+  if(!row)return;
+  const key=restaurantKey(row),idx=compareKeys.indexOf(key);
+  if(idx>=0){
+    compareKeys.splice(idx,1);
+    showToast('비교 목록에서 제외했습니다.');
+  }else{
+    if(compareKeys.length>=COMPARE_MAX){showToast('비교는 최대 '+COMPARE_MAX+'곳까지 가능합니다.');return;}
+    compareKeys.push(key);
+    showToast('비교 목록에 담았습니다.');
+  }
+  syncCompareUI();
+}
+function renderCompareModal(){
+  const rows=compareRows();
+  if(!compareContent)return;
+  compareContent.innerHTML=rows.map(x=>{
+    const score=ratingScore(x),hours=operatingInfo(x);
+    const reviewCount=commentCountFor(x);
+    const metrics=[
+      ['평점',score?'★ '+score.toFixed(1):'-'],
+      ['거리',formatDistanceFromSeahTower(x)||'-'],
+      ['영업',hours.label||'정보 없음'],
+      ['인원',String(x.capacity||'-')],
+      ['특징',String(x.feature||x.note||'-')],
+      ['후기',reviewCount?reviewCount+'개':'-']
+    ];
+    return '<article class="compare-card" data-row="'+Number(x.row)+'"><h3>'+esc(x.name)+'</h3>'+
+      '<div class="compare-category">'+esc(x.category||'식당')+'</div>'+
+      '<div class="compare-metrics">'+metrics.map(v=>'<div class="compare-metric"><span>'+esc(v[0])+'</span><span>'+esc(v[1])+'</span></div>').join('')+'</div>'+
+      '<div class="compare-card-actions"><button type="button" class="primary compare-view">상세 보기</button><button type="button" class="compare-remove">제외</button></div></article>';
+  }).join('');
+  compareContent.querySelectorAll('.compare-view').forEach(btn=>btn.addEventListener('click',()=>{
+    const row=Number(btn.closest('.compare-card').dataset.row);closeCompareModal();selectRow(row,true,false);
+  }));
+  compareContent.querySelectorAll('.compare-remove').forEach(btn=>btn.addEventListener('click',()=>{
+    const row=Number(btn.closest('.compare-card').dataset.row),x=dataForRow(row);if(x)toggleCompareRestaurant(x);renderCompareModal();
+  }));
+}
+function openCompareModal(){
+  if(compareRows().length<2){showToast('비교할 식당을 2곳 이상 담아 주세요.');return;}
+  renderCompareModal();compareModal.classList.add('open');compareModal.setAttribute('aria-hidden','false');
+}
+function closeCompareModal(){
+  compareModal?.classList.remove('open');compareModal?.setAttribute('aria-hidden','true');
+}
+function renderDetailDecision(row){
+  if(!detailDecision||!row)return;
+  const hours=operatingInfo(row),distance=formatDistanceFromSeahTower(row);
+  const reviewCount=commentCountFor(row);
+  const parts=[];
+  if(hours.label)parts.push('<span class="decision-primary hours-state '+esc(hours.status)+'">'+esc(hours.label)+'</span>');
+  if(hours.text)parts.push('<span>'+esc(hours.text)+'</span>');
+  if(distance)parts.push('<span>'+esc(distance)+'</span>');
+  if(reviewCount)parts.push('<span>후기 '+reviewCount+'개</span>');
+  detailDecision.innerHTML=parts.map((x,i)=>i?'<span class="decision-dot">·</span>'+x:x).join('');
+  detailDecision.hidden=!parts.length;
+}
+function syncDetailAdminAction(){
+  if(detailEditButton)detailEditButton.hidden=!isCommentAdmin();
+}
+function syncDetailActionLinks(row,place){
+  if(!row)return;
+  const phone=String(place&&place.phone||firstField(row,['phone','전화'])||'').trim();
+  const tel=phone.replace(/[^0-9+]/g,'');
+  if(detailPhoneLink){
+    if(tel){detailPhoneLink.href='tel:'+tel;detailPhoneLink.setAttribute('aria-disabled','false');detailPhoneLink.title=phone;}
+    else{detailPhoneLink.href='#';detailPhoneLink.setAttribute('aria-disabled','true');detailPhoneLink.title='전화번호 정보 없음';}
+  }
+  if(detailDirectionsLink){
+    detailDirectionsLink.href=kakaoDirectionUrl(row,place);
+    detailDirectionsLink.setAttribute('aria-disabled','false');
+  }
+  renderDetailDecision(row);
+  syncCompareUI();
+  syncDetailAdminAction();
 }
 function isRowSelected(row){
   const data=dataForRow(row);
@@ -5247,16 +5434,21 @@ function renderRestaurantDetailInfo(row,place){
   if(!row)return;
   const distance=formatDistanceFromSeahTower(row);
   const kakaoCategory=String(place&&place.category_name||'').trim();
-  const phone=String(place&&place.phone||'').trim();
+  const phone=String(place&&place.phone||firstField(row,['phone','전화'])||'').trim();
   const roadAddress=String(place&&place.road_address_name||'').trim();
   const address=roadAddress||String(row.address||'').trim();
   const hours=operatingInfo(row);
+  const lastOrder=firstField(row,['lastOrder','라스트오더']);
+  const closedDays=firstField(row,['closedDays','closedDay','휴무일']);
+  const hoursNote=firstField(row,['hoursNote','영업시간비고']);
+  const checkedAt=firstField(row,['hoursCheckedAt','영업시간확인일']);
+  const hoursSource=firstField(row,['hoursSource','영업시간출처']);
   const placeUrl=String(place&&place.place_url||row._placeUrl||'').trim().replace(/^http:/i,'https:');
 
   const infoRows=[
-    ['특징',row.feature],['비고',row.note],['수용인원',row.capacity],
-    ['거리',distance?('세아타워 기준 '+distance):''],['카카오 업종',kakaoCategory],
-    ['전화',phone],['영업시간',hours.text],['주소',address]
+    ['영업시간',hours.text],['브레이크',hours.breakTime],['라스트오더',lastOrder],['휴무일',closedDays],
+    ['특징',row.feature],['수용인원',row.capacity],['비고',row.note],['거리',distance?('세아타워 기준 '+distance):''],
+    ['전화',phone],['카카오 업종',kakaoCategory],['주소',address],['영업 참고',hoursNote]
   ].filter(x=>String(x[1]||'').trim());
 
   let html=infoRows.map(([label,value])=>{
@@ -5266,8 +5458,7 @@ function renderRestaurantDetailInfo(row,place){
       if(tel)rendered='<a class="detail-info-link" href="tel:'+esc(tel)+'">'+esc(value)+'</a>';
     }
     if(label==='영업시간'){
-      rendered=(hours.label?'<span class="hours-state '+esc(hours.status)+'">'+esc(hours.label)+'</span> · ':'')+esc(hours.text)+
-        (hours.breakTime?'<br><span class="detail-info-sub">브레이크 '+esc(hours.breakTime)+'</span>':'');
+      rendered=(hours.label?'<span class="hours-state '+esc(hours.status)+'">'+esc(hours.label)+'</span> · ':'')+esc(hours.text);
     }
     return '<div class="detail-info-row"><div class="detail-info-label">'+esc(label)+'</div><div class="detail-info-value">'+rendered+'</div></div>';
   }).join('');
@@ -5275,7 +5466,12 @@ function renderRestaurantDetailInfo(row,place){
   if(!hours.text&&placeUrl){
     html+='<div class="detail-info-row"><div class="detail-info-label">영업시간</div><div class="detail-info-value"><a class="detail-info-link" href="'+esc(placeUrl)+'" target="_blank" rel="noopener noreferrer">카카오맵에서 최신 영업시간 확인</a></div></div>';
   }
+  if(checkedAt||hoursSource){
+    const meta=[checkedAt?('확인 '+checkedAt):'',hoursSource?('출처 '+hoursSource):''].filter(Boolean).join(' · ');
+    html+='<div class="detail-info-row"><div class="detail-info-label">정보 기준</div><div class="detail-info-value detail-info-sub">'+esc(meta)+'</div></div>';
+  }
   detailInfo.innerHTML=html||'<div class="comment-empty">등록된 상세 정보가 없습니다.</div>';
+  syncDetailActionLinks(row,place);
 }
 
 async function prepareKakaoPlaceLink(row){
@@ -5289,6 +5485,7 @@ async function prepareKakaoPlaceLink(row){
   if(!commentRestaurant||restaurantCommentKey(commentRestaurant)!==targetKey)return;
 
   renderRestaurantDetailInfo(row,place);
+  syncDetailActionLinks(row,place);
 
   kakaoMapLink.classList.remove('is-loading');
   kakaoMapLink.textContent='카카오맵';
@@ -5404,6 +5601,8 @@ function applyDbRows(rows){
   if(mapReady)render(false);
   if(suggestMode==='edit'&&suggestModal&&suggestModal.classList.contains('open'))populateEditRestaurantSelect();
   hydrateMissingRows();
+  syncCompareUI();
+  openDeepLinkedPlace();
   return true;
 }
 
@@ -5437,6 +5636,7 @@ function updateAccountUI(user,needsAuth=false){
     accountButton.classList.remove('connected');
     if(needsAuth)accountButton.classList.add('needs-auth');
   }
+  syncDetailAdminAction();
   if(commentPanel&&commentPanel.classList.contains('open')){
     renderComments(currentCommentRows);
   }
@@ -5680,7 +5880,22 @@ const detailRating=document.getElementById('detailRating');
 const detailInfo=document.getElementById('detailInfo');
 const detailTags=document.getElementById('detailTags');
 const detailFavoriteButton=document.getElementById('detailFavoriteButton');
+const detailCompareButton=document.getElementById('detailCompareButton');
+const detailPhoneLink=document.getElementById('detailPhoneLink');
+const detailDirectionsLink=document.getElementById('detailDirectionsLink');
+const detailShareButton=document.getElementById('detailShareButton');
+const detailEditButton=document.getElementById('detailEditButton');
+const detailDecision=document.getElementById('detailDecision');
+const detailSimilar=document.getElementById('detailSimilar');
+const detailNearby=document.getElementById('detailNearby');
 const kakaoMapLink=document.getElementById('kakaoMapLink');
+const compareTray=document.getElementById('compareTray');
+const compareTrayTitle=document.getElementById('compareTrayTitle');
+const compareTrayNames=document.getElementById('compareTrayNames');
+const compareOpen=document.getElementById('compareOpen');
+const compareClear=document.getElementById('compareClear');
+const compareModal=document.getElementById('compareModal');
+const compareContent=document.getElementById('compareContent');
 const reviewSummary=document.getElementById('reviewSummary');
 const detailReviewInsight=document.getElementById('detailReviewInsight');
 const mapQuickBar=document.getElementById('mapQuickBar');
@@ -6129,8 +6344,12 @@ function openComments(restaurant){
   detailTags.innerHTML=tags.map(x=>'<span class="detail-tag">'+esc(x)+'</span>').join('');
 
   renderRestaurantDetailInfo(restaurant,null);
+  renderRelatedPlaces(restaurant);
+  syncDetailActionLinks(restaurant,null);
   prepareKakaoPlaceLink(restaurant);
   updateFavoriteButton();
+  syncCompareUI();
+  syncDetailAdminAction();
 
   commentStatus.textContent=currentAccount
     ? getCommentNickname()+' 계정으로 등록됩니다.'
