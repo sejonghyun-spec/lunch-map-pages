@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-editorial-city-zine-v79">
+<meta name="lunch-map-build" content="2026-10-04-usability-pack-v80">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -576,6 +576,66 @@ button,input,select,textarea{font:inherit}
   color:var(--muted);
   font-size:12.5px;
   font-weight:500;
+}
+
+
+.search-field,.mobile-search-field{position:relative}
+.search-suggestions{
+  position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:85;display:none;
+  max-height:310px;overflow:auto;border:1px solid #d9dde0;border-radius:11px;padding:5px;
+  background:#fff;box-shadow:0 12px 30px rgba(31,39,44,.18)
+}
+.search-suggestions.open{display:block}
+.search-suggestion{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 10px;width:100%;
+  border:0;border-radius:8px;padding:9px 10px;background:transparent;color:#252a2d;text-align:left;cursor:pointer
+}
+.search-suggestion:hover,.search-suggestion.active{background:#f3f5f6}
+.search-suggestion b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px}
+.search-suggestion small{grid-column:1/-1;color:#7a8287;font-size:11.5px}
+.search-suggestion em{color:#767e84;font-size:11px;font-style:normal}
+.list-skeleton{display:grid;gap:9px;padding:10px}
+.list-skeleton i{
+  display:block;height:86px;border-radius:10px;
+  background:linear-gradient(90deg,#f0eeeb 20%,#faf9f7 40%,#f0eeeb 60%);
+  background-size:240% 100%;animation:listShimmer 1.15s linear infinite
+}
+@keyframes listShimmer{to{background-position:-240% 0}}
+.empty-reset{
+  display:inline-flex;margin-top:12px;height:34px;align-items:center;border:1px solid var(--line);
+  border-radius:8px;padding:0 12px;background:#fff;color:var(--text);font-weight:700;cursor:pointer
+}
+.map-quick-bar{
+  position:absolute;left:50%;bottom:18px;z-index:24;transform:translateX(-50%);
+  display:flex;align-items:center;gap:14px;max-width:min(760px,calc(100% - 40px));min-width:460px;
+  padding:9px 10px 9px 14px;border:1px solid #d9dfe2;border-radius:14px;
+  background:rgba(255,255,255,.97);box-shadow:0 9px 28px rgba(33,43,49,.18);backdrop-filter:blur(12px)
+}
+.map-quick-bar[hidden]{display:none}
+.map-quick-copy{display:grid;min-width:0;flex:1}
+.map-quick-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.map-quick-copy span{margin-top:2px;color:#747d82;font-size:11.5px}
+.map-quick-actions{display:flex;gap:5px}
+.map-quick-actions button{
+  height:32px;border:1px solid #d9dfe2;border-radius:8px;padding:0 9px;background:#fff;color:#4d575c;font-size:11.5px;font-weight:750;cursor:pointer
+}
+.map-quick-actions button:hover{background:#f3f5f6}
+.map-quick-actions button.active{border-color:var(--brand);color:var(--brand)}
+.map-cluster{
+  display:grid;place-items:center;min-width:42px;height:42px;border:3px solid #fff;border-radius:50%;
+  padding:0 8px;background:#45545e;color:#fff;font-size:13px;font-weight:900;
+  box-shadow:0 4px 14px rgba(35,45,51,.28);cursor:pointer;user-select:none
+}
+.map-cluster:hover{transform:scale(1.06)}
+.detail-review-insight{
+  margin-top:10px;border-radius:9px;padding:9px 11px;background:rgba(255,255,255,.12);
+  color:inherit;font-size:12px;font-weight:650;line-height:1.45
+}
+.hours-state{display:inline-flex;align-items:center;gap:5px;font-weight:800}
+.hours-state.open{color:#18794e}.hours-state.break{color:#a05a00}.hours-state.closed{color:#a33b32}
+@media(max-width:900px){
+  .mobile-search-suggestions{left:0;right:0;top:calc(100% + 5px);max-height:260px}
+  .map-quick-bar{display:none!important}
 }
 
 /* MAP */
@@ -3346,7 +3406,8 @@ html[data-theme="bistro"] .marker-label.selected .marker-name{
       <div class="sheet-handle" id="sheetHandle" aria-label="식당 목록 열기/닫기"></div>
       <div class="search-wrap"><label class="search-field">
         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5" stroke-linecap="round"/></svg>
-        <input id="search" class="search" type="search" aria-label="식당 이름, 특징, 주소 검색" placeholder="식당 이름 · 특징 · 주소 검색">
+        <input id="search" class="search" type="search" aria-label="식당 이름, 특징, 주소 검색" placeholder="식당 이름 · 특징 · 주소 검색" autocomplete="off" aria-autocomplete="list" aria-controls="searchSuggestions">
+        <div id="searchSuggestions" class="search-suggestions" role="listbox"></div>
       </label></div>
       <div class="multi-filter-wrap">
         <div class="multi-filter-scroll">
@@ -3414,7 +3475,7 @@ html[data-theme="bistro"] .marker-label.selected .marker-name{
           </div>
         </div>
       </div>
-      <div id="list" class="list"><div class="empty">식당 정보를 불러오는 중입니다.</div></div>
+      <div id="list" class="list"><div class="list-skeleton" aria-label="식당 정보를 불러오는 중"><i></i><i></i><i></i><i></i></div></div>
     </aside>
 
     <aside id="mobileSheet" class="mobile-sheet sheet-mid" aria-label="모바일 식당 탐색">
@@ -3423,7 +3484,8 @@ html[data-theme="bistro"] .marker-label.selected .marker-name{
       <div class="mobile-sheet-search">
         <label class="mobile-search-field">
           <svg class="mobile-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5" stroke-linecap="round"/></svg>
-          <input id="mobileSearch" type="search" aria-label="식당 이름, 특징, 주소 검색" placeholder="식당 이름 · 특징 검색">
+          <input id="mobileSearch" type="search" aria-label="식당 이름, 특징, 주소 검색" placeholder="식당 이름 · 특징 검색" autocomplete="off" aria-autocomplete="list" aria-controls="mobileSearchSuggestions">
+          <div id="mobileSearchSuggestions" class="search-suggestions mobile-search-suggestions" role="listbox"></div>
         </label>
       </div>
 
@@ -3463,7 +3525,7 @@ html[data-theme="bistro"] .marker-label.selected .marker-name{
         </select>
       </div>
 
-      <div id="mobileList" class="mobile-list"><div class="empty">식당 정보를 불러오는 중입니다.</div></div>
+      <div id="mobileList" class="mobile-list"><div class="list-skeleton" aria-label="식당 정보를 불러오는 중"><i></i><i></i><i></i></div></div>
     </aside>
 
     <section class="map-wrap">
@@ -3472,6 +3534,15 @@ html[data-theme="bistro"] .marker-label.selected .marker-name{
       <button id="mapBoundsButton" class="map-area-filter" type="button">이 지역에서 보기</button>
       <button id="mobileMyLocation" class="mobile-map-location" type="button" aria-label="내 위치로 이동">◎</button>
       <div id="mapHint" class="map-hint">상단 분류는 여러 개를 동시에 선택할 수 있습니다.</div>
+      <div id="mapQuickBar" class="map-quick-bar" aria-live="polite" hidden>
+        <div class="map-quick-copy"><strong id="mapQuickName"></strong><span id="mapQuickMeta"></span></div>
+        <div class="map-quick-actions">
+          <button id="mapQuickFavorite" type="button">♡ 저장</button>
+          <button id="mapQuickKakao" type="button">카카오맵</button>
+          <button id="mapQuickReview" type="button">후기</button>
+          <button id="mapQuickNext" type="button">다음</button>
+        </div>
+      </div>
 
       <section id="commentPanel" class="comment-panel" aria-live="polite" aria-hidden="true">
         <div id="detailResizer" class="detail-resizer" aria-hidden="true"></div>
@@ -3490,6 +3561,7 @@ html[data-theme="bistro"] .marker-label.selected .marker-name{
             <div id="detailRating" class="detail-rating"></div>
             <div id="commentSub" class="comment-sub"></div>
             <div id="detailTags" class="detail-tags"></div>
+            <div id="detailReviewInsight" class="detail-review-insight" hidden></div>
             <div class="detail-actions">
               <button id="detailFavoriteButton" class="comment-photo-btn detail-favorite-btn" type="button">♡ 즐겨찾기</button>
               <a id="kakaoMapLink" class="detail-kakao-link" href="https://map.kakao.com/" target="_blank" rel="noopener noreferrer">카카오맵</a>
