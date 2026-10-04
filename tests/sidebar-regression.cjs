@@ -147,11 +147,18 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(!(await page.locator('#detailReviewInsight').evaluate(el=>el.hidden)));
    await state(()=>clearSelectedRows());
  });
- await check('admin place capture controls and upload helpers exist safely',async()=>{
+ await check('admin clipboard capture opens without selecting a restaurant',async()=>{
    assert.equal(await page.locator('#placeCaptureButton').count(),1);
    assert.equal(await page.locator('#detailCaptureButton').count(),1);
-   assert.equal(await page.locator('#placeCaptureInput').count(),1);
-   assert.ok(await state(()=>typeof compressCaptureFile==='function'&&typeof processPlaceCaptureFiles==='function'&&typeof submitPlaceCaptureForm==='function'));
+   assert.equal(await page.locator('#placeCaptureModal').count(),1);
+   assert.equal(await page.locator('#capturePasteZone').count(),1);
+   assert.ok(await state(()=>typeof compressCaptureFile==='function'&&typeof addPlaceCaptureFiles==='function'&&typeof submitCaptureQueue==='function'&&typeof submitPlaceCaptureForm==='function'));
+   await state(()=>{clearSelectedRows();currentAccount={email:'sejong.hyun@seah.co.kr',name:'qa'};syncPlaceCaptureUI();});
+   assert.equal(await page.locator('#placeCaptureButton').isDisabled(),false);
+   await page.click('#placeCaptureButton');
+   assert.ok(await page.locator('#placeCaptureModal').evaluate(el=>el.classList.contains('open')));
+   assert.equal(await page.locator('#captureDone').isDisabled(),true);
+   await state(()=>{captureQueueData=[];closePlaceCaptureModal();});
  });
  await check('place detail actions, related places, comparison and official directions link',async()=>{
    await page.setViewportSize({width:1440,height:900});await reset();
