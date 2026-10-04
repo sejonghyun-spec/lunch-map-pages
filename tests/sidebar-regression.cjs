@@ -147,18 +147,27 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(!(await page.locator('#detailReviewInsight').evaluate(el=>el.hidden)));
    await state(()=>clearSelectedRows());
  });
- await check('admin clipboard capture opens without selecting a restaurant',async()=>{
+ await check('admin Place text import opens without selecting a restaurant',async()=>{
    assert.equal(await page.locator('#placeCaptureButton').count(),1);
    assert.equal(await page.locator('#detailCaptureButton').count(),1);
    assert.equal(await page.locator('#placeCaptureModal').count(),1);
-   assert.equal(await page.locator('#capturePasteZone').count(),1);
-   assert.ok(await state(()=>typeof compressCaptureFile==='function'&&typeof addPlaceCaptureFiles==='function'&&typeof submitCaptureQueue==='function'&&typeof submitPlaceCaptureForm==='function'));
+   assert.equal(await page.locator('#placeTextInput').count(),1);
+   assert.ok(await state(()=>typeof submitPlaceText==='function'&&typeof submitPlaceCaptureForm==='function'&&typeof placeTextResultSummary==='function'));
    await state(()=>{clearSelectedRows();currentAccount={email:'sejong.hyun@seah.co.kr',name:'qa'};syncPlaceCaptureUI();});
    assert.equal(await page.locator('#placeCaptureButton').isDisabled(),false);
    await page.click('#placeCaptureButton');
    assert.ok(await page.locator('#placeCaptureModal').evaluate(el=>el.classList.contains('open')));
    assert.equal(await page.locator('#captureDone').isDisabled(),true);
-   await state(()=>{captureQueueData=[];closePlaceCaptureModal();});
+   await page.fill('#placeTextInput','자성당\n서울 마포구 잔다리로7안길 3\n영업시간 11:30~21:00');
+   assert.equal(await page.locator('#captureDone').isDisabled(),false);
+   await state(()=>{placeTextInput.value='';closePlaceCaptureModal();});
+ });
+ await check('menu tab and automatic web menu finder controls exist',async()=>{
+   assert.equal(await page.locator('[data-detail-tab="menu"]').count(),1);
+   assert.equal(await page.locator('[data-detail-panel="menu"]').count(),1);
+   assert.equal(await page.locator('#menuAutoButton').count(),1);
+   assert.equal(await page.locator('#menuList').count(),1);
+   assert.ok(await state(()=>typeof fetchMenus==='function'&&typeof loadMenus==='function'&&typeof autoFindMenus==='function'&&typeof renderMenuList==='function'));
  });
  await check('place detail actions, related places, comparison and official directions link',async()=>{
    await page.setViewportSize({width:1440,height:900});await reset();
