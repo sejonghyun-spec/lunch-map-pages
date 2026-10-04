@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-dramatic-themes-v67">
+<meta name="lunch-map-build" content="2026-10-04-theme-trim-v68">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
   const saved=localStorage.getItem(key);
-  document.documentElement.dataset.theme=['simple','night','mono','foodpop','editorial'].includes(saved)?saved:'simple';
+  document.documentElement.dataset.theme=['simple','night','editorial'].includes(saved)?saved:'simple';
 }catch(e){document.documentElement.dataset.theme='simple';}})();
 </script>
 <link rel="preconnect" href="https://dapi.kakao.com" crossorigin>
@@ -212,9 +212,7 @@ button,input,select,textarea{font:inherit}
   box-shadow:inset 0 0 0 4px rgba(255,255,255,.5)
 }
 .theme-preview.simple{background:linear-gradient(135deg,#fff 0 55%,#9a4f31 55% 70%,#eee7e1 70%)}
-.theme-preview.night{background:linear-gradient(135deg,#0d1117 0 52%,#171b22 52% 68%,#ffb84d 68%)}
-.theme-preview.mono{background:linear-gradient(135deg,#fff 0 46%,#111 46% 63%,#d8d8d8 63%)}
-.theme-preview.foodpop{background:conic-gradient(from 35deg,#ff5a5f,#ffb703,#00b894,#4361ee,#a855f7,#ff5a5f)}
+.theme-preview.night{background:linear-gradient(135deg,#0d1117 0 52%,#171b22 52% 68%,#9ca3af 68%)}
 .theme-preview.editorial{background:linear-gradient(135deg,#f2eadc 0 58%,#151515 58% 64%,#b08b57 64%)}
 .theme-option-copy{min-width:0}
 .theme-option-copy b{display:block;font-size:13px;font-weight:850}
@@ -2395,157 +2393,9 @@ html[data-theme="night"] .kakao-info{
 html[data-theme="night"] .popup-name{color:#8db7ff}
 html[data-theme="night"] .popup-meta,
 html[data-theme="night"] .popup-line{color:#a9b2ba}
-html[data-theme="night"] #map{filter:brightness(.62) saturate(.68) contrast(1.12)}
-html[data-theme="night"] .marker-label{filter:brightness(1.55) saturate(1.35)}
-html[data-theme="night"] .marker-label.selected{filter:brightness(1.7) saturate(1.45)}
-html[data-theme="foodpop"] #map{filter:saturate(1.12) contrast(1.02)}
-
-/* Mono — intentionally nearly colorless, dense and technical */
-html[data-theme="mono"]{
-  --brand:#111;--brand-dark:#000;--text:#111;--muted:#666;
-  --line:#cfcfcf;--soft:#f0f0f0;--panel:#fff;
-  --theme-control-bg:#fff;--theme-header-bg:#f7f7f7;--theme-sidebar-bg:#fafafa;
-  --theme-sheet-bg:#fafafa;--theme-card-bg:#fff;--theme-chip-bg:#ececec;
-}
-html[data-theme="mono"] body{background:#e9e9e9}
-html[data-theme="mono"] .topbar{border-bottom:2px solid #111;box-shadow:none}
-html[data-theme="mono"] .brand{border-right:2px solid #111}
-html[data-theme="mono"] .brand-title{font-weight:900;letter-spacing:-.85px}
-html[data-theme="mono"] .filter-btn,
-html[data-theme="mono"] .theme-button,
-html[data-theme="mono"] .account-btn,
-html[data-theme="mono"] .roulette-btn,
-html[data-theme="mono"] .quick-btn,
-html[data-theme="mono"] .compact-filter-label,
-html[data-theme="mono"] .sort-btn,
-html[data-theme="mono"] .mobile-sheet-quick button,
-html[data-theme="mono"] .mobile-sort{
-  border:1px solid #aaa;background:#fff;color:#111;box-shadow:none
-}
-html[data-theme="mono"] .filter-btn.active,
-html[data-theme="mono"] .filter-chip.active,
-html[data-theme="mono"] .mobile-sheet-quick button.active{
-  border-color:#111!important;background:#111!important;color:#fff!important;filter:none!important
-}
-html[data-theme="mono"] .suggest-btn{background:#111;color:#fff;box-shadow:none}
-html[data-theme="mono"] .search,
-html[data-theme="mono"] #mobileSearch{border:2px solid #111;border-radius:7px;background:#fff;box-shadow:none}
-html[data-theme="mono"] .search-icon,
-html[data-theme="mono"] .mobile-search-icon{color:#111}
-html[data-theme="mono"] .filter-chip-row{border:1px solid #c8c8c8;border-radius:7px;background:#ededed}
-html[data-theme="mono"] .filter-chip{border-radius:4px;color:#222}
-html[data-theme="mono"] .sidebar{border-right:2px solid #111;box-shadow:none}
-html[data-theme="mono"] .card{
-  border-bottom:1px solid #bbb;border-radius:0;background:#fff;box-shadow:none
-}
-html[data-theme="mono"] .card:hover{background:#f1f1f1}
-html[data-theme="mono"] .card.active{background:#e8e8e8}
-html[data-theme="mono"] .card.active::before{background:#111}
-html[data-theme="mono"] .badge,
-html[data-theme="mono"] .mobile-card-category,
-html[data-theme="mono"] .card-tag,
-html[data-theme="mono"] .mobile-card-tag,
-html[data-theme="mono"] .detail-category,
-html[data-theme="mono"] .detail-tag{
-  border:1px solid #aaa!important;background:#f4f4f4!important;color:#222!important
-}
-html[data-theme="mono"] .badge-dot{background:#222!important}
-html[data-theme="mono"] .rating,
-html[data-theme="mono"] .mobile-card-rating{color:#111!important}
-html[data-theme="mono"] .theme-menu,
-html[data-theme="mono"] .sort-menu{border:2px solid #111;border-radius:4px;box-shadow:5px 5px 0 #111}
-html[data-theme="mono"] .theme-option,
-html[data-theme="mono"] .sort-option{border-radius:0}
-html[data-theme="mono"] .mobile-sheet{
-  border-top:2px solid #111;border-radius:8px 8px 0 0!important;box-shadow:none
-}
-html[data-theme="mono"] .mobile-sheet-handle::before{border-radius:0;background:#111}
-html[data-theme="mono"] .mobile-card{border-bottom:1px solid #bbb;border-radius:0;background:#fff}
-html[data-theme="mono"] .map-area-filter,
-html[data-theme="mono"] .mobile-map-location{
-  border:2px solid #111;border-radius:5px;background:#fff;color:#111;box-shadow:4px 4px 0 rgba(0,0,0,.72)
-}
-html[data-theme="mono"] .comment-panel{border-right:2px solid #111;box-shadow:none}
-html[data-theme="mono"] .detail-hero,
-html[data-theme="mono"] .detail-section{border-color:#111;background:#fff}
-html[data-theme="mono"] .detail-tabs{border-color:#111}
-html[data-theme="mono"] .detail-tab.active{border-color:#111;background:#ededed;color:#111}
-html[data-theme="mono"] .review-score,
-html[data-theme="mono"] .review-sort button,
-html[data-theme="mono"] .comment-helpful{border-color:#aaa;border-radius:4px;background:#f5f5f5;color:#222}
-html[data-theme="mono"] .suggest-modal,
-html[data-theme="mono"] .roulette-modal{border:2px solid #111;border-radius:6px;box-shadow:8px 8px 0 #111}
-html[data-theme="mono"] .modal-head,
-html[data-theme="mono"] .suggest-tabs{border-color:#111}
-html[data-theme="mono"] #map{filter:grayscale(1) contrast(1.03)}
-html[data-theme="mono"] .theme-orb{filter:grayscale(1)}
-
-/* Food Pop — vivid food-category palette and playful surfaces */
-html[data-theme="foodpop"]{
-  --brand:#ff4f5e;--brand-dark:#bf2735;--text:#2d2030;--muted:#756671;
-  --line:#f0d8e0;--soft:#fff1f5;--panel:#fff9fb;
-  --theme-control-bg:#fff;--theme-header-bg:#fff7e8;--theme-sidebar-bg:#fff9fb;
-  --theme-sheet-bg:#fff9fb;--theme-card-bg:#fff;--theme-chip-bg:#fff0d4;
-}
-html[data-theme="foodpop"] body{background:#fff2e6}
-html[data-theme="foodpop"] .topbar{
-  border-bottom:0;background:linear-gradient(90deg,#fff4d8 0%,#fff0f5 52%,#edf8ff 100%);
-  box-shadow:0 5px 18px rgba(129,67,76,.10)
-}
-html[data-theme="foodpop"] .brand{border-right:1px solid rgba(134,75,78,.14)}
-html[data-theme="foodpop"] .brand-title{color:#3a2434}
-html[data-theme="foodpop"] .filter-btn:not(.active){
-  border-color:color-mix(in srgb,var(--filter-color,#ff4f5e) 30%,#fff);
-  background:color-mix(in srgb,var(--filter-color,#ff4f5e) 12%,#fff);
-  color:color-mix(in srgb,var(--filter-color,#ff4f5e) 76%,#352735)
-}
-html[data-theme="foodpop"] .filter-btn.active{box-shadow:0 4px 12px color-mix(in srgb,var(--filter-color,#ff4f5e) 24%,transparent)}
-html[data-theme="foodpop"] .search,
-html[data-theme="foodpop"] #mobileSearch{
-  border:2px solid #ff9a7a;border-radius:18px;background:#fff;box-shadow:0 5px 16px rgba(255,91,76,.10)
-}
-html[data-theme="foodpop"] .filter-chip-row{background:linear-gradient(90deg,#fff0d4,#ffe8ef,#e9f6ff);border-radius:15px}
-html[data-theme="foodpop"] .filter-chip{border-radius:11px;color:#654954}
-html[data-theme="foodpop"] .filter-chip.active{background:#ff4f5e;border-color:#ff4f5e}
-html[data-theme="foodpop"] .compact-filter-label,
-html[data-theme="foodpop"] .quick-btn{border-color:#ead3d9;background:#fff;color:#684f59}
-html[data-theme="foodpop"] .sidebar{box-shadow:7px 0 22px rgba(105,59,72,.08)}
-html[data-theme="foodpop"] .card{
-  margin:7px 3px;border:1px solid color-mix(in srgb,var(--card-color,#ff4f5e) 30%,#fff);
-  border-radius:17px;background:color-mix(in srgb,var(--card-color,#ff4f5e) 8%,#fff);
-  box-shadow:0 5px 14px color-mix(in srgb,var(--card-color,#ff4f5e) 10%,transparent)
-}
-html[data-theme="foodpop"] .card.active{background:color-mix(in srgb,var(--card-color,#ff4f5e) 15%,#fff)}
-html[data-theme="foodpop"] .card-tag{
-  border:0;background:color-mix(in srgb,var(--card-color,#ff4f5e) 17%,#fff);
-  color:color-mix(in srgb,var(--card-color,#ff4f5e) 70%,#3b2933)
-}
-html[data-theme="foodpop"] .theme-menu{border-color:#efd8df;background:#fff9fb}
-html[data-theme="foodpop"] .theme-option:hover{background:#fff0f4}
-html[data-theme="foodpop"] .theme-option.active{background:#ffe5ed}
-html[data-theme="foodpop"] .mobile-sheet{
-  border-top:0;border-radius:26px 26px 0 0!important;
-  background:linear-gradient(180deg,#fff9fb 0%,#fff 45%);box-shadow:0 -16px 38px rgba(116,60,78,.16)
-}
-html[data-theme="foodpop"] .mobile-sheet-handle::before{background:linear-gradient(90deg,#ff5a5f,#ffb703,#00b894,#4361ee)}
-html[data-theme="foodpop"] .mobile-sheet-quick button{
-  border-color:#efd4dd;background:#fff;color:#684d58
-}
-html[data-theme="foodpop"] .mobile-sheet-quick button.active{background:#ff4f5e;border-color:#ff4f5e;color:#fff}
-html[data-theme="foodpop"] .mobile-card{
-  margin:7px 3px;border:1px solid color-mix(in srgb,var(--card-color,#ff4f5e) 28%,#fff);
-  border-radius:17px;background:color-mix(in srgb,var(--card-color,#ff4f5e) 8%,#fff)
-}
-html[data-theme="foodpop"] .mobile-card-tag{
-  background:color-mix(in srgb,var(--card-color,#ff4f5e) 16%,#fff);
-  color:#684652
-}
-html[data-theme="foodpop"] .detail-hero{
-  background:linear-gradient(135deg,#fff2d6 0%,#fff0f4 52%,#edf8ff 100%)
-}
-html[data-theme="foodpop"] .detail-section{border-color:#fff0e5}
-html[data-theme="foodpop"] .review-score{border:0;background:#fff0f4}
-html[data-theme="foodpop"] .map-area-filter{border-color:#ffccb9;background:#fff9f4;color:#72493e}
+html[data-theme="night"] #map{filter:grayscale(1) brightness(.56) contrast(1.16)}
+html[data-theme="night"] .marker-label{filter:brightness(1.35)}
+html[data-theme="night"] .marker-label.selected{filter:brightness(1.5)}
 
 /* Editorial — restaurant guide / print-inspired layout */
 html[data-theme="editorial"]{
@@ -2669,8 +2519,6 @@ html[data-theme="editorial"] #map{filter:saturate(.78) sepia(.08)}
 
 @media(max-width:900px){
   html[data-theme="night"] .mobile-sheet{border-radius:22px 22px 0 0}
-  html[data-theme="mono"] .mobile-sheet{border-radius:8px 8px 0 0}
-  html[data-theme="foodpop"] .mobile-sheet{border-radius:26px 26px 0 0}
   html[data-theme="editorial"] .mobile-sheet{border-radius:0}
 }
 </style>
@@ -2695,16 +2543,6 @@ html[data-theme="editorial"] #map{filter:saturate(.78) sepia(.08)}
         <button class="theme-option" type="button" data-theme-option="night" role="menuitem">
           <span class="theme-preview night" aria-hidden="true"></span>
           <span class="theme-option-copy"><b>나이트</b><small>완전한 다크 인터페이스</small></span>
-          <span class="theme-check">✓</span>
-        </button>
-        <button class="theme-option" type="button" data-theme-option="mono" role="menuitem">
-          <span class="theme-preview mono" aria-hidden="true"></span>
-          <span class="theme-option-copy"><b>모노</b><small>흑백 지도 도구 스타일</small></span>
-          <span class="theme-check">✓</span>
-        </button>
-        <button class="theme-option" type="button" data-theme-option="foodpop" role="menuitem">
-          <span class="theme-preview foodpop" aria-hidden="true"></span>
-          <span class="theme-option-copy"><b>푸드 팝</b><small>카테고리 컬러 극대화</small></span>
           <span class="theme-check">✓</span>
         </button>
         <button class="theme-option" type="button" data-theme-option="editorial" role="menuitem">
@@ -5736,7 +5574,7 @@ window.addEventListener('message',e=>{
 });
 
 const THEME_KEY='lunch-map-theme-v1';
-const THEME_IDS=['simple','night','mono','foodpop','editorial'];
+const THEME_IDS=['simple','night','editorial'];
 const themeControl=document.getElementById('themeControl');
 const themeButton=document.getElementById('themeButton');
 const themeMenu=document.getElementById('themeMenu');
@@ -5752,7 +5590,7 @@ function syncThemeUI(){
     btn.setAttribute('aria-current',active?'true':'false');
   });
   if(themeButton){
-    const labels={simple:'심플',night:'나이트',mono:'모노',foodpop:'푸드 팝',editorial:'에디토리얼'};
+    const labels={simple:'심플',night:'나이트',editorial:'에디토리얼'};
     themeButton.title='현재 테마: '+(labels[current]||labels.simple);
   }
 }
