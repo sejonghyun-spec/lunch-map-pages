@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-place-experience-v83">
+<meta name="lunch-map-build" content="2026-10-04-place-capture-v84">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -725,6 +725,28 @@ button,input,select,textarea{font:inherit}
   box-shadow:0 4px 14px rgba(35,45,51,.14);
 }
 .map-area-filter.active{border-color:#566269;background:#566269;color:#fff}
+.map-capture-btn{
+  position:absolute;top:14px;right:14px;z-index:19;height:36px;
+  border:1px solid #d8e0e4;border-radius:999px;padding:0 13px;background:rgba(255,255,255,.97);
+  color:#3f4a50;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(35,45,51,.14)
+}
+.map-capture-btn:hover:not(:disabled){border-color:#bfc9ce;background:#fff}
+.map-capture-btn:disabled{opacity:.48;cursor:not-allowed}
+.map-capture-btn.busy{pointer-events:none;opacity:.78}
+.detail-capture-button{white-space:nowrap}
+@media(max-width:900px){
+  .map-capture-btn{top:58px;right:10px;height:38px;padding:0 11px}
+  .detail-topbar-actions{gap:5px}
+  .detail-capture-button{height:34px;padding:0 8px;font-size:11px}
+}
+html[data-theme="night"] .map-capture-btn{border-color:#424a53;background:#242a31;color:#eef2f5}
+html[data-theme="editorial"] .map-capture-btn{
+  border:2px solid #111317;border-radius:0;background:#efff54;color:#111317;box-shadow:3px 3px 0 #111317
+}
+html[data-theme="bistro"] .map-capture-btn{
+  border-color:#756858;border-radius:4px;background:#faf6ee;color:#302a24;box-shadow:3px 3px 0 rgba(72,57,43,.13)
+}
+
 .map-hint{
   position:absolute;
   left:16px;
@@ -3741,6 +3763,8 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
       <div id="map"></div>
       <div id="mapStatus" class="map-status">카카오 지도를 준비하는 중입니다.</div>
       <button id="mapBoundsButton" class="map-area-filter" type="button">이 지역에서 보기</button>
+      <button id="placeCaptureButton" class="map-capture-btn" type="button" hidden disabled>📷 플레이스 캡처</button>
+      <input id="placeCaptureInput" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
       <button id="mobileMyLocation" class="mobile-map-location" type="button" aria-label="내 위치로 이동">◎</button>
       <div id="mapHint" class="map-hint">상단 분류는 여러 개를 동시에 선택할 수 있습니다.</div>
       <div id="mapQuickBar" class="map-quick-bar" aria-live="polite" hidden>
@@ -3762,6 +3786,7 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
             <button id="detailNext" type="button" aria-label="다음 식당">›</button>
           </div>
           <div class="detail-topbar-actions">
+            <button id="detailCaptureButton" class="detail-edit-button detail-capture-button" type="button" hidden>📷 캡처</button>
             <button id="detailEditButton" class="detail-edit-button" type="button" hidden>정보 수정</button>
             <button id="commentClose" class="comment-close" type="button" aria-label="상세 페이지 닫기">×</button>
           </div>
@@ -3995,6 +4020,7 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
     </form>
     <iframe name="suggestSink" id="suggestSink" title="제안 전송" style="display:none"></iframe>
     <iframe name="enrichSink" id="enrichSink" title="DB 자동보완" style="display:none"></iframe>
+    <iframe name="placeCaptureSink" id="placeCaptureSink" title="플레이스 캡처 반영" style="display:none"></iframe>
   </section>
 </div>
 <div id="toast" class="toast"></div>
