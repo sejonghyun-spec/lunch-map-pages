@@ -4816,6 +4816,7 @@ function renderDetailDecision(row){
 }
 function syncDetailAdminAction(){
   if(detailEditButton)detailEditButton.hidden=!isCommentAdmin();
+  syncMenuAdminUI();
 }
 function syncDetailActionLinks(row,place){
   if(!row)return;
@@ -6295,6 +6296,7 @@ function clearPlaceText(){
 function submitPlaceText(){
   const rawText=String(placeTextInput?.value||'').trim();
   if(placeCaptureBusy||!rawText)return;
+  if(pendingAiAction){showToast('다른 AI 작업이 진행 중입니다.');return;}
   pendingAiAction={kind:'placeText',fields:{mode:'placeText',rawText:rawText}};
   setPlaceCaptureBusy(true);
   setCaptureStatus('식당명과 영업정보를 판독해서 DB와 매칭하는 중입니다.');
@@ -6402,6 +6404,7 @@ async function loadMenus(restaurant,force=false){
 }
 function autoFindMenus(){
   if(!commentRestaurant)return;
+  if(pendingAiAction){showToast('다른 AI 작업이 진행 중입니다.');return;}
   if(!isCommentAdmin()){
     showToast('관리자 계정에서만 사용할 수 있습니다.');
     return;
@@ -6774,9 +6777,13 @@ function toggleHelpfulComment(commentId){
 }
 
 function setDetailTab(tab,fromUser=false){
-  const valid=['home','reviews'].includes(tab)?tab:'home';
+  const valid=['home','menu','reviews'].includes(tab)?tab:'home';
   document.querySelectorAll('.detail-tab').forEach(btn=>btn.classList.toggle('active',btn.dataset.detailTab===valid));
   document.querySelectorAll('.detail-tab-panel').forEach(panel=>panel.classList.toggle('active',panel.dataset.detailPanel===valid));
+
+  if(valid==='menu'&&commentRestaurant){
+    loadMenus(commentRestaurant);
+  }
 
   if(valid==='reviews'&&commentRestaurant){
     const key=restaurantCommentKey(commentRestaurant);
@@ -6930,6 +6937,14 @@ function openComments(restaurant){
   updateFavoriteButton();
   syncCompareUI();
   syncDetailAdminAction();
+  const menuKey=restaurantCommentKey(restaurant);
+  menuRequestSeq++;
+  setMenuStatus('');
+  if(menuCache.has(menuKey))renderMenuList(menuCache.get(menuKey));
+  else{
+    menuMeta.textContent='등록된 메뉴 정보를 불러옵니다.';
+    menuList.innerHTML='<div class="comment-empty">메뉴 탭을 열면 정보를 불러옵니다.</div>';
+  }
 
   commentStatus.textContent=currentAccount
     ? getCommentNickname()+' 계정으로 등록됩니다.'
