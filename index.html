@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-marker-capsule-v71">
+<meta name="lunch-map-build" content="2026-10-04-marker-capsule-v72">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -1135,6 +1135,7 @@ button,input,select,textarea{font:inherit}
 .marker-label:hover .marker-caption{
   display:flex;
 }
+.marker-label.caption-suppressed .marker-caption{display:none!important}
 .marker-label:hover .marker-pin{
   transform:scale(1.08);
   box-shadow:0 2px 7px rgba(24,34,40,.24);
@@ -3184,6 +3185,37 @@ function loadKakao(){return new Promise((resolve,reject)=>{if(window.kakao&&kaka
 function syncMarkerLabelVisibility(){
   const wrap=document.querySelector('.map-wrap');
   if(wrap)wrap.classList.remove('show-marker-labels');
+  requestAnimationFrame(syncMarkerCaptionCollisions);
+}
+function markerCaptionPriority(el){
+  if(!el)return 0;
+  if(el.classList.contains('selected'))return 300;
+  if(el.classList.contains('list-hover'))return 220;
+  try{if(el.matches(':hover'))return 180;}catch(e){}
+  return 0;
+}
+function markerRectsOverlap(a,b,pad=4){
+  return !(a.right+pad<=b.left||b.right+pad<=a.left||a.bottom+pad<=b.top||b.bottom+pad<=a.top);
+}
+function syncMarkerCaptionCollisions(){
+  const labels=[...document.querySelectorAll('.marker-label')];
+  labels.forEach(el=>el.classList.remove('caption-suppressed'));
+  const candidates=labels.map(el=>{
+    const priority=markerCaptionPriority(el);
+    const caption=el.querySelector('.marker-caption');
+    if(!priority||!caption)return null;
+    const rect=caption.getBoundingClientRect();
+    if(rect.width<=0||rect.height<=0)return null;
+    return {el,priority,rect};
+  }).filter(Boolean).sort((a,b)=>b.priority-a.priority);
+  const kept=[];
+  candidates.forEach(item=>{
+    if(kept.some(x=>markerRectsOverlap(item.rect,x.rect,5))){
+      item.el.classList.add('caption-suppressed');
+    }else{
+      kept.push(item);
+    }
+  });
 }
 
 function initMap(){
@@ -3206,6 +3238,7 @@ function initMap(){
         renderList(getRows());
         updateFilterChipUI();
       }
+      requestAnimationFrame(syncMarkerCaptionCollisions);
     });
 
     requestAnimationFrame(()=>{
@@ -3327,6 +3360,7 @@ function setListMarkerHover(row,on){
     }
     if(listHoveredRow===row)listHoveredRow=null;
   }
+  requestAnimationFrame(syncMarkerCaptionCollisions);
 }
 function syncSelectedRowsUI(){
   document.querySelectorAll('.marker-label').forEach(el=>{
@@ -3346,6 +3380,7 @@ function syncSelectedRowsUI(){
   });
   const mapWrap=document.querySelector('.map-wrap');
   if(mapWrap)mapWrap.classList.toggle('has-selection',!!selectedRestaurantKey);
+  requestAnimationFrame(syncMarkerCaptionCollisions);
 }
 function clearSelectedRows(){
   selectedRestaurantKey='';
@@ -3516,6 +3551,7 @@ function renderMap(rows,fit=true){
       const card=document.querySelector('.card[data-row="'+Number(x.row)+'"]');
       if(card)card.classList.add('map-hover');
       showMarkerInfo(item);
+      requestAnimationFrame(syncMarkerCaptionCollisions);
     });
     content.addEventListener('mouseleave',()=>{
       hideMarkerInfo(x.row);
@@ -3524,6 +3560,7 @@ function renderMap(rows,fit=true){
       if(overlay&&typeof overlay.setZIndex==='function'){
         overlay.setZIndex(isRowSelected(x.row)?60:(placement?placement.zIndex:5));
       }
+      requestAnimationFrame(syncMarkerCaptionCollisions);
     });
     content.addEventListener('click',e=>{
       e.preventDefault();
