@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-04-fast-capture-v86">
+<meta name="lunch-map-build" content="2026-10-04-text-menu-v87">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -3819,7 +3819,7 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
       <div id="map"></div>
       <div id="mapStatus" class="map-status">카카오 지도를 준비하는 중입니다.</div>
       <button id="mapBoundsButton" class="map-area-filter" type="button">이 지역에서 보기</button>
-      <button id="placeCaptureButton" class="map-capture-btn" type="button" hidden disabled>📋 플레이스 캡처 입력</button>
+      <button id="placeCaptureButton" class="map-capture-btn" type="button" hidden disabled>📋 플레이스 텍스트</button>
       <input id="placeCaptureInput" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
       <button id="mobileMyLocation" class="mobile-map-location" type="button" aria-label="내 위치로 이동">◎</button>
       <div id="mapHint" class="map-hint">상단 분류는 여러 개를 동시에 선택할 수 있습니다.</div>
@@ -3842,7 +3842,7 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
             <button id="detailNext" type="button" aria-label="다음 식당">›</button>
           </div>
           <div class="detail-topbar-actions">
-            <button id="detailCaptureButton" class="detail-edit-button detail-capture-button" type="button" hidden>📋 캡처</button>
+            <button id="detailCaptureButton" class="detail-edit-button detail-capture-button" type="button" hidden>📋 텍스트</button>
             <button id="detailEditButton" class="detail-edit-button" type="button" hidden>정보 수정</button>
             <button id="commentClose" class="comment-close" type="button" aria-label="상세 페이지 닫기">×</button>
           </div>
@@ -3867,6 +3867,7 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
           </div>
           <div class="detail-tabs" role="tablist">
             <button class="detail-tab active" type="button" data-detail-tab="home">홈</button>
+            <button class="detail-tab" type="button" data-detail-tab="menu">메뉴</button>
             <button class="detail-tab" type="button" data-detail-tab="reviews">후기</button>
           </div>
           <div class="detail-tab-panel active" data-detail-panel="home">
@@ -3881,6 +3882,21 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
             <section class="detail-section">
               <div class="detail-section-head"><div class="detail-section-title">근처 식당</div><div class="detail-section-note">가까운 순</div></div>
               <div id="detailNearby" class="related-places"></div>
+            </section>
+          </div>
+          <div class="detail-tab-panel" data-detail-panel="menu">
+            <section class="detail-section">
+              <div class="detail-section-head menu-section-head">
+                <div>
+                  <div class="detail-section-title">메뉴 · 가격</div>
+                  <div id="menuMeta" class="detail-section-note">등록된 메뉴 정보를 불러옵니다.</div>
+                </div>
+                <button id="menuAutoButton" class="menu-auto-button" type="button" hidden>웹에서 자동찾기</button>
+              </div>
+              <div id="menuStatus" class="menu-status" role="status" aria-live="polite"></div>
+              <div id="menuList" class="menu-list">
+                <div class="comment-empty">메뉴 탭을 열면 정보를 불러옵니다.</div>
+              </div>
             </section>
           </div>
           <div class="detail-tab-panel" data-detail-panel="reviews">
@@ -3917,31 +3933,32 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
 
 
 <div id="placeCaptureModal" class="modal-backdrop" aria-hidden="true">
-  <section class="capture-modal" role="dialog" aria-modal="true" aria-labelledby="placeCaptureTitle">
+  <section class="capture-modal text-import-modal" role="dialog" aria-modal="true" aria-labelledby="placeCaptureTitle">
     <div class="modal-head">
       <div>
-        <div id="placeCaptureTitle" class="modal-title">플레이스 캡처 자동 반영</div>
-        <div class="modal-sub">식당을 선택할 필요 없이 네이버 플레이스 캡처를 계속 붙여넣은 뒤 완료를 누르세요.</div>
+        <div id="placeCaptureTitle" class="modal-title">플레이스 텍스트 자동 반영</div>
+        <div class="modal-sub">네이버 플레이스에서 복사한 텍스트를 그대로 붙여넣으세요. 여러 식당을 연속으로 붙여넣어도 자동 구분합니다.</div>
       </div>
       <button id="placeCaptureClose" class="modal-close" type="button" aria-label="닫기">×</button>
     </div>
-    <div class="capture-body">
-      <div id="capturePasteZone" class="capture-paste-zone" tabindex="0">
-        <strong>Ctrl+V로 캡처 붙여넣기</strong>
-        <span>여기를 클릭한 뒤 클립보드 이미지를 반복해서 붙여넣으세요. 서로 다른 식당이 섞여 있어도 됩니다.</span>
-        <small>식당명·주소를 이미지에서 읽어 현재 DB와 자동 매칭합니다. 최대 10장.</small>
-      </div>
-      <div class="capture-toolbar">
-        <button id="captureFileAdd" type="button">파일 추가</button>
-        <span id="captureCount">0장 대기 중</span>
-      </div>
-      <div id="captureQueue" class="capture-queue">
-        <div class="capture-empty">붙여넣은 캡처가 여기에 쌓입니다.</div>
-      </div>
+    <div class="capture-body text-import-body">
+      <textarea id="placeTextInput" class="place-text-input" spellcheck="false"
+        placeholder="여기에 네이버 플레이스 텍스트를 그대로 붙여넣으세요.
+
+예)
+자성당
+서울 마포구 잔다리로7안길 3
+영업 중 21:00에 영업 종료
+브레이크타임 15:00~17:00
+일요일 정기휴무
+02-000-0000
+
+다른 식당 내용을 이어서 붙여넣어도 됩니다."></textarea>
+      <div class="text-import-help">메뉴·리뷰·광고 문구가 같이 섞여 있어도 영업정보만 판별합니다. 원문에 없는 값은 기존 DB를 유지합니다.</div>
       <div id="captureStatus" class="capture-status" role="status" aria-live="polite"></div>
       <div class="capture-actions">
         <button id="captureClear" class="modal-btn secondary" type="button">전체 비우기</button>
-        <button id="captureDone" class="modal-btn primary" type="button" disabled>완료 · 자동 반영</button>
+        <button id="captureDone" class="modal-btn primary" type="button" disabled>판독 · DB 반영</button>
       </div>
     </div>
   </section>
