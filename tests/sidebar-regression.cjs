@@ -158,6 +158,8 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.equal(weeklyHours.rows.length,7);
    assert.equal(weeklyHours.rows[0].hours,'11:00-21:00');
    assert.equal(weeklyHours.rows[1].hours,'12:00-20:00');
+   assert.equal(weeklyHours.rows[1].breakTime,'');
+   assert.equal(weeklyHours.rows[1].lastOrder,'');
    assert.equal(weeklyHours.rows[6].closed,true);
    assert.ok(weeklyHours.html.includes('detail-hours-disclosure'));
    assert.ok(weeklyHours.html.includes('라스트오더'));
