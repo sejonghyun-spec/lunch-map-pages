@@ -137,8 +137,13 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    await state(row=>selectRow(row,false,false),firstRow);await page.waitForTimeout(100);
    assert.ok(await page.locator('#mapQuickBar').isVisible());
    assert.ok((await page.textContent('#mapQuickName')).trim().length>0);
-   assert.ok(await state(()=>typeof clusterGroupsForMap==='function'&&typeof operatingInfo==='function'));
+   assert.ok(await state(()=>typeof clusterGroupsForMap==='function'&&typeof operatingInfo==='function'&&typeof scheduleFromNoteForWeekday==='function'));
    assert.deepEqual(await state(()=>{const x=operatingInfo({hours:'11:00-21:00'});return [x.text,!!x.status];}),['11:00-21:00',true]);
+   assert.deepEqual(await state(()=>{
+     const note='월요일 11:00-21:00 브레이크 15:00-16:00 라스트오더 20:30 | 화요일 12:00-20:00 | 일요일 휴무';
+     const mon=scheduleFromNoteForWeekday(note,0),tue=scheduleFromNoteForWeekday(note,1),sun=scheduleFromNoteForWeekday(note,6);
+     return [[mon.hours,mon.breakTime,mon.lastOrder,mon.closed],[tue.hours,tue.closed],[sun.hours,sun.closed]];
+   }),[['11:00-21:00','15:00-16:00','20:30',false],['12:00-20:00',false],['',true]]);
    await state(()=>renderReviewSummary([
      {taste:5,amount:4,price:3,wait:4},
      {taste:5,amount:4,price:3,wait:4},
