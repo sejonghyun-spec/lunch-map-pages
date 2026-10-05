@@ -144,6 +144,24 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
      const mon=scheduleFromNoteForWeekday(note,0),tue=scheduleFromNoteForWeekday(note,1),sun=scheduleFromNoteForWeekday(note,6);
      return [[mon.hours,mon.breakTime,mon.lastOrder,mon.closed],[tue.hours,tue.closed],[sun.hours,sun.closed]];
    }),[['11:00-21:00','15:00-16:00','20:30',false],['12:00-20:00',false],['',true]]);
+   assert.ok(await state(()=>typeof weeklyOperatingSchedule==='function'&&typeof renderWeeklyHours==='function'));
+   const weeklyHours=await state(()=>{
+     const row={
+       hours:'11:00-21:00',
+       breakTime:'15:00-16:00',
+       lastOrder:'20:30',
+       closedDays:'일요일 정기휴무',
+       hoursNote:'월요일 11:00-21:00 브레이크 15:00-16:00 라스트오더 20:30 | 화요일 12:00-20:00 | 일요일 휴무'
+     };
+     return {rows:weeklyOperatingSchedule(row),html:renderWeeklyHours(row)};
+   });
+   assert.equal(weeklyHours.rows.length,7);
+   assert.equal(weeklyHours.rows[0].hours,'11:00-21:00');
+   assert.equal(weeklyHours.rows[1].hours,'12:00-20:00');
+   assert.equal(weeklyHours.rows[6].closed,true);
+   assert.ok(weeklyHours.html.includes('detail-hours-disclosure'));
+   assert.ok(weeklyHours.html.includes('라스트오더'));
+   assert.ok(weeklyHours.html.includes('휴무'));
    await state(()=>renderReviewSummary([
      {taste:5,amount:4,price:3,wait:4},
      {taste:5,amount:4,price:3,wait:4},
@@ -182,7 +200,22 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.equal(await page.locator('#captureDone').isDisabled(),true);
    await page.fill('#placeTextInput','자성당\n서울 마포구 잔다리로7안길 3\n영업시간 11:30~21:00');
    assert.equal(await page.locator('#captureDone').isDisabled(),false);
-   await state(()=>{placeTextInput.value='';closePlaceCaptureModal();});
+
+   await state(()=>{
+     const originalLoadLiveDb=loadLiveDb;
+     loadLiveDb=()=>Promise.resolve(true);
+     pendingPlaceText={requestId:999,names:['자성당'],beforeSnapshot:'[]',originalText:String(placeTextInput.value||'')};
+     setPlaceCaptureBusy(true);
+     window.dispatchEvent(new MessageEvent('message',{
+       origin:'https://script.google.com',
+       data:{source:'lunch-map-place-text',ok:true,results:[{name:'자성당'}],skipped:[]}
+     }));
+     loadLiveDb=originalLoadLiveDb;
+   });
+   await page.waitForTimeout(40);
+   assert.equal(await page.locator('#placeCaptureModal').evaluate(el=>el.classList.contains('open')),false);
+   assert.equal(await state(()=>placeCaptureBusy),false);
+   assert.equal(await page.inputValue('#placeTextInput'),'');
  });
  await check('menu tab remains as manual DB viewer without auto collection',async()=>{
    assert.equal(await page.locator('[data-detail-tab="menu"]').count(),1);
