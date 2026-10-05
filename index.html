@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-05-day-hours-v89">
+<meta name="lunch-map-build" content="2026-10-05-place-text-fast-v90">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -4189,7 +4189,8 @@ let favoritesOnly=false,recentOnly=false,mapOnlyMode=false,reviewSortMode='lates
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',hoveredMarkerRow=null,searchTimer=null;
 let lastMapRows=[],lastClusterLevel=null,mapIdleRenderTimer=null,lastDetailRow=null,lastListSignature='';
 let compareKeys=[],deepLinkHandled=false;
-let pendingPlaceText=null,placeCaptureBusy=false,menuRequestSeq=0;
+let pendingPlaceText=null,placeCaptureBusy=false,placeCaptureTimeoutTimer=null,placeCaptureRequestSeq=0,menuRequestSeq=0;
+const PLACE_CAPTURE_TIMEOUT_MS=12000;
 const menuCache=new Map();
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,selectedEditRestaurant=null,suggestMode='new',suggestPending=false,pendingSuggestionTemp=null,pendingEditUpdate=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
@@ -6357,6 +6358,117 @@ function detectedDbNamesInText(text){
     seen.add(key);return true;
   }).map(x=>x.name);
 }
+function placeImportAddressLine(line){
+  return /^(?:서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)(?:특별시|광역시|특별자치시|특별자치도|도)?\s+/.test(String(line||'').trim());
+}
+function placeImportPhoneLine(line){
+  return /(?:^|\s)(?:0\d{1,2}[-.)\s]?\d{3,4}[-.\s]?\d{4})(?:\s|$)/.test(String(line||'').trim());
+}
+function isPlaceOperationalLine(line){
+  const text=String(line||'').trim();
+  if(!text)return false;
+  if(placeImportAddressLine(text)||placeImportPhoneLine(text))return true;
+  if(/영업|운영|휴무|휴점|정기휴일|쉬는\s*날|브레이크|휴게|라스트\s*오더|주문\s*마감|24\s*시간|연중무휴|매일|평일|주말/.test(text))return true;
+  if(/^(?:월|화|수|목|금|토|일)(?:요일)?(?:\s|$)/.test(text))return true;
+  if(/^(?:오전|오후)?\s*\d{1,2}:\d{2}(?:\s*[-~–—]\s*(?:오전|오후)?\s*\d{1,2}:\d{2})?/.test(text))return true;
+  return false;
+}
+function buildPlaceTextPayload(rawText){
+  const source=String(rawText||'').trim();
+  const names=detectedDbNamesInText(source);
+  if(!source)return {names:[],compactText:'',records:[]};
+  if(!names.length)return {names:[],compactText:source,records:[]};
+
+  const lines=source.split(/\r?\n/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const orderedNames=names.slice().sort((a,b)=>b.length-a.length);
+  const seenNames=new Set();
+  const sections=[];
+  let current=null;
+
+  lines.forEach(line=>{
+    const lower=line.toLowerCase();
+    const matched=orderedNames.find(name=>lower.includes(name.toLowerCase()));
+    if(matched&&!seenNames.has(matched)){
+      if(current)sections.push(current);
+      current={name:matched,lines:[matched]};
+      seenNames.add(matched);
+      return;
+    }
+    if(current)current.lines.push(line);
+  });
+  if(current)sections.push(current);
+
+  const records=sections.map(section=>{
+    const operational=section.lines.slice(1).filter(isPlaceOperationalLine);
+    const deduped=[section.name,...operational].filter((value,index,array)=>array.indexOf(value)===index);
+    const address=operational.find(placeImportAddressLine)||'';
+    const phone=operational.find(placeImportPhoneLine)||'';
+    const infoLines=operational.filter(line=>line!==address&&line!==phone);
+    return {
+      name:section.name,
+      address,
+      phone,
+      infoLines,
+      rawText:deduped.join('\n')
+    };
+  }).filter(x=>x.rawText);
+
+  const compactText=records.length?records.map(x=>x.rawText).join('\n\n'):source;
+  return {names,compactText,records};
+}
+function placeImportSnapshot(names){
+  const wanted=new Set((names||[]).map(x=>String(x||'').trim().toLowerCase()).filter(Boolean));
+  const keys=['address','phone','전화','hours','openingHours','businessHours','영업시간','breakTime','breakHours','브레이크타임','lastOrder','라스트오더','closedDays','closedDay','휴무일','hoursNote','영업시간비고','hoursCheckedAt','영업시간확인일','hoursSource','영업시간출처'];
+  const rows=displayRestaurants().filter(row=>wanted.has(String(row&&row.name||'').trim().toLowerCase()));
+  return JSON.stringify(rows.map(row=>{
+    const item={name:String(row.name||'').trim()};
+    keys.forEach(key=>{item[key]=String((row&&row[key])??'').trim();});
+    return item;
+  }));
+}
+function clearPlaceCaptureTimeout(){
+  if(placeCaptureTimeoutTimer){
+    clearTimeout(placeCaptureTimeoutTimer);
+    placeCaptureTimeoutTimer=null;
+  }
+}
+function resetPlaceCaptureSink(){
+  const sink=document.getElementById('placeCaptureSink');
+  if(!sink)return;
+  try{sink.src='about:blank';}catch(e){}
+}
+function armPlaceCaptureTimeout(requestId){
+  clearPlaceCaptureTimeout();
+  placeCaptureTimeoutTimer=setTimeout(()=>{
+    const pending=pendingPlaceText;
+    if(!pending||pending.requestId!==requestId)return;
+    const beforeSnapshot=pending.beforeSnapshot;
+    const names=pending.names.slice();
+    const originalText=pending.originalText;
+
+    pendingPlaceText=null;
+    clearPlaceCaptureTimeout();
+    resetPlaceCaptureSink();
+    setPlaceCaptureBusy(false);
+    setCaptureStatus('서버 응답이 지연되어 입력 잠금을 해제했습니다. DB 반영 여부를 확인 중입니다…');
+    showToast('서버 응답이 늦어 입력 잠금을 해제했습니다.');
+
+    loadLiveDb().then(ok=>{
+      if(placeCaptureBusy)return;
+      const changed=!!ok&&placeImportSnapshot(names)!==beforeSnapshot;
+      if(changed){
+        if(placeTextInput&&String(placeTextInput.value||'').trim()===originalText)placeTextInput.value='';
+        setCaptureStatus('DB 반영은 완료되었습니다. 서버 완료 응답만 지연되었습니다.','success');
+        showToast('DB 반영 완료 · 응답 지연만 발생했습니다.');
+      }else{
+        setCaptureStatus('12초 안에 완료 응답을 받지 못했습니다. 다시 시도할 수 있습니다.','error');
+      }
+      updatePlaceTextHint();
+    }).catch(()=>{
+      if(!placeCaptureBusy)setCaptureStatus('12초 안에 완료 응답을 받지 못했습니다. 다시 시도할 수 있습니다.','error');
+    });
+  },PLACE_CAPTURE_TIMEOUT_MS);
+}
 function updatePlaceTextHint(){
   if(placeCaptureBusy)return;
   const text=String(placeTextInput?.value||'').trim();
@@ -6366,9 +6478,9 @@ function updatePlaceTextHint(){
     setCaptureStatus('네이버 플레이스에서 복사한 텍스트를 그대로 붙여넣으세요.');
     return;
   }
-  const names=detectedDbNamesInText(text);
-  setCaptureStatus(names.length
-    ? 'DB 식당명 '+names.length+'개 감지 · '+names.slice(0,5).join(', ')+(names.length>5?' 외 '+(names.length-5)+'개':'')
+  const parsed=buildPlaceTextPayload(text);
+  setCaptureStatus(parsed.names.length
+    ? '즉시 판독 '+parsed.names.length+'개 · '+parsed.names.slice(0,5).join(', ')+(parsed.names.length>5?' 외 '+(parsed.names.length-5)+'개':'')
     : 'DB 식당명이 아직 감지되지 않았습니다. 식당명이 포함된 원문을 붙여넣어 주세요.');
 }
 function openPlaceCaptureModal(){
@@ -6389,6 +6501,8 @@ function closePlaceCaptureModal(){
 }
 function clearPlaceText(){
   if(placeCaptureBusy)return;
+  clearPlaceCaptureTimeout();
+  pendingPlaceText=null;
   if(placeTextInput)placeTextInput.value='';
   setPlaceCaptureBusy(false);
   updatePlaceTextHint();
@@ -6397,11 +6511,31 @@ function clearPlaceText(){
 function submitPlaceText(){
   const rawText=String(placeTextInput?.value||'').trim();
   if(placeCaptureBusy||!rawText)return;
-  pendingPlaceText={mode:'placeText',rawText:rawText};
+
+  const parsed=buildPlaceTextPayload(rawText);
+  const requestId=++placeCaptureRequestSeq;
+  pendingPlaceText={
+    requestId,
+    names:parsed.names.slice(),
+    beforeSnapshot:placeImportSnapshot(parsed.names),
+    originalText:rawText
+  };
   setPlaceCaptureBusy(true);
-  const names=detectedDbNamesInText(rawText);
-  setCaptureStatus('빠른 텍스트 판독 중'+(names.length?' · '+names.length+'개 식당 후보':'')+'…');
-  submitPlaceCaptureForm(pendingPlaceText);
+  setCaptureStatus(
+    parsed.names.length
+      ? '클라이언트 판독 완료 · '+parsed.names.length+'개 식당 · DB 반영 중…'
+      : '식당명을 특정하지 못해 원문으로 DB 반영을 시도합니다…'
+  );
+
+  submitPlaceCaptureForm({
+    mode:'placeText',
+    rawText:parsed.compactText||rawText,
+    structuredJson:JSON.stringify(parsed.records),
+    detectedNames:parsed.names.join('\n'),
+    clientParsed:'1',
+    requestId:String(requestId)
+  });
+  armPlaceCaptureTimeout(requestId);
 }
 function placeTextResultSummary(data){
   const results=Array.isArray(data.results)?data.results:[];
@@ -6498,6 +6632,9 @@ window.addEventListener('message',e=>{
   if(!allowedOrigins.has(e.origin))return;
   const data=e.data||{};
   if(data.source!=='lunch-map-place-text')return;
+  if(!pendingPlaceText||!placeCaptureBusy)return;
+
+  clearPlaceCaptureTimeout();
 
   if(!data.ok){
     setCaptureStatus(data.message||'텍스트 반영에 실패했습니다.','error');
