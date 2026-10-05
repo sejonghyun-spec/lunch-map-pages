@@ -5813,9 +5813,9 @@ function weeklyOperatingSchedule(row){
       shortName:short,
       closed,
       scheduleMatched:!!schedule,
-      hours:closed?'':String(schedule&&schedule.hours||genericHours||''),
-      breakTime:closed?'':String(schedule&&schedule.breakTime||genericBreak||''),
-      lastOrder:closed?'':String(schedule&&schedule.lastOrder||genericLastOrder||'')
+      hours:closed?'':String(schedule?schedule.hours:(genericHours||'')),
+      breakTime:closed?'':String(schedule?schedule.breakTime:(genericBreak||'')),
+      lastOrder:closed?'':String(schedule?schedule.lastOrder:(genericLastOrder||''))
     };
   });
 }
