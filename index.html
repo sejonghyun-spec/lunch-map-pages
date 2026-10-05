@@ -5765,6 +5765,17 @@ function uniqueSortedClocks_(...values){
   values.flat(Infinity).forEach(value=>clockValues_(value).forEach(v=>set.add(v)));
   return [...set].sort((a,b)=>clockMinutes_(a)-clockMinutes_(b));
 }
+function filterClocksWithinHours_(values,hours){
+  const clocks=uniqueSortedClocks_(values);
+  const range=timeRangeMinutes(hours);
+  if(!range)return clocks;
+  const [start,end]=range;
+  return clocks.filter(value=>{
+    const n=clockMinutes_(value);
+    if(n==null)return false;
+    return end>=start?(n>=start&&n<=end):(n>=start||n<=end);
+  });
+}
 function labeledClocks_(text,labelRe){
   const source=String(text||'');
   const after=source.match(new RegExp('(?:'+labelRe+')\\s*((?:\\d{1,2}:\\d{2})(?:\\s*[,/·]\\s*\\d{1,2}:\\d{2})*)','i'));
@@ -5776,8 +5787,8 @@ function labeledClock_(text,labelRe){
   return labeledClocks_(text,labelRe)[0]||'';
 }
 function splitDayLastOrders_(specificValues,genericValue,hours,breakTime){
-  const specific=uniqueSortedClocks_(specificValues);
-  const generic=uniqueSortedClocks_(genericValue);
+  const specific=filterClocksWithinHours_(specificValues,hours);
+  const generic=filterClocksWithinHours_(genericValue,hours);
   if(!specific.length)return generic;
   if(!generic.length)return specific;
   const breakRange=timeRangeMinutes(breakTime);
