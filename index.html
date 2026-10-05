@@ -6422,7 +6422,7 @@ function placeImportSnapshot(names){
   const rows=displayRestaurants().filter(row=>wanted.has(String(row&&row.name||'').trim().toLowerCase()));
   return JSON.stringify(rows.map(row=>{
     const item={name:String(row.name||'').trim()};
-    keys.forEach(key=>{item[key]=String(row&&row[key]??'').trim();});
+    keys.forEach(key=>{item[key]=String((row&&row[key])??'').trim();});
     return item;
   }));
 }
