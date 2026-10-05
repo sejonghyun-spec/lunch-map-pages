@@ -144,7 +144,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
      const mon=scheduleFromNoteForWeekday(note,0),tue=scheduleFromNoteForWeekday(note,1),sun=scheduleFromNoteForWeekday(note,6);
      return [[mon.hours,mon.breakTime,mon.lastOrder,mon.closed],[tue.hours,tue.closed],[sun.hours,sun.closed]];
    }),[['11:00-21:00','15:00-16:00','20:30',false],['12:00-20:00',false],['',true]]);
-   assert.ok(await state(()=>typeof weeklyOperatingSchedule==='function'&&typeof renderWeeklyHours==='function'));
+   assert.ok(await state(()=>typeof weeklyOperatingSchedule==='function'&&typeof renderWeeklyHours==='function'&&typeof relevantLastOrder_==='function'&&typeof splitDayLastOrders_==='function'));
    const weeklyHours=await state(()=>{
      const row={
        hours:'11:00-21:00',
@@ -164,6 +164,51 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(weeklyHours.html.includes('detail-hours-disclosure'));
    assert.ok(weeklyHours.html.includes('라스트오더'));
    assert.ok(weeklyHours.html.includes('휴무'));
+
+   const jasung=await state(()=>{
+     const row={
+       hours:'11:00-20:00',
+       breakTime:'15:00-16:30',
+       lastOrder:'19:30',
+       closedDays:'',
+       hoursNote:'월요일 11:00-20:00 브레이크 15:00-16:30 라스트오더 14:30'
+     };
+     const rows=weeklyOperatingSchedule(row);
+     return {
+       mon:rows[0],tue:rows[1],
+       at1300:relevantLastOrder_(rows[0].lastOrders,13*60),
+       at1445:relevantLastOrder_(rows[0].lastOrders,14*60+45),
+       at1530:relevantLastOrder_(rows[0].lastOrders,15*60+30),
+       at1800:relevantLastOrder_(rows[0].lastOrders,18*60)
+     };
+   });
+   assert.deepEqual(jasung.mon.lastOrders,['14:30','19:30']);
+   assert.equal(jasung.mon.lastOrderText,'14:30 · 19:30');
+   assert.deepEqual(jasung.tue.lastOrders,['19:30']);
+   assert.equal(jasung.at1300,'14:30');
+   assert.equal(jasung.at1445,'19:30');
+   assert.equal(jasung.at1530,'19:30');
+   assert.equal(jasung.at1800,'19:30');
+
+   const duplicateLastOrders=await state(()=>weeklyOperatingSchedule({
+     hours:'11:00-20:00',
+     breakTime:'15:00-16:30',
+     lastOrder:'14:30, 19:30',
+     closedDays:'',
+     hoursNote:'월요일 11:00-20:00 브레이크 15:00-16:30 라스트오더 14:30'
+   }));
+   assert.deepEqual(duplicateLastOrders[0].lastOrders,['14:30','19:30']);
+   assert.deepEqual(duplicateLastOrders[1].lastOrders,['14:30','19:30']);
+
+   const invalidGeneric=await state(()=>weeklyOperatingSchedule({
+     hours:'11:00-21:00',
+     breakTime:'15:00-16:00',
+     lastOrder:'20:30',
+     closedDays:'',
+     hoursNote:'화요일 12:00-20:00'
+   }));
+   assert.deepEqual(invalidGeneric[1].lastOrders,[]);
+
    await state(()=>renderReviewSummary([
      {taste:5,amount:4,price:3,wait:4},
      {taste:5,amount:4,price:3,wait:4},
