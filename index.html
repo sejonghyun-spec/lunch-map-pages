@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-05-time-aware-hours-v92">
+<meta name="lunch-map-build" content="2026-10-05-detail-type-v93">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -641,8 +641,8 @@ button,input,select,textarea{font:inherit}
 .card-hours.closed,.mobile-card-hours.closed{color:#a33b32}
 .detail-hours-disclosure{width:100%;min-width:0}
 .detail-hours-disclosure>summary{
-  display:flex;align-items:center;gap:7px;min-height:24px;list-style:none;cursor:pointer;
-  color:#3f494e;font-size:14px;font-weight:650;line-height:1.45
+  display:flex;align-items:center;gap:8px;min-height:28px;list-style:none;cursor:pointer;
+  color:#3f494e;font-size:15.5px;font-weight:700;line-height:1.5;min-width:0
 }
 .detail-hours-disclosure>summary::-webkit-details-marker{display:none}
 .detail-hours-disclosure>summary::after{
@@ -650,27 +650,35 @@ button,input,select,textarea{font:inherit}
   transform:translateY(-1px);transition:transform .16s ease
 }
 .detail-hours-disclosure[open]>summary::after{transform:rotate(180deg) translateY(1px)}
-.detail-hours-summary-copy{min-width:0;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
-.detail-hours-summary-copy .hours-state{font-size:14px}
+.detail-hours-summary-copy{min-width:0;max-width:100%;display:flex;align-items:center;gap:6px;flex-wrap:wrap;overflow-wrap:anywhere}
+.detail-hours-summary-copy .hours-state{font-size:15.5px}
 .detail-hours-panel{
-  margin-top:9px;border-top:1px solid #e7ebed;padding-top:6px;
+  margin-top:10px;border-top:1px solid #e7ebed;padding-top:7px;
 }
 .detail-hours-day{
-  display:grid;grid-template-columns:38px minmax(0,1fr);gap:8px;padding:7px 8px;border-radius:8px;
+  display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;padding:9px 10px;border-radius:9px;min-width:0;
 }
 .detail-hours-day.today{background:#f3f7fa}
 .detail-hours-day-name{
-  color:#7a858b;font-size:12.5px;font-weight:800;line-height:1.5
+  color:#7a858b;font-size:14px;font-weight:850;line-height:1.55
 }
 .detail-hours-day.today .detail-hours-day-name{color:#287bb5}
-.detail-hours-day-value{min-width:0;color:#3f494e;font-size:13px;font-weight:650;line-height:1.45}
-.detail-hours-day.closed .detail-hours-day-value{color:#a33b32}
-.detail-hours-day-sub{margin-top:2px;color:#899298;font-size:11.5px;font-weight:550;line-height:1.4}
-.detail-hours-note{
-  margin:5px 8px 1px;padding-top:7px;border-top:1px dashed #e1e6e9;
-  color:#818b90;font-size:11.5px;font-weight:550;line-height:1.45
+.detail-hours-day-value{
+  min-width:0;max-width:100%;color:#3f494e;font-size:15px;font-weight:700;line-height:1.5;
+  word-break:keep-all;overflow-wrap:anywhere
 }
-.detail-hours-info .detail-info-value{overflow:visible}
+.detail-hours-day.closed .detail-hours-day-value{color:#a33b32}
+.detail-hours-day-sub{
+  margin-top:3px;color:#77838a;font-size:13.5px;font-weight:600;line-height:1.5;
+  word-break:keep-all;overflow-wrap:anywhere
+}
+.detail-hours-note{
+  margin:6px 10px 1px;padding-top:8px;border-top:1px dashed #e1e6e9;
+  color:#748087;font-size:13px;font-weight:600;line-height:1.5;overflow-wrap:anywhere
+}
+.detail-hours-info{grid-template-columns:minmax(0,1fr);gap:7px}
+.detail-hours-info .detail-info-label{font-size:15px;color:#4f5a60}
+.detail-hours-info .detail-info-value{overflow:visible;min-width:0}
 
 @media(max-width:900px){
   .mobile-search-suggestions{left:0;right:0;top:calc(100% + 5px);max-height:260px}
@@ -804,9 +812,9 @@ html[data-theme="bistro"] .map-capture-btn{
   z-index:35;
   display:grid;
   grid-template-rows:auto minmax(0,1fr) auto;
-  width:var(--detail-width,400px);
-  min-width:340px;
-  max-width:42vw;
+  width:var(--detail-width,440px);
+  min-width:410px;
+  max-width:48vw;
   height:100%;
   overflow:hidden;
   transform:translateX(-104%);
@@ -834,8 +842,8 @@ html[data-theme="bistro"] .map-capture-btn{
   min-width:0;
   flex:1 1 auto;
   color:#3f484d;
-  font-size:14.5px;
-  font-weight:800;
+  font-size:15.5px;
+  font-weight:850;
   letter-spacing:-.15px;
 }
 .comment-close{
@@ -876,7 +884,7 @@ html[data-theme="bistro"] .map-capture-btn{
 }
 .comment-name{
   color:#22282c;
-  font-size:25px;
+  font-size:27px;
   font-weight:800;
   line-height:1.25;
   letter-spacing:-.7px;
@@ -885,13 +893,13 @@ html[data-theme="bistro"] .map-capture-btn{
 .detail-rating{
   margin-top:8px;
   color:#ef7c18;
-  font-size:14px;
+  font-size:15px;
   font-weight:750;
 }
 .comment-sub{
   margin-top:7px;
   color:#606a70;
-  font-size:14px;
+  font-size:15px;
   font-weight:550;
   line-height:1.45;
   word-break:keep-all;
@@ -903,13 +911,13 @@ html[data-theme="bistro"] .map-capture-btn{
 @media(prefers-reduced-motion:reduce){.comment-panel.open{animation:none}}
 .detail-edit-button{
   height:32px;border:1px solid #d9dfe2;border-radius:8px;padding:0 9px;background:#fff;
-  color:#5f686d;font-size:11.5px;font-weight:800;cursor:pointer
+  color:#5f686d;font-size:12.5px;font-weight:800;cursor:pointer
 }
 .detail-edit-button:hover{background:#f5f7f8}
 .detail-decision{
   display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin-top:13px;
   padding:10px 11px;border:1px solid #e1e6e9;border-radius:10px;
-  background:#f4f6f7;color:#505a60;font-size:12px;font-weight:750;line-height:1.4
+  background:#f4f6f7;color:#505a60;font-size:13.5px;font-weight:750;line-height:1.5
 }
 .detail-decision[hidden]{display:none}
 .detail-decision .decision-primary{font-weight:900}
@@ -920,7 +928,7 @@ html[data-theme="bistro"] .map-capture-btn{
 .detail-action{
   display:inline-flex;align-items:center;justify-content:center;min-width:0;height:39px;
   border:1px solid #d6dde1;border-radius:9px;padding:0 8px;background:#fff;color:#3f484d;
-  font-size:12.5px;font-weight:800;text-decoration:none;cursor:pointer;white-space:nowrap
+  font-size:13.5px;font-weight:800;text-decoration:none;cursor:pointer;white-space:nowrap
 }
 .detail-action:hover{border-color:#bdc6cb;background:#f7f9fa}
 .detail-action[aria-disabled="true"]{opacity:.45;pointer-events:none}
@@ -1113,8 +1121,8 @@ html[data-theme="bistro"] .capture-paste-zone{border-color:#a89886;border-radius
   border-top:1px solid #edf0f2;border-bottom:1px solid #dfe5e8;background:#fff
 }
 .detail-tab{
-  height:52px;border:0;border-bottom:3px solid transparent;background:#fff;color:#59646a;
-  font-size:15px;font-weight:750;letter-spacing:-.2px;cursor:pointer
+  height:54px;border:0;border-bottom:3px solid transparent;background:#fff;color:#59646a;
+  font-size:16px;font-weight:780;letter-spacing:-.2px;cursor:pointer
 }
 .detail-tab:hover{background:#f8fafb;color:#30393e}
 .detail-tab.active{
@@ -1124,8 +1132,8 @@ html[data-theme="bistro"] .capture-paste-zone{border-color:#a89886;border-radius
 .detail-tab-panel.active{display:block}
 .detail-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
 .detail-tag{
-  display:inline-flex;align-items:center;min-height:30px;border-radius:999px;padding:5px 10px;
-  background:#f2f5f6;color:#4e5960;font-size:12.5px;font-weight:750
+  display:inline-flex;align-items:center;min-height:31px;border-radius:999px;padding:5px 10px;
+  background:#f2f5f6;color:#4e5960;font-size:13.5px;font-weight:750
 }
 .review-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 0 14px}
 .review-score{padding:11px 6px;border:1px solid #edf0f2;border-radius:10px;background:#f8f9fa;text-align:center}
@@ -1169,37 +1177,45 @@ html[data-theme="bistro"] .capture-paste-zone{border-color:#a89886;border-radius
 }
 .detail-section-title{
   color:#242b2f;
-  font-size:17px;
+  font-size:18.5px;
   font-weight:850;
   letter-spacing:-.3px;
 }
 .detail-info{
   display:grid;
-  gap:11px;
+  gap:13px;
 }
 .detail-info-row{
   display:grid;
-  grid-template-columns:76px minmax(0,1fr);
-  gap:10px;
+  grid-template-columns:88px minmax(0,1fr);
+  gap:12px;
   align-items:start;
+  min-width:0;
 }
 .detail-info-label{
+  min-width:0;
   color:#707b81;
-  font-size:13px;
-  font-weight:750;
+  font-size:14px;
+  font-weight:800;
+  line-height:1.5;
+  word-break:keep-all;
 }
 .detail-info-value{
   min-width:0;
+  max-width:100%;
   color:#3f494e;
-  font-size:14px;
-  font-weight:550;
-  line-height:1.5;
-  word-break:break-word;
+  font-size:15.5px;
+  font-weight:600;
+  line-height:1.55;
+  word-break:keep-all;
+  overflow-wrap:anywhere;
 }
 .detail-info-link{
   color:#287bb5;
-  font-weight:700;
+  font-weight:750;
   text-decoration:none;
+  overflow-wrap:anywhere;
+  word-break:break-all;
 }
 .detail-info-link:hover{text-decoration:underline}
 .comment-count{
@@ -1256,7 +1272,7 @@ html[data-theme="bistro"] .capture-paste-zone{border-color:#a89886;border-radius
 .comment-text{
   margin-top:7px;
   color:#3f494e;
-  font-size:14px;
+  font-size:15px;
   font-weight:550;
   line-height:1.55;
   white-space:pre-wrap;
@@ -2442,22 +2458,27 @@ html[data-theme="bistro"] .capture-paste-zone{border-color:#a89886;border-radius
   }
   .detail-scroll{background:#fff}
   .detail-hero{padding:18px 16px 17px}
-  .detail-tab{height:50px;font-size:15px}
-  .detail-section-title{font-size:17px}
-  .detail-info-label{font-size:12.5px}
-  .detail-info-value{font-size:13.5px}
+  .detail-tab{height:52px;font-size:16px}
+  .detail-section-title{font-size:18px}
+  .detail-info-label{font-size:13.5px}
+  .detail-info-value{font-size:15px}
   .comment-score-inputs{grid-template-columns:repeat(2,minmax(0,1fr))}
   .comment-score-inputs select{height:40px;font-size:13px}
   .review-summary{grid-template-columns:repeat(2,1fr)}
-  .comment-name{font-size:24px}
-  .detail-rating{font-size:14px}
-  .comment-sub{font-size:13.5px}
+  .comment-name{font-size:26px}
+  .detail-rating{font-size:15px}
+  .comment-sub{font-size:14.5px}
   .detail-actions{gap:8px;margin-top:14px}
   .comment-photo-btn,.detail-kakao-link{height:40px;font-size:13.5px}
   .detail-section{padding:18px 16px}
-  .detail-info-row{grid-template-columns:88px minmax(0,1fr);gap:10px}
+  .detail-info-row{grid-template-columns:92px minmax(0,1fr);gap:10px}
+  .detail-hours-info{grid-template-columns:minmax(0,1fr)}
+  .detail-hours-day{grid-template-columns:42px minmax(0,1fr);padding:9px 8px}
+  .detail-hours-day-name{font-size:13.5px}
+  .detail-hours-day-value{font-size:14.5px}
+  .detail-hours-day-sub{font-size:13px}
   .comment-item{padding:12px 1px 11px}
-  .comment-text{font-size:13px}
+  .comment-text{font-size:14.5px}
   .comment-compose{padding:9px 10px calc(10px + var(--mobile-safe-bottom))}
   .comment-input{height:44px;font-size:16px}
   .comment-submit{height:44px;min-width:68px;font-size:13px}
@@ -7223,7 +7244,7 @@ function initDetailResizer(){
   const handle=document.getElementById('detailResizer');
   if(!handle)return;
   const saved=Number(localStorage.getItem(DETAIL_WIDTH_KEY));
-  if(Number.isFinite(saved)&&saved>=340&&saved<=520)commentPanel.style.setProperty('--detail-width',saved+'px');
+  if(Number.isFinite(saved)&&saved>=410&&saved<=580)commentPanel.style.setProperty('--detail-width',saved+'px');
   let startX=0,startWidth=0;
   handle.addEventListener('pointerdown',e=>{
     if(isMobile())return;
@@ -7231,7 +7252,7 @@ function initDetailResizer(){
     startWidth=commentPanel.getBoundingClientRect().width;
     handle.setPointerCapture?.(e.pointerId);
     const move=ev=>{
-      const width=Math.max(340,Math.min(520,startWidth+(ev.clientX-startX)));
+      const width=Math.max(410,Math.min(580,startWidth+(ev.clientX-startX)));
       commentPanel.style.setProperty('--detail-width',width+'px');
       localStorage.setItem(DETAIL_WIDTH_KEY,String(Math.round(width)));
     };
