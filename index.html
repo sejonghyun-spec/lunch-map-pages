@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-05-place-text-fast-v90">
+<meta name="lunch-map-build" content="2026-10-05-weekly-hours-v91">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -639,6 +639,38 @@ button,input,select,textarea{font:inherit}
 .card-hours.open,.mobile-card-hours.open{color:#18794e}
 .card-hours.break,.mobile-card-hours.break{color:#a05a00}
 .card-hours.closed,.mobile-card-hours.closed{color:#a33b32}
+.detail-hours-disclosure{width:100%;min-width:0}
+.detail-hours-disclosure>summary{
+  display:flex;align-items:center;gap:7px;min-height:24px;list-style:none;cursor:pointer;
+  color:#3f494e;font-size:14px;font-weight:650;line-height:1.45
+}
+.detail-hours-disclosure>summary::-webkit-details-marker{display:none}
+.detail-hours-disclosure>summary::after{
+  content:'⌄';margin-left:auto;color:#899298;font-size:16px;font-weight:800;line-height:1;
+  transform:translateY(-1px);transition:transform .16s ease
+}
+.detail-hours-disclosure[open]>summary::after{transform:rotate(180deg) translateY(1px)}
+.detail-hours-summary-copy{min-width:0;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.detail-hours-summary-copy .hours-state{font-size:14px}
+.detail-hours-panel{
+  margin-top:9px;border-top:1px solid #e7ebed;padding-top:6px;
+}
+.detail-hours-day{
+  display:grid;grid-template-columns:38px minmax(0,1fr);gap:8px;padding:7px 8px;border-radius:8px;
+}
+.detail-hours-day.today{background:#f3f7fa}
+.detail-hours-day-name{
+  color:#7a858b;font-size:12.5px;font-weight:800;line-height:1.5
+}
+.detail-hours-day.today .detail-hours-day-name{color:#287bb5}
+.detail-hours-day-value{min-width:0;color:#3f494e;font-size:13px;font-weight:650;line-height:1.45}
+.detail-hours-day.closed .detail-hours-day-value{color:#a33b32}
+.detail-hours-day-sub{margin-top:2px;color:#899298;font-size:11.5px;font-weight:550;line-height:1.4}
+.detail-hours-note{
+  margin:5px 8px 1px;padding-top:7px;border-top:1px dashed #e1e6e9;
+  color:#818b90;font-size:11.5px;font-weight:550;line-height:1.45
+}
+.detail-hours-info .detail-info-value{overflow:visible}
 
 @media(max-width:900px){
   .mobile-search-suggestions{left:0;right:0;top:calc(100% + 5px);max-height:260px}
@@ -2643,6 +2675,8 @@ html[data-theme="night"] .detail-info-value,
 html[data-theme="night"] .comment-nick{color:#fff}
 html[data-theme="night"] .comment-sub,
 html[data-theme="night"] .detail-info-label,
+html[data-theme="night"] .detail-hours-day-name,
+html[data-theme="night"] .detail-hours-day-sub,
 html[data-theme="night"] .detail-topbar-title,
 html[data-theme="night"] .detail-tab{color:#c4ccd2}
 html[data-theme="night"] .detail-tab.active{background:#242a32;color:#ffd28b}
@@ -2656,6 +2690,11 @@ html[data-theme="night"] .comment-helpful{
 html[data-theme="night"] .review-score b{color:#f4f6f8}
 html[data-theme="night"] .review-score span{color:#bbc4cb}
 html[data-theme="night"] .comment-item{border-color:#30363d}
+html[data-theme="night"] .detail-hours-disclosure>summary,
+html[data-theme="night"] .detail-hours-day-value{color:#eef1f4}
+html[data-theme="night"] .detail-hours-panel{border-color:#343b43}
+html[data-theme="night"] .detail-hours-day.today{background:#202a33}
+html[data-theme="night"] .detail-hours-note{border-color:#343b43;color:#aeb8bf}
 html[data-theme="night"] .suggest-modal,
 html[data-theme="night"] .roulette-modal,
 html[data-theme="night"] .modal-head,
@@ -5649,6 +5688,7 @@ function minuteInRange(now,range){
   return b>=a?(now>=a&&now<b):(now>=a||now<b);
 }
 const WEEKDAY_SHORT=['월','화','수','목','금','토','일'];
+const WEEKDAY_NAMES=WEEKDAY_SHORT.map(x=>x+'요일');
 function seoulDateInfo(){
   try{
     const parts=Object.fromEntries(new Intl.DateTimeFormat('ko-KR',{
@@ -5744,6 +5784,82 @@ function isClosedToday(closedDays){
   if(/매주/.test(text))return text.includes(short);
   return daySpecMatchesIndex(text,idx);
 }
+function regularlyClosedOnWeekday_(closedDays,index){
+  const text=String(closedDays||'').trim();
+  if(!text||/연중무휴|휴무 없음|무휴/.test(text))return false;
+  if(/격주|공휴일|첫째|둘째|셋째|넷째|다섯째/.test(text))return false;
+  const compact=text.replace(/\s+/g,'');
+  const name=WEEKDAY_NAMES[index],short=WEEKDAY_SHORT[index];
+  if(compact.includes(name))return true;
+  if(new RegExp('매주'+short+'(?:요일)?').test(compact))return true;
+  const range=compact.match(/([월화수목금토일])(?:요일)?[~\-–—]([월화수목금토일])(?:요일)?/);
+  if(range&&daySpecMatchesIndex(range[0],index))return true;
+  if(compact.includes('평일')&&index<=4)return true;
+  if(compact.includes('주말')&&index>=5)return true;
+  return false;
+}
+function weeklyOperatingSchedule(row){
+  const genericHours=firstField(row,['hours','openingHours','businessHours','영업시간']);
+  const genericBreak=firstField(row,['breakTime','breakHours','브레이크타임']);
+  const genericLastOrder=firstField(row,['lastOrder','라스트오더']);
+  const closedDays=firstField(row,['closedDays','closedDay','휴무일']);
+  const hoursNote=firstField(row,['hoursNote','영업시간비고']);
+  return WEEKDAY_SHORT.map((short,index)=>{
+    const schedule=scheduleFromNoteForWeekday(hoursNote,index);
+    const closed=!!(schedule&&schedule.closed)||regularlyClosedOnWeekday_(closedDays,index);
+    return {
+      weekdayIndex:index,
+      weekdayName:WEEKDAY_NAMES[index],
+      shortName:short,
+      closed,
+      scheduleMatched:!!schedule,
+      hours:closed?'':String(schedule&&schedule.hours||genericHours||''),
+      breakTime:closed?'':String(schedule&&schedule.breakTime||genericBreak||''),
+      lastOrder:closed?'':String(schedule&&schedule.lastOrder||genericLastOrder||'')
+    };
+  });
+}
+function renderWeeklyHours(row){
+  const current=operatingInfo(row);
+  const closedDays=firstField(row,['closedDays','closedDay','휴무일']);
+  const hoursNote=firstField(row,['hoursNote','영업시간비고']);
+  const weekly=weeklyOperatingSchedule(row);
+  const hasAny=weekly.some(x=>x.closed||x.hours||x.breakTime||x.lastOrder)||closedDays||hoursNote;
+  if(!hasAny)return '';
+
+  const today=seoulDateInfo();
+  const summary=[];
+  if(current.label)summary.push('<span class="hours-state '+esc(current.status)+'">'+esc(current.label)+'</span>');
+  if(current.lastOrder)summary.push('<span>'+esc(current.lastOrder)+' 라스트오더</span>');
+  else if(current.text)summary.push('<span>'+esc(current.text)+'</span>');
+  else if(closedDays)summary.push('<span>'+esc(closedDays)+'</span>');
+  else summary.push('<span>요일별 영업시간</span>');
+
+  const rows=weekly.map(item=>{
+    const main=item.closed?'휴무':(item.hours||'정보 없음');
+    const sub=[
+      item.breakTime?('브레이크 '+item.breakTime):'',
+      item.lastOrder?('라스트오더 '+item.lastOrder):''
+    ].filter(Boolean).join(' · ');
+    const classes=['detail-hours-day'];
+    if(item.weekdayIndex===today.weekdayIndex)classes.push('today');
+    if(item.closed)classes.push('closed');
+    return '<div class="'+classes.join(' ')+'">'+
+      '<div class="detail-hours-day-name">'+esc(item.shortName)+'</div>'+
+      '<div class="detail-hours-day-value"><div>'+esc(main)+'</div>'+
+      (sub?'<div class="detail-hours-day-sub">'+esc(sub)+'</div>':'')+
+      '</div></div>';
+  }).join('');
+
+  const irregularNote=closedDays&&/격주|공휴일|첫째|둘째|셋째|넷째|다섯째/.test(closedDays)
+    ? '<div class="detail-hours-note">휴무 안내 · '+esc(closedDays)+'</div>'
+    : '';
+
+  return '<details class="detail-hours-disclosure">'+
+    '<summary><span class="detail-hours-summary-copy">'+summary.join('<span aria-hidden="true">·</span>')+'</span></summary>'+
+    '<div class="detail-hours-panel">'+rows+irregularNote+'</div>'+
+  '</details>';
+}
 function operatingInfo(row){
   const genericHours=firstField(row,['hours','openingHours','businessHours','영업시간']);
   const genericBreak=firstField(row,['breakTime','breakHours','브레이크타임']);
@@ -5775,34 +5891,32 @@ function renderRestaurantDetailInfo(row,place){
   const roadAddress=String(place&&place.road_address_name||'').trim();
   const address=roadAddress||String(row.address||'').trim();
   const hours=operatingInfo(row);
-  const lastOrder=hours.lastOrder||'';
-  const closedDays=firstField(row,['closedDays','closedDay','휴무일']);
-  const hoursNote=firstField(row,['hoursNote','영업시간비고']);
   const checkedAt=firstField(row,['hoursCheckedAt','영업시간확인일']);
   const hoursSource=firstField(row,['hoursSource','영업시간출처']);
   const placeUrl=String(place&&place.place_url||row._placeUrl||'').trim().replace(/^http:/i,'https:');
+  const weeklyHoursHtml=renderWeeklyHours(row);
 
   const infoRows=[
-    [hours.scheduleMatched?'오늘 영업시간':'영업시간',hours.text],['브레이크',hours.breakTime],['라스트오더',lastOrder],['휴무일',closedDays],
     ['특징',row.feature],['수용인원',row.capacity],['비고',row.note],['거리',distance?('세아타워 기준 '+distance):''],
-    ['전화',phone],['카카오 업종',kakaoCategory],['주소',address],['영업 참고',hoursNote]
+    ['전화',phone],['카카오 업종',kakaoCategory],['주소',address]
   ].filter(x=>String(x[1]||'').trim());
 
-  let html=infoRows.map(([label,value])=>{
+  let html='';
+  if(weeklyHoursHtml){
+    html+='<div class="detail-info-row detail-hours-info"><div class="detail-info-label">영업시간</div><div class="detail-info-value">'+weeklyHoursHtml+'</div></div>';
+  }else if(placeUrl){
+    html+='<div class="detail-info-row"><div class="detail-info-label">영업시간</div><div class="detail-info-value"><a class="detail-info-link" href="'+esc(placeUrl)+'" target="_blank" rel="noopener noreferrer">카카오맵에서 최신 영업시간 확인</a></div></div>';
+  }
+
+  html+=infoRows.map(([label,value])=>{
     let rendered=esc(value);
     if(label==='전화'){
       const tel=String(value||'').replace(/[^0-9+]/g,'');
       if(tel)rendered='<a class="detail-info-link" href="tel:'+esc(tel)+'">'+esc(value)+'</a>';
     }
-    if(label==='영업시간'||label==='오늘 영업시간'){
-      rendered=(hours.label?'<span class="hours-state '+esc(hours.status)+'">'+esc(hours.label)+'</span> · ':'')+esc(hours.text);
-    }
     return '<div class="detail-info-row"><div class="detail-info-label">'+esc(label)+'</div><div class="detail-info-value">'+rendered+'</div></div>';
   }).join('');
 
-  if(!hours.text&&placeUrl){
-    html+='<div class="detail-info-row"><div class="detail-info-label">영업시간</div><div class="detail-info-value"><a class="detail-info-link" href="'+esc(placeUrl)+'" target="_blank" rel="noopener noreferrer">카카오맵에서 최신 영업시간 확인</a></div></div>';
-  }
   if(checkedAt||hoursSource){
     const meta=[checkedAt?('확인 '+checkedAt):'',hoursSource?('출처 '+hoursSource):''].filter(Boolean).join(' · ');
     html+='<div class="detail-info-row"><div class="detail-info-label">정보 기준</div><div class="detail-info-value detail-info-sub">'+esc(meta)+'</div></div>';
@@ -6460,6 +6574,7 @@ function armPlaceCaptureTimeout(requestId){
         if(placeTextInput&&String(placeTextInput.value||'').trim()===originalText)placeTextInput.value='';
         setCaptureStatus('DB 반영은 완료되었습니다. 서버 완료 응답만 지연되었습니다.','success');
         showToast('DB 반영 완료 · 응답 지연만 발생했습니다.');
+        closePlaceCaptureModal();
       }else{
         setCaptureStatus('12초 안에 완료 응답을 받지 못했습니다. 다시 시도할 수 있습니다.','error');
       }
@@ -6650,6 +6765,7 @@ window.addEventListener('message',e=>{
   if(placeTextInput)placeTextInput.value='';
   pendingPlaceText=null;
   setPlaceCaptureBusy(false);
+  closePlaceCaptureModal();
   liveDbPromise=loadLiveDb().catch(()=>false);
 });
 
