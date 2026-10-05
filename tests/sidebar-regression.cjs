@@ -277,6 +277,25 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(rows.length>=2);
    await state(row=>selectRow(row,false,false),rows[0]);await page.waitForTimeout(160);
    assert.ok(await page.locator('#commentPanel').evaluate(el=>el.classList.contains('open')));
+   const detailType=await state(()=>{
+     const panel=document.getElementById('commentPanel');
+     const info=document.getElementById('detailInfo');
+     const value=info?.querySelector('.detail-info-value');
+     const hours=info?.querySelector('.detail-hours-disclosure');
+     if(hours)hours.open=true;
+     return {
+       width:panel.getBoundingClientRect().width,
+       overflow:info?info.scrollWidth-info.clientWidth:0,
+       valueFont:value?parseFloat(getComputedStyle(value).fontSize):0,
+       labelFont:parseFloat(getComputedStyle(document.querySelector('.detail-info-label')).fontSize),
+       sectionFont:parseFloat(getComputedStyle(document.querySelector('.detail-section-title')).fontSize)
+     };
+   });
+   assert.ok(detailType.width>=410,JSON.stringify(detailType));
+   assert.ok(detailType.overflow<=1,JSON.stringify(detailType));
+   assert.ok(detailType.valueFont>=15,JSON.stringify(detailType));
+   assert.ok(detailType.labelFont>=14,JSON.stringify(detailType));
+   assert.ok(detailType.sectionFont>=18,JSON.stringify(detailType));
    assert.ok(await page.locator('#detailDirectionsLink').evaluate(el=>el.getAttribute('href')?.startsWith('https://map.kakao.com/link/to/')));
    assert.ok(await page.locator('#detailShareButton').isVisible());
    assert.ok(await page.locator('#detailCompareButton').isVisible());
@@ -366,6 +385,20 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(await state(()=>commentPanel.classList.contains('open')&&sheetState==='hidden'&&document.body.classList.contains('detail-mobile-open')));
    const p=await page.locator('#commentPanel').boundingBox();
    assert.ok(Math.abs(p.x)<=1&&Math.abs(p.width-width)<=1&&p.y<=1,JSON.stringify(p));
+   const mobileDetail=await state(()=>{
+     const panel=document.getElementById('commentPanel');
+     const info=document.getElementById('detailInfo');
+     const hours=info?.querySelector('.detail-hours-disclosure');
+     if(hours)hours.open=true;
+     return {
+       panelOverflow:panel.scrollWidth-panel.clientWidth,
+       infoOverflow:info?info.scrollWidth-info.clientWidth:0,
+       valueFont:parseFloat(getComputedStyle(info?.querySelector('.detail-info-value')||panel).fontSize)
+     };
+   });
+   assert.ok(mobileDetail.panelOverflow<=1,JSON.stringify(mobileDetail));
+   assert.ok(mobileDetail.infoOverflow<=1,JSON.stringify(mobileDetail));
+   assert.ok(mobileDetail.valueFont>=14.5,JSON.stringify(mobileDetail));
    if(width===390)await shot('mobile-detail');
    await page.click('#commentClose');await page.waitForTimeout(350);
    assert.ok(await state(()=>!commentPanel.classList.contains('open')&&sheetState==='mid'&&!document.body.classList.contains('detail-mobile-open')));
