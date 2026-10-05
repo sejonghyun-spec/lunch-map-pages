@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-05-weekly-hours-v91">
+<meta name="lunch-map-build" content="2026-10-05-time-aware-hours-v92">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -5743,12 +5743,76 @@ function labeledRange_(text,labelRe){
   const norm=v=>{const [h,min]=v.split(':');return String(Number(h)).padStart(2,'0')+':'+min;};
   return norm(m[1])+'-'+norm(m[2]);
 }
-function labeledClock_(text,labelRe){
-  const source=String(text||'');
-  const m=source.match(new RegExp('(?:'+labelRe+')\\s*(\\d{1,2}:\\d{2})','i'));
+function normalizeClock_(value){
+  const m=String(value||'').match(/(\d{1,2}):(\d{2})/);
   if(!m)return '';
-  const [h,min]=m[1].split(':');
-  return String(Number(h)).padStart(2,'0')+':'+min;
+  const h=Number(m[1]),min=Number(m[2]);
+  if(h<0||h>23||min<0||min>59)return '';
+  return String(h).padStart(2,'0')+':'+String(min).padStart(2,'0');
+}
+function clockValues_(value){
+  return [...String(value||'').matchAll(/\b(\d{1,2}:\d{2})\b/g)]
+    .map(m=>normalizeClock_(m[1])).filter(Boolean);
+}
+function clockMinutes_(value){
+  const v=normalizeClock_(value);
+  if(!v)return null;
+  const [h,m]=v.split(':').map(Number);
+  return h*60+m;
+}
+function uniqueSortedClocks_(...values){
+  const set=new Set();
+  values.flat(Infinity).forEach(value=>clockValues_(value).forEach(v=>set.add(v)));
+  return [...set].sort((a,b)=>clockMinutes_(a)-clockMinutes_(b));
+}
+function filterClocksWithinHours_(values,hours){
+  const clocks=uniqueSortedClocks_(values);
+  const range=timeRangeMinutes(hours);
+  if(!range)return clocks;
+  const [start,end]=range;
+  return clocks.filter(value=>{
+    const n=clockMinutes_(value);
+    if(n==null)return false;
+    return end>=start?(n>=start&&n<=end):(n>=start||n<=end);
+  });
+}
+function labeledClocks_(text,labelRe){
+  const source=String(text||'');
+  const after=source.match(new RegExp('(?:'+labelRe+')\\s*((?:\\d{1,2}:\\d{2})(?:\\s*[,/·]\\s*\\d{1,2}:\\d{2})*)','i'));
+  if(after)return uniqueSortedClocks_(after[1]);
+  const before=source.match(new RegExp('((?:\\d{1,2}:\\d{2})(?:\\s*[,/·]\\s*\\d{1,2}:\\d{2})*)\\s*(?:'+labelRe+')','i'));
+  return before?uniqueSortedClocks_(before[1]):[];
+}
+function labeledClock_(text,labelRe){
+  return labeledClocks_(text,labelRe)[0]||'';
+}
+function splitDayLastOrders_(specificValues,genericValue,hours,breakTime){
+  const specific=filterClocksWithinHours_(specificValues,hours);
+  const generic=filterClocksWithinHours_(genericValue,hours);
+  if(!specific.length)return generic;
+  if(!generic.length)return specific;
+  const breakRange=timeRangeMinutes(breakTime);
+  const openRange=timeRangeMinutes(hours);
+  if(!breakRange)return specific;
+  const [breakStart,breakEnd]=breakRange;
+  const beforeBreak=specific.some(v=>{const n=clockMinutes_(v);return n!=null&&n<=breakStart;});
+  const afterBreak=generic.some(v=>{
+    const n=clockMinutes_(v);
+    if(n==null||n<breakEnd)return false;
+    if(!openRange)return true;
+    const [openStart,openEnd]=openRange;
+    return openEnd>=openStart?n<=openEnd:(n>=openStart||n<=openEnd);
+  });
+  return beforeBreak&&afterBreak?uniqueSortedClocks_(specific,generic):specific;
+}
+function relevantLastOrder_(values,nowMinutes=seoulClockMinutes()){
+  const orders=uniqueSortedClocks_(values);
+  if(!orders.length)return '';
+  const upcoming=orders.find(v=>clockMinutes_(v)>=nowMinutes);
+  return upcoming||orders[orders.length-1];
+}
+function formatLastOrders_(values){
+  return uniqueSortedClocks_(values).join(' · ');
 }
 function scheduleFromNoteForWeekday(note,index){
   const segments=String(note||'').split(/\s*[|;\n]+\s*/).map(x=>x.trim()).filter(Boolean);
@@ -5757,11 +5821,12 @@ function scheduleFromNoteForWeekday(note,index){
     const head=segment.match(/^(매일|평일|주말|[월화수목금토일](?:요일)?\s*[~\-–—]\s*[월화수목금토일](?:요일)?|[월화수목금토일](?:요일)?)(?:\s|$)/);
     if(!head||!daySpecMatchesIndex(head[1],index))return;
     const breakTime=labeledRange_(segment,'브레이크(?:타임)?|휴게(?:시간)?');
-    const lastOrder=labeledClock_(segment,'라스트\\s*오더|주문\\s*마감|마지막\\s*주문');
+    const lastOrders=labeledClocks_(segment,'라스트\\s*오더|주문\\s*마감|마지막\\s*주문');
+    const lastOrder=lastOrders[0]||'';
     const ranges=allTimeRanges_(segment);
     const hours=ranges.find(r=>r!==breakTime)||'';
     matches.push({
-      spec:head[1],hours,breakTime,lastOrder,
+      spec:head[1],hours,breakTime,lastOrder,lastOrders,
       closed:/휴무|휴점|정기휴일|쉬는\s*날/.test(segment),
       specificity:scheduleSpecificity_(head[1])
     });
@@ -5807,15 +5872,22 @@ function weeklyOperatingSchedule(row){
   return WEEKDAY_SHORT.map((short,index)=>{
     const schedule=scheduleFromNoteForWeekday(hoursNote,index);
     const closed=!!(schedule&&schedule.closed)||regularlyClosedOnWeekday_(closedDays,index);
+    const hours=closed?'':String(schedule?schedule.hours:(genericHours||''));
+    const breakTime=closed?'':String(schedule?schedule.breakTime:(genericBreak||''));
+    const lastOrders=closed?[]:(schedule
+      ? splitDayLastOrders_(schedule.lastOrders||schedule.lastOrder,genericLastOrder,hours,breakTime)
+      : uniqueSortedClocks_(genericLastOrder));
     return {
       weekdayIndex:index,
       weekdayName:WEEKDAY_NAMES[index],
       shortName:short,
       closed,
       scheduleMatched:!!schedule,
-      hours:closed?'':String(schedule?schedule.hours:(genericHours||'')),
-      breakTime:closed?'':String(schedule?schedule.breakTime:(genericBreak||'')),
-      lastOrder:closed?'':String(schedule?schedule.lastOrder:(genericLastOrder||''))
+      hours,
+      breakTime,
+      lastOrders,
+      lastOrder:lastOrders[lastOrders.length-1]||'',
+      lastOrderText:formatLastOrders_(lastOrders)
     };
   });
 }
@@ -5824,7 +5896,7 @@ function renderWeeklyHours(row){
   const closedDays=firstField(row,['closedDays','closedDay','휴무일']);
   const hoursNote=firstField(row,['hoursNote','영업시간비고']);
   const weekly=weeklyOperatingSchedule(row);
-  const hasAny=weekly.some(x=>x.closed||x.hours||x.breakTime||x.lastOrder)||closedDays||hoursNote;
+  const hasAny=weekly.some(x=>x.closed||x.hours||x.breakTime||x.lastOrders.length)||closedDays||hoursNote;
   if(!hasAny)return '';
 
   const today=seoulDateInfo();
@@ -5839,7 +5911,7 @@ function renderWeeklyHours(row){
     const main=item.closed?'휴무':(item.hours||'정보 없음');
     const sub=[
       item.breakTime?('브레이크 '+item.breakTime):'',
-      item.lastOrder?('라스트오더 '+item.lastOrder):''
+      item.lastOrders.length?('라스트오더 '+item.lastOrderText):''
     ].filter(Boolean).join(' · ');
     const classes=['detail-hours-day'];
     if(item.weekdayIndex===today.weekdayIndex)classes.push('today');
@@ -5861,27 +5933,27 @@ function renderWeeklyHours(row){
   '</details>';
 }
 function operatingInfo(row){
-  const genericHours=firstField(row,['hours','openingHours','businessHours','영업시간']);
-  const genericBreak=firstField(row,['breakTime','breakHours','브레이크타임']);
-  const genericLastOrder=firstField(row,['lastOrder','라스트오더']);
   const closedDays=firstField(row,['closedDays','closedDay','휴무일']);
-  const hoursNote=firstField(row,['hoursNote','영업시간비고']);
   const today=seoulDateInfo();
-  const schedule=scheduleFromNoteForWeekday(hoursNote,today.weekdayIndex);
-  const hours=schedule?String(schedule.hours||''):genericHours;
-  const breakTime=schedule?String(schedule.breakTime||''):genericBreak;
-  const lastOrder=schedule?String(schedule.lastOrder||''):genericLastOrder;
-  const scheduleMatched=!!schedule;
-  if((schedule&&schedule.closed)||isClosedToday(closedDays)){
-    return {status:'closed',label:'오늘 휴무',text:hours,breakTime,lastOrder,closedDays,scheduleMatched,weekdayName:today.weekdayName};
+  const weekly=weeklyOperatingSchedule(row);
+  const day=weekly[today.weekdayIndex]||{};
+  const hours=String(day.hours||'');
+  const breakTime=String(day.breakTime||'');
+  const lastOrders=Array.isArray(day.lastOrders)?day.lastOrders:[];
+  const now=seoulClockMinutes();
+  const lastOrder=relevantLastOrder_(lastOrders,now);
+  const scheduleMatched=!!day.scheduleMatched;
+  const base={text:hours,breakTime,lastOrder,lastOrders,lastOrderText:formatLastOrders_(lastOrders),closedDays,scheduleMatched,weekdayName:today.weekdayName};
+  if(day.closed||isClosedToday(closedDays)){
+    return {...base,status:'closed',label:'오늘 휴무'};
   }
-  if(!hours)return {status:'unknown',label:'',text:'',breakTime,lastOrder,closedDays,scheduleMatched,weekdayName:today.weekdayName};
-  const now=seoulClockMinutes(),openRange=timeRangeMinutes(hours),breakRange=timeRangeMinutes(breakTime);
-  if(breakRange&&minuteInRange(now,breakRange))return {status:'break',label:'브레이크타임',text:hours,breakTime,lastOrder,closedDays,scheduleMatched,weekdayName:today.weekdayName};
+  if(!hours)return {...base,status:'unknown',label:''};
+  const openRange=timeRangeMinutes(hours),breakRange=timeRangeMinutes(breakTime);
+  if(breakRange&&minuteInRange(now,breakRange))return {...base,status:'break',label:'브레이크타임'};
   if(openRange)return minuteInRange(now,openRange)
-    ? {status:'open',label:'영업중',text:hours,breakTime,lastOrder,closedDays,scheduleMatched,weekdayName:today.weekdayName}
-    : {status:'closed',label:'영업시간 외',text:hours,breakTime,lastOrder,closedDays,scheduleMatched,weekdayName:today.weekdayName};
-  return {status:'unknown',label:'영업시간',text:hours,breakTime,lastOrder,closedDays,scheduleMatched,weekdayName:today.weekdayName};
+    ? {...base,status:'open',label:'영업중'}
+    : {...base,status:'closed',label:'영업시간 외'};
+  return {...base,status:'unknown',label:'영업시간'};
 }
 function renderRestaurantDetailInfo(row,place){
   if(!row)return;
