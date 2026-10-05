@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-05-fast-text-v88">
+<meta name="lunch-map-build" content="2026-10-05-day-hours-v89">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -5647,29 +5647,124 @@ function minuteInRange(now,range){
   if(!range)return false;const [a,b]=range;
   return b>=a?(now>=a&&now<b):(now>=a||now<b);
 }
-function seoulWeekdayName(){
-  try{return new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',weekday:'long'}).format(new Date());}
-  catch(e){return ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'][new Date().getDay()];}
+const WEEKDAY_SHORT=['월','화','수','목','금','토','일'];
+function seoulDateInfo(){
+  try{
+    const parts=Object.fromEntries(new Intl.DateTimeFormat('ko-KR',{
+      timeZone:'Asia/Seoul',weekday:'long',day:'numeric'
+    }).formatToParts(new Date()).map(x=>[x.type,x.value]));
+    const short=String(parts.weekday||'').replace('요일','');
+    return {weekdayIndex:Math.max(0,WEEKDAY_SHORT.indexOf(short)),dayOfMonth:Number(parts.day)||1,weekdayName:short+'요일'};
+  }catch(e){
+    const d=new Date(),js=d.getDay(),idx=js===0?6:js-1;
+    return {weekdayIndex:idx,dayOfMonth:d.getDate(),weekdayName:WEEKDAY_SHORT[idx]+'요일'};
+  }
 }
-function isSimpleClosedToday(closedDays){
+function seoulWeekdayName(){return seoulDateInfo().weekdayName;}
+function weekdayIndexForShort(ch){return WEEKDAY_SHORT.indexOf(String(ch||'').replace('요일','').trim());}
+function daySpecMatchesIndex(spec,index){
+  const text=String(spec||'').replace(/\s+/g,'').replaceAll('요일','');
+  if(!text)return false;
+  if(text.includes('매일'))return true;
+  if(text.includes('평일'))return index>=0&&index<=4;
+  if(text.includes('주말'))return index>=5;
+  const range=text.match(/([월화수목금토일])[~\-–—]([월화수목금토일])/);
+  if(range){
+    const a=weekdayIndexForShort(range[1]),b=weekdayIndexForShort(range[2]);
+    if(a<0||b<0)return false;
+    return a<=b?(index>=a&&index<=b):(index>=a||index<=b);
+  }
+  const days=[...text.matchAll(/[월화수목금토일]/g)].map(m=>weekdayIndexForShort(m[0])).filter(v=>v>=0);
+  return days.includes(index);
+}
+function scheduleSpecificity_(spec){
+  const text=String(spec||'');
+  if(/^[월화수목금토일](?:요일)?$/.test(text.trim()))return 4;
+  if(/[월화수목금토일](?:요일)?\s*[~\-–—]/.test(text))return 3;
+  if(/평일|주말/.test(text))return 2;
+  if(/매일/.test(text))return 1;
+  return 0;
+}
+function allTimeRanges_(text){
+  const out=[];
+  const re=/(\d{1,2}):(\d{2})\s*(?:~|-|–|—)\s*(\d{1,2}):(\d{2})/g;
+  let m;
+  while((m=re.exec(String(text||'')))){
+    const value=String(Number(m[1])).padStart(2,'0')+':'+m[2]+'-'+String(Number(m[3])).padStart(2,'0')+':'+m[4];
+    if(!out.includes(value))out.push(value);
+  }
+  return out;
+}
+function labeledRange_(text,labelRe){
+  const source=String(text||'');
+  const m=source.match(new RegExp('(?:'+labelRe+')\\s*(\\d{1,2}:\\d{2})\\s*(?:~|-|–|—)\\s*(\\d{1,2}:\\d{2})','i'));
+  if(!m)return '';
+  const norm=v=>{const [h,min]=v.split(':');return String(Number(h)).padStart(2,'0')+':'+min;};
+  return norm(m[1])+'-'+norm(m[2]);
+}
+function labeledClock_(text,labelRe){
+  const source=String(text||'');
+  const m=source.match(new RegExp('(?:'+labelRe+')\\s*(\\d{1,2}:\\d{2})','i'));
+  if(!m)return '';
+  const [h,min]=m[1].split(':');
+  return String(Number(h)).padStart(2,'0')+':'+min;
+}
+function scheduleFromNoteForWeekday(note,index){
+  const segments=String(note||'').split(/\s*[|;\n]+\s*/).map(x=>x.trim()).filter(Boolean);
+  const matches=[];
+  segments.forEach(segment=>{
+    const head=segment.match(/^(매일|평일|주말|[월화수목금토일](?:요일)?\s*[~\-–—]\s*[월화수목금토일](?:요일)?|[월화수목금토일](?:요일)?)(?:\s|$)/);
+    if(!head||!daySpecMatchesIndex(head[1],index))return;
+    const breakTime=labeledRange_(segment,'브레이크(?:타임)?|휴게(?:시간)?');
+    const lastOrder=labeledClock_(segment,'라스트\\s*오더|주문\\s*마감|마지막\\s*주문');
+    const ranges=allTimeRanges_(segment);
+    const hours=ranges.find(r=>r!==breakTime)||'';
+    matches.push({
+      spec:head[1],hours,breakTime,lastOrder,
+      closed:/휴무|휴점|정기휴일|쉬는\s*날/.test(segment),
+      specificity:scheduleSpecificity_(head[1])
+    });
+  });
+  if(!matches.length)return null;
+  matches.sort((a,b)=>b.specificity-a.specificity);
+  return matches[0];
+}
+function isClosedToday(closedDays){
   const text=String(closedDays||'').trim();
   if(!text||/연중무휴|휴무 없음|무휴/.test(text))return false;
-  if(/둘째|셋째|넷째|첫째|격주|매월|공휴일|2주|3주|4주/.test(text))return false;
-  const today=seoulWeekdayName();
-  return text.includes(today)||text.includes(today.replace('요일',''));
+  const info=seoulDateInfo(),idx=info.weekdayIndex,short=WEEKDAY_SHORT[idx];
+  if(/격주|공휴일/.test(text)&&!/첫째|둘째|셋째|넷째|다섯째/.test(text))return false;
+  const ordinals={첫째:1,둘째:2,셋째:3,넷째:4,다섯째:5};
+  const ordinalHits=Object.entries(ordinals).filter(([word])=>text.includes(word)).map(([,n])=>n);
+  if(ordinalHits.length){
+    const week=Math.ceil(info.dayOfMonth/7);
+    return text.includes(short)&&ordinalHits.includes(week);
+  }
+  if(/매주/.test(text))return text.includes(short);
+  return daySpecMatchesIndex(text,idx);
 }
 function operatingInfo(row){
-  const hours=firstField(row,['hours','openingHours','businessHours','영업시간']);
-  const breakTime=firstField(row,['breakTime','breakHours','브레이크타임']);
+  const genericHours=firstField(row,['hours','openingHours','businessHours','영업시간']);
+  const genericBreak=firstField(row,['breakTime','breakHours','브레이크타임']);
+  const genericLastOrder=firstField(row,['lastOrder','라스트오더']);
   const closedDays=firstField(row,['closedDays','closedDay','휴무일']);
-  if(isSimpleClosedToday(closedDays))return {status:'closed',label:'오늘 휴무',text:hours,breakTime,closedDays};
-  if(!hours)return {status:'unknown',label:'',text:'',breakTime,closedDays};
+  const hoursNote=firstField(row,['hoursNote','영업시간비고']);
+  const today=seoulDateInfo();
+  const schedule=scheduleFromNoteForWeekday(hoursNote,today.weekdayIndex);
+  const hours=schedule?String(schedule.hours||''):genericHours;
+  const breakTime=schedule?String(schedule.breakTime||''):genericBreak;
+  const lastOrder=schedule?String(schedule.lastOrder||''):genericLastOrder;
+  const scheduleMatched=!!schedule;
+  if((schedule&&schedule.closed)||isClosedToday(closedDays)){
+    return {status:'closed',label:'오늘 휴무',text:hours,breakTime,lastOrder,closedDays,scheduleMatched,weekdayName:today.weekdayName};
+  }
+  if(!hours)return {status:'unknown',label:'',text:'',breakTime,lastOrder,closedDays,scheduleMatched,weekdayName:today.weekdayName};
   const now=seoulClockMinutes(),openRange=timeRangeMinutes(hours),breakRange=timeRangeMinutes(breakTime);
-  if(breakRange&&minuteInRange(now,breakRange))return {status:'break',label:'브레이크타임',text:hours,breakTime,closedDays};
+  if(breakRange&&minuteInRange(now,breakRange))return {status:'break',label:'브레이크타임',text:hours,breakTime,lastOrder,closedDays,scheduleMatched,weekdayName:today.weekdayName};
   if(openRange)return minuteInRange(now,openRange)
-    ? {status:'open',label:'영업중',text:hours,breakTime,closedDays}
-    : {status:'closed',label:'영업시간 외',text:hours,breakTime,closedDays};
-  return {status:'unknown',label:'영업시간',text:hours,breakTime,closedDays};
+    ? {status:'open',label:'영업중',text:hours,breakTime,lastOrder,closedDays,scheduleMatched,weekdayName:today.weekdayName}
+    : {status:'closed',label:'영업시간 외',text:hours,breakTime,lastOrder,closedDays,scheduleMatched,weekdayName:today.weekdayName};
+  return {status:'unknown',label:'영업시간',text:hours,breakTime,lastOrder,closedDays,scheduleMatched,weekdayName:today.weekdayName};
 }
 function renderRestaurantDetailInfo(row,place){
   if(!row)return;
@@ -5679,7 +5774,7 @@ function renderRestaurantDetailInfo(row,place){
   const roadAddress=String(place&&place.road_address_name||'').trim();
   const address=roadAddress||String(row.address||'').trim();
   const hours=operatingInfo(row);
-  const lastOrder=firstField(row,['lastOrder','라스트오더']);
+  const lastOrder=hours.lastOrder||'';
   const closedDays=firstField(row,['closedDays','closedDay','휴무일']);
   const hoursNote=firstField(row,['hoursNote','영업시간비고']);
   const checkedAt=firstField(row,['hoursCheckedAt','영업시간확인일']);
@@ -5687,7 +5782,7 @@ function renderRestaurantDetailInfo(row,place){
   const placeUrl=String(place&&place.place_url||row._placeUrl||'').trim().replace(/^http:/i,'https:');
 
   const infoRows=[
-    ['영업시간',hours.text],['브레이크',hours.breakTime],['라스트오더',lastOrder],['휴무일',closedDays],
+    [hours.scheduleMatched?'오늘 영업시간':'영업시간',hours.text],['브레이크',hours.breakTime],['라스트오더',lastOrder],['휴무일',closedDays],
     ['특징',row.feature],['수용인원',row.capacity],['비고',row.note],['거리',distance?('세아타워 기준 '+distance):''],
     ['전화',phone],['카카오 업종',kakaoCategory],['주소',address],['영업 참고',hoursNote]
   ].filter(x=>String(x[1]||'').trim());
@@ -5698,7 +5793,7 @@ function renderRestaurantDetailInfo(row,place){
       const tel=String(value||'').replace(/[^0-9+]/g,'');
       if(tel)rendered='<a class="detail-info-link" href="tel:'+esc(tel)+'">'+esc(value)+'</a>';
     }
-    if(label==='영업시간'){
+    if(label==='영업시간'||label==='오늘 영업시간'){
       rendered=(hours.label?'<span class="hours-state '+esc(hours.status)+'">'+esc(hours.label)+'</span> · ':'')+esc(hours.text);
     }
     return '<div class="detail-info-row"><div class="detail-info-label">'+esc(label)+'</div><div class="detail-info-value">'+rendered+'</div></div>';
