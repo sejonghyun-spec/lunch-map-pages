@@ -31,7 +31,12 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
  await context.route('https://script.google.com/**',r=>{
    const u=new URL(r.request().url());const mode=u.searchParams.get('mode');apiRequests.push(mode||r.request().method());
    const callback=u.searchParams.get('callback');
-   if(callback&&/^[a-zA-Z0-9_]+$/.test(callback))return r.fulfill({contentType:'application/javascript',body:callback+'('+JSON.stringify(mode==='data'?{rows:data.rows,commentsByKey:bundle}:mode==='comments'?{comments:bundle[u.searchParams.get('key')]||[]}:{authRequired:true})+');'});
+   if(callback&&/^[a-zA-Z0-9_]+$/.test(callback))return r.fulfill({contentType:'application/javascript',body:callback+'('+JSON.stringify(
+     mode==='data'?{rows:data.rows,commentsByKey:bundle,loadedAt:Date.now()}:
+     mode==='comments'?{comments:bundle[u.searchParams.get('key')]||[]}:
+     mode==='reviewChanges'?{ok:true,changes:[],serverTime:Date.now(),user:{email:'qa@seah.co.kr',name:'QA'}}:
+     {authRequired:true}
+   )+');'});
    return r.fulfill({contentType:'text/html',body:'<!doctype html><title>Account connection test</title>'});
  });
  page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
@@ -243,12 +248,9 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
 
    const external=await state(()=>{
      const key=window.__reviewAlertTestKey;
-     processReviewMonitorBundle_({
-       [key]:[
-         {id:'review-new-1',nickname:'동료',comment:'새 후기입니다',createdAt:'11:00',canDelete:false},
-         {id:'review-old-1',nickname:'기존',comment:'기존 후기',createdAt:'10:00',canDelete:false}
-       ]
-     },{notify:false});
+     processReviewChanges_([
+       {key,id:'review-new-1',nickname:'동료',comment:'새 후기입니다',createdAt:'11:00',canDelete:false}
+     ],Date.now(),{notify:false});
      stopReviewMonitor_();
      return {
        count:unreadReviewItems.length,
@@ -268,17 +270,18 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    const ownIgnored=await state(()=>{
      const key=window.__reviewAlertTestKey;
      ownRecentCommentIds.add('review-mine-1');
-     processReviewMonitorBundle_({
-       [key]:[
-         {id:'review-mine-1',nickname:'QA',comment:'내 후기',createdAt:'11:01',canDelete:true},
-         {id:'review-new-1',nickname:'동료',comment:'새 후기입니다',createdAt:'11:00',canDelete:false},
-         {id:'review-old-1',nickname:'기존',comment:'기존 후기',createdAt:'10:00',canDelete:false}
-       ]
-     },{notify:false});
+     processReviewChanges_([
+       {key,id:'review-mine-1',nickname:'QA',comment:'내 후기',createdAt:'11:01',canDelete:true}
+     ],Date.now(),{notify:false});
      stopReviewMonitor_();
      return unreadReviewItems.length;
    });
    assert.equal(ownIgnored,1);
+   const apiBefore=apiRequests.length;
+   const deltaResult=await state(()=>fetchReviewChangesSnapshot_(Date.now()-1000,3000));
+   assert.ok(Array.isArray(deltaResult.changes));
+   assert.ok(deltaResult.serverTime>0);
+   assert.ok(apiRequests.slice(apiBefore).includes('reviewChanges'));
 
    await page.locator('#reviewAlertList .review-alert-item').first().click();
    await page.waitForTimeout(140);
