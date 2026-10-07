@@ -404,6 +404,19 @@ button,input,select,textarea{font:inherit}
   font-size:13px;
   font-weight:650;
 }
+.card-new-review{
+  display:inline-flex;
+  align-items:center;
+  min-height:19px;
+  border-radius:999px;
+  padding:2px 6px;
+  background:#d9483b;
+  color:#fff;
+  font-size:10.5px;
+  font-weight:900;
+  line-height:1;
+  white-space:nowrap;
+}
 .toast.action{
   pointer-events:auto;
   cursor:pointer;
@@ -5509,6 +5522,7 @@ function updateCardReviewCounts(){
     el.hidden=!Array.isArray(rows);
     el.textContent=Array.isArray(rows)?'후기 '+rows.length:'';
   });
+  syncReviewNewBadges();
 }
 function updateListHeading(count){
   const searchMode=!!searchKeyword.trim();
@@ -6341,6 +6355,11 @@ function loadStaticData(){
 }
 
 const accountButton=document.getElementById('accountButton');
+const reviewAlertButton=document.getElementById('reviewAlertButton');
+const reviewAlertCount=document.getElementById('reviewAlertCount');
+const reviewAlertPanel=document.getElementById('reviewAlertPanel');
+const reviewAlertList=document.getElementById('reviewAlertList');
+const reviewAlertMarkAll=document.getElementById('reviewAlertMarkAll');
 
 function updateAccountUI(user,needsAuth=false){
   if(user&&user.email){
@@ -6358,6 +6377,7 @@ function updateAccountUI(user,needsAuth=false){
   }
   syncDetailAdminAction();
   syncPlaceCaptureUI();
+  syncReviewMonitorAccountState();
   if(commentPanel&&commentPanel.classList.contains('open')){
     renderComments(currentCommentRows);
   }
@@ -6491,7 +6511,10 @@ window.addEventListener('message',e=>{
 });
 
 window.addEventListener('focus',()=>{
-  if(currentAccount)return;
+  if(currentAccount){
+    checkForNewReviews({force:true});
+    return;
+  }
   const now=Date.now();
   if(now-lastAuthRetry<700)return;
   lastAuthRetry=now;
@@ -6507,7 +6530,298 @@ function ensureCompanyAccount(){
   return false;
 }
 
-function applyCommentBundle(bundle){
+function reviewCommentId_(row,key,index=0){
+  const id=String(row&&row.id||'').trim();
+  if(id)return id;
+  return 'review:'+String(key||'')+'|'+String(row&&row.createdAt||'')+'|'+String(row&&row.nickname||'')+'|'+String(row&&row.comment||'')+'|'+index;
+}
+function flattenReviewBundle_(bundle){
+  const items=[];
+  if(!bundle||typeof bundle!=='object')return items;
+  Object.entries(bundle).forEach(([key,rows])=>{
+    (Array.isArray(rows)?rows:[]).forEach((row,index)=>{
+      if(!row)return;
+      items.push({
+        id:reviewCommentId_(row,key,index),
+        key:String(key||''),
+        row
+      });
+    });
+  });
+  return items;
+}
+function reviewRestaurantForKey_(key){
+  return displayRestaurants().find(row=>restaurantCommentKey(row)===key)||null;
+}
+function reviewRestaurantName_(item){
+  const restaurant=reviewRestaurantForKey_(item&&item.key);
+  if(restaurant&&restaurant.name)return restaurant.name;
+  const fromKey=String(item&&item.key||'').split('||')[0].trim();
+  return fromKey||'식당';
+}
+function readReviewStorageIds_(key){
+  const rows=readLocalJson(key,[]);
+  return Array.isArray(rows)?rows.map(String).filter(Boolean):[];
+}
+function persistReviewMonitorState_(){
+  writeLocalJson(REVIEW_KNOWN_IDS_KEY,[...reviewMonitorKnownIds].slice(-1200));
+  writeLocalJson(REVIEW_UNREAD_IDS_KEY,unreadReviewItems.map(item=>item.id).slice(0,120));
+  try{localStorage.setItem(REVIEW_MONITOR_INIT_KEY,'1');}catch(e){}
+}
+function isOwnReviewItem_(item){
+  if(!item)return false;
+  if(ownRecentCommentIds.has(item.id))return true;
+  return item.row&&item.row.canDelete===true;
+}
+function unreadReviewKeys_(){
+  return new Set(unreadReviewItems.map(item=>item.key));
+}
+function syncReviewNewBadges(){
+  const unreadKeys=unreadReviewKeys_();
+  document.querySelectorAll('.card').forEach(card=>{
+    const row=dataForRow(Number(card.dataset.row));
+    const key=row?restaurantCommentKey(row):'';
+    const show=!!key&&unreadKeys.has(key);
+    let badge=card.querySelector('.card-new-review');
+    if(show&&!badge){
+      badge=document.createElement('span');
+      badge.className='card-new-review';
+      badge.textContent='NEW 후기';
+      const stats=card.querySelector('.card-stats,.mobile-card-meta');
+      if(stats)stats.appendChild(badge);
+    }else if(!show&&badge){
+      badge.remove();
+    }
+  });
+}
+function renderReviewAlertList_(){
+  if(!reviewAlertList)return;
+  if(!unreadReviewItems.length){
+    reviewAlertList.innerHTML='<div class="review-alert-empty">새로 확인할 후기가 없습니다.</div>';
+    return;
+  }
+  reviewAlertList.innerHTML=unreadReviewItems.slice(0,20).map(item=>{
+    const row=item.row||{};
+    const copy=String(row.comment||'').trim()||'새 후기가 등록되었습니다.';
+    const nick=String(row.nickname||'').trim();
+    const prefix=nick?nick+' · ':'';
+    return '<button type="button" class="review-alert-item" data-review-id="'+esc(item.id)+'">'+
+      '<span class="review-alert-item-name">'+esc(reviewRestaurantName_(item))+'</span>'+
+      '<span class="review-alert-item-time">'+esc(row.createdAt||'방금')+'</span>'+
+      '<span class="review-alert-item-copy">'+esc(prefix+copy)+'</span>'+
+    '</button>';
+  }).join('');
+  reviewAlertList.querySelectorAll('.review-alert-item').forEach(btn=>{
+    btn.addEventListener('click',()=>openUnreadReview_(btn.dataset.reviewId));
+  });
+}
+function syncReviewAlertUI(){
+  if(!reviewAlertButton)return;
+  const count=unreadReviewItems.length;
+  reviewAlertButton.hidden=!currentAccount||count<1;
+  reviewAlertButton.classList.toggle('has-unread',count>0);
+  reviewAlertCount.textContent=count>99?'99+':String(count);
+  reviewAlertButton.setAttribute('aria-label',count?'새 후기 '+count+'개':'새 후기 없음');
+  if(!currentAccount||!count){
+    reviewAlertPanel.hidden=true;
+    reviewAlertButton.setAttribute('aria-expanded','false');
+  }
+  renderReviewAlertList_();
+  syncReviewNewBadges();
+}
+function markReviewIdsRead_(ids){
+  const set=new Set((ids||[]).map(String));
+  if(!set.size)return;
+  unreadReviewItems=unreadReviewItems.filter(item=>!set.has(item.id));
+  persistReviewMonitorState_();
+  syncReviewAlertUI();
+}
+function markRestaurantReviewsRead(key){
+  const ids=unreadReviewItems.filter(item=>item.key===key).map(item=>item.id);
+  markReviewIdsRead_(ids);
+}
+function markAllReviewsRead_(){
+  unreadReviewItems=[];
+  persistReviewMonitorState_();
+  syncReviewAlertUI();
+}
+function closeReviewAlertPanel_(){
+  if(!reviewAlertPanel||!reviewAlertButton)return;
+  reviewAlertPanel.hidden=true;
+  reviewAlertButton.setAttribute('aria-expanded','false');
+}
+function toggleReviewAlertPanel_(){
+  if(!reviewAlertPanel||!reviewAlertButton||reviewAlertButton.hidden)return;
+  const open=reviewAlertPanel.hidden;
+  reviewAlertPanel.hidden=!open;
+  reviewAlertButton.setAttribute('aria-expanded',open?'true':'false');
+  if(open&&isMobile()){
+    document.getElementById('headerActions')?.classList.remove('mobile-open');
+    const menu=document.getElementById('mobileMenuButton');
+    menu?.classList.remove('open');
+    menu?.setAttribute('aria-expanded','false');
+  }
+}
+function openUnreadReview_(id){
+  const item=unreadReviewItems.find(x=>x.id===String(id||''));
+  if(!item)return;
+  const restaurant=reviewRestaurantForKey_(item.key);
+  markReviewIdsRead_([item.id]);
+  closeReviewAlertPanel_();
+  if(!restaurant){
+    showToast('해당 식당을 찾지 못했습니다.');
+    return;
+  }
+  selectRow(restaurant.row,true,false);
+  setTimeout(()=>{
+    setDetailTab('reviews',false);
+    markRestaurantReviewsRead(item.key);
+  },80);
+}
+function showNewReviewNotice_(items){
+  if(!items.length)return;
+  const first=items[0];
+  const keys=new Set(items.map(item=>item.key));
+  const message=items.length===1
+    ? reviewRestaurantName_(first)+'에 새 후기가 등록되었습니다.'
+    : '새 후기 '+items.length+'개 · '+reviewRestaurantName_(first)+(keys.size>1?' 외 '+(keys.size-1)+'곳':'');
+  showToast(message,()=>openUnreadReview_(first.id));
+}
+function addUnreadReviewItems_(items,{notify=true}={}){
+  const existing=new Set(unreadReviewItems.map(item=>item.id));
+  const added=[];
+  items.forEach(item=>{
+    if(!item||existing.has(item.id)||isOwnReviewItem_(item))return;
+    unreadReviewItems.unshift(item);
+    existing.add(item.id);
+    added.push(item);
+  });
+  if(unreadReviewItems.length>120)unreadReviewItems=unreadReviewItems.slice(0,120);
+  if(added.length&&notify)showNewReviewNotice_(added);
+  return added;
+}
+function processReviewMonitorBundle_(bundle,{notify=true}={}){
+  const flat=flattenReviewBundle_(bundle);
+  const currentById=new Map(flat.map(item=>[item.id,item]));
+
+  if(!reviewMonitorBaselineReady){
+    const savedKnown=new Set(readReviewStorageIds_(REVIEW_KNOWN_IDS_KEY));
+    const savedUnread=new Set(readReviewStorageIds_(REVIEW_UNREAD_IDS_KEY));
+    let hadHistory=false;
+    try{hadHistory=localStorage.getItem(REVIEW_MONITOR_INIT_KEY)==='1';}catch(e){}
+
+    reviewMonitorKnownIds=new Set(savedKnown);
+    unreadReviewItems=flat.filter(item=>savedUnread.has(item.id)&&!isOwnReviewItem_(item));
+
+    const initialNew=hadHistory&&savedKnown.size
+      ? flat.filter(item=>!savedKnown.has(item.id))
+      : [];
+
+    flat.forEach(item=>reviewMonitorKnownIds.add(item.id));
+    reviewMonitorBaselineReady=true;
+    reviewMonitorLastCheck=Date.now();
+    addUnreadReviewItems_(initialNew,{notify});
+    persistReviewMonitorState_();
+    syncReviewAlertUI();
+    startReviewMonitor_();
+    return initialNew;
+  }
+
+  const newlyAdded=flat.filter(item=>!reviewMonitorKnownIds.has(item.id));
+  flat.forEach(item=>reviewMonitorKnownIds.add(item.id));
+
+  // Refresh display text/time for unread items that still exist, and drop deleted reviews.
+  unreadReviewItems=unreadReviewItems
+    .map(item=>currentById.get(item.id)||null)
+    .filter(Boolean)
+    .filter(item=>!isOwnReviewItem_(item));
+
+  const added=addUnreadReviewItems_(newlyAdded,{notify});
+  reviewMonitorLastCheck=Date.now();
+  persistReviewMonitorState_();
+  syncReviewAlertUI();
+  return added;
+}
+function stopReviewMonitor_(){
+  if(reviewMonitorTimer){
+    clearInterval(reviewMonitorTimer);
+    reviewMonitorTimer=null;
+  }
+}
+function startReviewMonitor_(){
+  if(reviewMonitorTimer||!currentAccount||!reviewMonitorBaselineReady)return;
+  reviewMonitorTimer=setInterval(()=>{
+    if(document.visibilityState==='visible')checkForNewReviews();
+  },REVIEW_POLL_INTERVAL_MS);
+}
+function syncReviewMonitorAccountState(){
+  if(currentAccount&&reviewMonitorBaselineReady)startReviewMonitor_();
+  else if(!currentAccount)stopReviewMonitor_();
+  syncReviewAlertUI();
+}
+function fetchReviewBundleSnapshot_(timeoutMs=8000){
+  return new Promise((resolve,reject)=>{
+    const callback='__lunchReviewMonitor_'+Date.now()+Math.random().toString(36).slice(2);
+    const script=document.createElement('script');
+    let done=false;
+    const finish=(value,error)=>{
+      if(done)return;
+      done=true;
+      clearTimeout(timer);
+      try{delete window[callback];}catch(e){window[callback]=undefined;}
+      script.remove();
+      error?reject(error):resolve(value||{});
+    };
+    const timer=setTimeout(()=>finish(null,new Error('review monitor timeout')),timeoutMs);
+    window[callback]=payload=>{
+      if(payload&&payload.authRequired){
+        updateAccountUI(null,true);
+        finish(null,new Error('review monitor auth required'));
+        return;
+      }
+      if(payload&&payload.user)updateAccountUI(payload.user,false);
+      if(payload&&payload.ok===false){
+        finish(null,new Error(payload.message||'review monitor failed'));
+        return;
+      }
+      finish(payload&&payload.commentsByKey&&typeof payload.commentsByKey==='object'?payload.commentsByKey:{},null);
+    };
+    script.onerror=()=>finish(null,new Error('review monitor load failed'));
+    script.src=SUGGEST_URL+'?mode=data&callback='+encodeURIComponent(callback)+'&t='+Date.now();
+    script.async=true;
+    document.head.appendChild(script);
+  });
+}
+async function checkForNewReviews({force=false}={}){
+  if(!currentAccount||!reviewMonitorBaselineReady||reviewMonitorInFlight||document.visibilityState!=='visible')return false;
+  const now=Date.now();
+  if(now-reviewMonitorLastCheck<REVIEW_POLL_MIN_GAP_MS)return false;
+  if(!force&&now-reviewMonitorLastCheck<REVIEW_POLL_INTERVAL_MS-1000)return false;
+  reviewMonitorInFlight=true;
+  try{
+    const bundle=await fetchReviewBundleSnapshot_(8000);
+    processReviewMonitorBundle_(bundle,{notify:true});
+    applyCommentBundle(bundle,{skipMonitor:true});
+    return true;
+  }catch(e){
+    return false;
+  }finally{
+    reviewMonitorInFlight=false;
+  }
+}
+reviewAlertButton?.addEventListener('click',event=>{
+  event.stopPropagation();
+  toggleReviewAlertPanel_();
+});
+reviewAlertPanel?.addEventListener('click',event=>event.stopPropagation());
+reviewAlertMarkAll?.addEventListener('click',markAllReviewsRead_);
+document.addEventListener('click',closeReviewAlertPanel_);
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&currentAccount)checkForNewReviews({force:true});
+});
+
+function applyCommentBundle(bundle,{skipMonitor=false}={}){
+  if(!skipMonitor)processReviewMonitorBundle_(bundle,{notify:true});
   preloadedComments.clear();
   if(bundle&&typeof bundle==='object'){
     Object.entries(bundle).forEach(([key,rows])=>{
@@ -7337,6 +7651,7 @@ function setDetailTab(tab,fromUser=false){
 
   if(valid==='reviews'&&commentRestaurant){
     const key=restaurantCommentKey(commentRestaurant);
+    markRestaurantReviewsRead(key);
     const hasCached=preloadedComments.has(key);
     if(!currentAccount&&!hasCached&&fromUser){
       openAccountConnection();
@@ -7546,6 +7861,10 @@ commentForm.addEventListener('submit',e=>{
     wait:commentWait?.value||''
   };
   const commentId=makeClientCommentId();
+  ownRecentCommentIds.add(commentId);
+  reviewMonitorKnownIds.add(commentId);
+  reviewMonitorLastCheck=Date.now();
+  setTimeout(()=>ownRecentCommentIds.delete(commentId),10*60*1000);
   const nickname=getCommentNickname();
   const optimisticRow={
     id:commentId,
@@ -7763,12 +8082,22 @@ const suggestStatus=document.getElementById('suggestStatus');
 const suggestSubmit=document.getElementById('suggestSubmit');
 const suggestSink=document.getElementById('suggestSink');
 
-function showToast(message){
+function showToast(message,onClick=null){
   const el=document.getElementById('toast');
   el.textContent=message;
+  el.classList.toggle('action',typeof onClick==='function');
+  el.onclick=typeof onClick==='function'?()=>{
+    const action=onClick;
+    el.classList.remove('show','action');
+    el.onclick=null;
+    action();
+  }:null;
   el.classList.add('show');
   clearTimeout(showToast._t);
-  showToast._t=setTimeout(()=>el.classList.remove('show'),2400);
+  showToast._t=setTimeout(()=>{
+    el.classList.remove('show','action');
+    el.onclick=null;
+  },typeof onClick==='function'?5200:2400);
 }
 
 function applySuggestModeUI(){
