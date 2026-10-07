@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-05-detail-type-v93">
+<meta name="lunch-map-build" content="2026-10-07-review-alerts-v94">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -279,6 +279,139 @@ button,input,select,textarea{font:inherit}
   border-color:#e8b4a2;
   background:#fff5f0;
   color:#a1492b;
+}
+.review-alert-btn{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  height:42px;
+  border:1px solid #d9d1cb;
+  border-radius:12px;
+  padding:0 11px;
+  background:#fff;
+  color:#4f575c;
+  font-size:13px;
+  font-weight:800;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.review-alert-btn:hover{background:#f7f9fa;border-color:#c7d0d5}
+.review-alert-btn.has-unread{
+  border-color:#e7bf4a;
+  background:#fff9df;
+  color:#7b5c00;
+}
+.review-alert-count{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:22px;
+  height:22px;
+  border-radius:999px;
+  padding:0 6px;
+  background:#d9483b;
+  color:#fff;
+  font-size:11px;
+  font-weight:900;
+  line-height:1;
+}
+.review-alert-panel{
+  position:fixed;
+  top:66px;
+  right:16px;
+  z-index:1150;
+  width:min(390px,calc(100vw - 24px));
+  max-height:min(540px,72dvh);
+  overflow:hidden;
+  border:1px solid #dce2e5;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 18px 48px rgba(27,37,43,.22);
+}
+.review-alert-panel[hidden]{display:none}
+.review-alert-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 15px 12px;
+  border-bottom:1px solid #edf0f2;
+}
+.review-alert-head strong{
+  color:#273036;
+  font-size:15px;
+  font-weight:900;
+}
+.review-alert-mark-all{
+  border:0;
+  background:transparent;
+  color:#68747a;
+  font-size:12px;
+  font-weight:750;
+  cursor:pointer;
+}
+.review-alert-list{
+  max-height:min(450px,62dvh);
+  overflow:auto;
+  padding:6px;
+}
+.review-alert-item{
+  width:100%;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:4px 10px;
+  border:0;
+  border-radius:11px;
+  padding:11px 10px;
+  background:#fff;
+  color:#30383d;
+  text-align:left;
+  cursor:pointer;
+}
+.review-alert-item:hover{background:#f6f8f9}
+.review-alert-item-name{
+  overflow:hidden;
+  color:#263036;
+  font-size:13.5px;
+  font-weight:850;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.review-alert-item-time{
+  align-self:start;
+  color:#8a9499;
+  font-size:11px;
+  font-weight:650;
+  white-space:nowrap;
+}
+.review-alert-item-copy{
+  grid-column:1/-1;
+  display:-webkit-box;
+  overflow:hidden;
+  color:#5c686e;
+  font-size:12.5px;
+  font-weight:600;
+  line-height:1.45;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+}
+.review-alert-empty{
+  padding:24px 14px;
+  color:#899399;
+  text-align:center;
+  font-size:13px;
+  font-weight:650;
+}
+.toast.action{
+  pointer-events:auto;
+  cursor:pointer;
+}
+.toast.action::after{
+  content:' · 눌러서 보기';
+  color:#ffe596;
+  font-weight:850;
 }
 /* MAIN LAYOUT */
 .main{
@@ -2051,7 +2184,8 @@ html[data-theme="bistro"] .capture-paste-zone{border-color:#a89886;border-radius
   .mobile-nav-action:hover{background:#f6f8f9}
   .suggest-btn,
   .roulette-btn,
-  .account-btn{
+  .account-btn,
+  .review-alert-btn{
     width:100%;
     height:44px;
     max-width:none;
@@ -2059,8 +2193,18 @@ html[data-theme="bistro"] .capture-paste-zone{border-color:#a89886;border-radius
     border-radius:10px;
     font-size:13px;
     text-align:left;
+    justify-content:flex-start;
     -webkit-tap-highlight-color:transparent;
   }
+  .review-alert-btn .review-alert-count{margin-left:auto}
+  .review-alert-panel{
+    top:64px;
+    left:8px;
+    right:8px;
+    width:auto;
+    max-height:calc(100dvh - 76px);
+  }
+  .review-alert-list{max-height:calc(100dvh - 140px)}
 
   .sidebar{display:none!important}
   .mobile-sheet{
@@ -2599,6 +2743,7 @@ html[data-theme="night"] .list-sub{color:#c0c7cd}
 html[data-theme="night"] .filter-btn:not(.active),
 html[data-theme="night"] .theme-button,
 html[data-theme="night"] .account-btn,
+html[data-theme="night"] .review-alert-btn,
 html[data-theme="night"] .roulette-btn,
 html[data-theme="night"] .quick-btn,
 html[data-theme="night"] .compact-filter-label,
@@ -2612,6 +2757,17 @@ html[data-theme="night"] .suggest-btn{background:#f0a93d;color:#16110a;box-shado
 html[data-theme="night"] .roulette-btn{color:#ffd28b}
 html[data-theme="night"] .account-btn.connected{border-color:#315b43;background:#17271e;color:#8dd7a7}
 html[data-theme="night"] .account-btn.needs-auth{border-color:#70463d;background:#2b1d1a;color:#ffad97}
+html[data-theme="night"] .review-alert-btn.has-unread{border-color:#8c7428;background:#302914;color:#ffd978}
+html[data-theme="night"] .review-alert-panel{border-color:#343b43;background:#1b2026;box-shadow:0 18px 48px rgba(0,0,0,.48)}
+html[data-theme="night"] .review-alert-head{border-color:#30363d}
+html[data-theme="night"] .review-alert-head strong{color:#f2f5f7}
+html[data-theme="night"] .review-alert-mark-all{color:#b8c2c9}
+html[data-theme="night"] .review-alert-item{background:#1b2026;color:#eef2f4}
+html[data-theme="night"] .review-alert-item:hover{background:#252b33}
+html[data-theme="night"] .review-alert-item-name{color:#fff}
+html[data-theme="night"] .review-alert-item-copy{color:#c1cbd2}
+html[data-theme="night"] .review-alert-item-time,
+html[data-theme="night"] .review-alert-empty{color:#99a5ad}
 html[data-theme="night"] .search,
 html[data-theme="night"] #mobileSearch,
 html[data-theme="night"] .comment-input,
@@ -3781,6 +3937,9 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
       <button id="mobileSearchOpen" class="mobile-nav-action" type="button">🔎 식당 찾기</button>
       <button id="mobileListOpen" class="mobile-nav-action" type="button">📋 식당 목록</button>
       <button id="accountButton" class="account-btn needs-auth" type="button">👤 회사 계정 연결</button>
+      <button id="reviewAlertButton" class="review-alert-btn" type="button" hidden aria-haspopup="dialog" aria-expanded="false">
+        <span>🔔 새 후기</span><span id="reviewAlertCount" class="review-alert-count">0</span>
+      </button>
       <button id="rouletteOpen" class="roulette-btn" type="button">🎲 점심 룰렛</button>
       <button id="suggestOpen" class="suggest-btn" type="button">＋ 제안하기</button>
     </div>
@@ -4224,6 +4383,13 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
     <iframe name="placeCaptureSink" id="placeCaptureSink" title="플레이스 캡처 반영" style="display:none"></iframe>
   </section>
 </div>
+<section id="reviewAlertPanel" class="review-alert-panel" hidden aria-label="새 후기 알림">
+  <div class="review-alert-head">
+    <strong>새 후기</strong>
+    <button id="reviewAlertMarkAll" class="review-alert-mark-all" type="button">모두 읽음</button>
+  </div>
+  <div id="reviewAlertList" class="review-alert-list"></div>
+</section>
 <div id="toast" class="toast"></div>
 
 <script>
@@ -4260,6 +4426,16 @@ const COMMENT_ADMIN_EMAILS=new Set(['sejong.hyun@seah.co.kr']);
 let commentRestaurant=null,commentRequestSeq=0,commentSubmitting=false,currentCommentRows=[];
 let commentsPreloaded=false;
 const preloadedComments=new Map();
+const REVIEW_KNOWN_IDS_KEY='lunchMapReviewKnownIdsV1';
+const REVIEW_UNREAD_IDS_KEY='lunchMapReviewUnreadIdsV1';
+const REVIEW_MONITOR_INIT_KEY='lunchMapReviewMonitorInitV1';
+const REVIEW_POLL_INTERVAL_MS=60000;
+const REVIEW_POLL_MIN_GAP_MS=8000;
+let reviewMonitorKnownIds=new Set();
+let reviewMonitorBaselineReady=false;
+let reviewMonitorTimer=null,reviewMonitorInFlight=false,reviewMonitorLastCheck=0;
+let unreadReviewItems=[];
+const ownRecentCommentIds=new Set();
 let rouletteCandidates=[],rouletteWinner=null,rouletteSpinning=false,rouletteRotation=0,rouletteTicker=null,rouletteCategory='전체';
 let rouletteDistance='all',rouletteMinRating=0,rouletteExcludeRecent=true;
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
