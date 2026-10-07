@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-07-review-alerts-v94">
+<meta name="lunch-map-build" content="2026-10-07-review-alerts-v95">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -4446,7 +4446,7 @@ const REVIEW_POLL_INTERVAL_MS=60000;
 const REVIEW_POLL_MIN_GAP_MS=8000;
 let reviewMonitorKnownIds=new Set();
 let reviewMonitorBaselineReady=false;
-let reviewMonitorTimer=null,reviewMonitorInFlight=false,reviewMonitorLastCheck=0;
+let reviewMonitorTimer=null,reviewMonitorInFlight=false,reviewMonitorLastCheck=0,reviewMonitorServerTime=0;
 let unreadReviewItems=[];
 const ownRecentCommentIds=new Set();
 let rouletteCandidates=[],rouletteWinner=null,rouletteSpinning=false,rouletteRotation=0,rouletteTicker=null,rouletteCategory='전체';
@@ -6700,8 +6700,9 @@ function addUnreadReviewItems_(items,{notify=true}={}){
   if(added.length&&notify)showNewReviewNotice_(added);
   return added;
 }
-function processReviewMonitorBundle_(bundle,{notify=true}={}){
+function processReviewMonitorBundle_(bundle,{notify=true,serverTime=0}={}){
   const flat=flattenReviewBundle_(bundle);
+  if(Number(serverTime)>0)reviewMonitorServerTime=Math.max(reviewMonitorServerTime,Number(serverTime));
   const currentById=new Map(flat.map(item=>[item.id,item]));
 
   if(!reviewMonitorBaselineReady){
@@ -6759,7 +6760,54 @@ function syncReviewMonitorAccountState(){
   else if(!currentAccount)stopReviewMonitor_();
   syncReviewAlertUI();
 }
-function fetchReviewBundleSnapshot_(timeoutMs=8000){
+function mergeReviewChangesIntoCache_(changes){
+  const grouped=new Map();
+  (Array.isArray(changes)?changes:[]).forEach(change=>{
+    const key=String(change&&change.key||'');
+    const id=reviewCommentId_(change,key,0);
+    if(!key||!id)return;
+    if(!grouped.has(key))grouped.set(key,[]);
+    grouped.get(key).push(change);
+  });
+
+  grouped.forEach((incoming,key)=>{
+    const existing=Array.isArray(preloadedComments.get(key))?preloadedComments.get(key):[];
+    const incomingIds=new Set(incoming.map(row=>reviewCommentId_(row,key,0)));
+    preloadedComments.set(key,[
+      ...incoming,
+      ...existing.filter(row=>!incomingIds.has(reviewCommentId_(row,key,0)))
+    ].slice(0,50));
+  });
+
+  if(grouped.size){
+    commentsPreloaded=true;
+    updateMultiFilterUI();
+    updateCardReviewCounts();
+    if(commentRestaurant){
+      const key=restaurantCommentKey(commentRestaurant);
+      if(grouped.has(key))renderComments(preloadedComments.get(key)||[]);
+    }
+    if(commentFilter==='has')render(false);
+  }
+}
+function processReviewChanges_(changes,serverTime,{notify=true}={}){
+  const items=(Array.isArray(changes)?changes:[]).map((row,index)=>{
+    const key=String(row&&row.key||'');
+    return {id:reviewCommentId_(row,key,index),key,row};
+  }).filter(item=>item.key&&item.id);
+
+  const newItems=items.filter(item=>!reviewMonitorKnownIds.has(item.id));
+  items.forEach(item=>reviewMonitorKnownIds.add(item.id));
+  addUnreadReviewItems_(newItems,{notify});
+  mergeReviewChangesIntoCache_(changes);
+
+  if(Number(serverTime)>0)reviewMonitorServerTime=Math.max(reviewMonitorServerTime,Number(serverTime));
+  reviewMonitorLastCheck=Date.now();
+  persistReviewMonitorState_();
+  syncReviewAlertUI();
+  return newItems;
+}
+function fetchReviewChangesSnapshot_(sinceMs,timeoutMs=8000){
   return new Promise((resolve,reject)=>{
     const callback='__lunchReviewMonitor_'+Date.now()+Math.random().toString(36).slice(2);
     const script=document.createElement('script');
@@ -6770,7 +6818,7 @@ function fetchReviewBundleSnapshot_(timeoutMs=8000){
       clearTimeout(timer);
       try{delete window[callback];}catch(e){window[callback]=undefined;}
       script.remove();
-      error?reject(error):resolve(value||{});
+      error?reject(error):resolve(value||{changes:[],serverTime:Date.now()});
     };
     const timer=setTimeout(()=>finish(null,new Error('review monitor timeout')),timeoutMs);
     window[callback]=payload=>{
@@ -6784,10 +6832,18 @@ function fetchReviewBundleSnapshot_(timeoutMs=8000){
         finish(null,new Error(payload.message||'review monitor failed'));
         return;
       }
-      finish(payload&&payload.commentsByKey&&typeof payload.commentsByKey==='object'?payload.commentsByKey:{},null);
+      finish({
+        changes:payload&&Array.isArray(payload.changes)?payload.changes:[],
+        serverTime:Number(payload&&payload.serverTime)||Date.now()
+      },null);
     };
     script.onerror=()=>finish(null,new Error('review monitor load failed'));
-    script.src=SUGGEST_URL+'?mode=data&callback='+encodeURIComponent(callback)+'&t='+Date.now();
+    const overlapSince=Math.max(0,Number(sinceMs||0)-5000);
+    script.src=SUGGEST_URL+
+      '?mode=reviewChanges'+
+      '&since='+encodeURIComponent(String(overlapSince))+
+      '&callback='+encodeURIComponent(callback)+
+      '&t='+Date.now();
     script.async=true;
     document.head.appendChild(script);
   });
@@ -6799,9 +6855,8 @@ async function checkForNewReviews({force=false}={}){
   if(!force&&now-reviewMonitorLastCheck<REVIEW_POLL_INTERVAL_MS-1000)return false;
   reviewMonitorInFlight=true;
   try{
-    const bundle=await fetchReviewBundleSnapshot_(8000);
-    processReviewMonitorBundle_(bundle,{notify:true});
-    applyCommentBundle(bundle,{skipMonitor:true});
+    const result=await fetchReviewChangesSnapshot_(reviewMonitorServerTime||reviewMonitorLastCheck,8000);
+    processReviewChanges_(result.changes,result.serverTime,{notify:true});
     return true;
   }catch(e){
     return false;
@@ -6820,8 +6875,8 @@ document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'&&currentAccount)checkForNewReviews({force:true});
 });
 
-function applyCommentBundle(bundle,{skipMonitor=false}={}){
-  if(!skipMonitor)processReviewMonitorBundle_(bundle,{notify:true});
+function applyCommentBundle(bundle,{skipMonitor=false,serverTime=0}={}){
+  if(!skipMonitor)processReviewMonitorBundle_(bundle,{notify:true,serverTime});
   preloadedComments.clear();
   if(bundle&&typeof bundle==='object'){
     Object.entries(bundle).forEach(([key,rows])=>{
@@ -6863,7 +6918,7 @@ function loadLiveDb(){
       }
       if(payload&&payload.user)updateAccountUI(payload.user,false);
       const rows=payload&&Array.isArray(payload.rows)?payload.rows:[];
-      if(payload&&payload.commentsByKey)applyCommentBundle(payload.commentsByKey);
+      if(payload&&payload.commentsByKey)applyCommentBundle(payload.commentsByKey,{serverTime:Number(payload.loadedAt)||Date.now()});
       if(rows.length){
         dbLoadDone=true;
         applyDbRows(rows);
