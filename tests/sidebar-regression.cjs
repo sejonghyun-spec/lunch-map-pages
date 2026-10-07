@@ -217,6 +217,91 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(!(await page.locator('#detailReviewInsight').evaluate(el=>el.hidden)));
    await state(()=>clearSelectedRows());
  });
+ await check('new review alerts detect external reviews, ignore own reviews, and mark read',async()=>{
+   await page.setViewportSize({width:1440,height:900});await reset();
+   const baseline=await state(()=>{
+     stopReviewMonitor_();
+     localStorage.removeItem(REVIEW_KNOWN_IDS_KEY);
+     localStorage.removeItem(REVIEW_UNREAD_IDS_KEY);
+     localStorage.removeItem(REVIEW_MONITOR_INIT_KEY);
+     reviewMonitorKnownIds=new Set();
+     reviewMonitorBaselineReady=false;
+     unreadReviewItems=[];
+     ownRecentCommentIds.clear();
+     currentAccount={email:'qa@seah.co.kr',name:'QA'};
+     const restaurant=displayRestaurants()[0];
+     const key=restaurantCommentKey(restaurant);
+     window.__reviewAlertTestKey=key;
+     processReviewMonitorBundle_({
+       [key]:[{id:'review-old-1',nickname:'기존',comment:'기존 후기',createdAt:'10:00',canDelete:false}]
+     },{notify:false});
+     stopReviewMonitor_();
+     return {key,count:unreadReviewItems.length,hidden:reviewAlertButton.hidden};
+   });
+   assert.equal(baseline.count,0);
+   assert.equal(baseline.hidden,true);
+
+   const external=await state(()=>{
+     const key=window.__reviewAlertTestKey;
+     processReviewMonitorBundle_({
+       [key]:[
+         {id:'review-new-1',nickname:'동료',comment:'새 후기입니다',createdAt:'11:00',canDelete:false},
+         {id:'review-old-1',nickname:'기존',comment:'기존 후기',createdAt:'10:00',canDelete:false}
+       ]
+     },{notify:false});
+     stopReviewMonitor_();
+     return {
+       count:unreadReviewItems.length,
+       buttonHidden:reviewAlertButton.hidden,
+       badge:reviewAlertCount.textContent,
+       listCount:reviewAlertList.querySelectorAll('.review-alert-item').length
+     };
+   });
+   assert.equal(external.count,1);
+   assert.equal(external.buttonHidden,false);
+   assert.equal(external.badge,'1');
+   assert.equal(external.listCount,1);
+
+   await page.click('#reviewAlertButton');
+   assert.equal(await page.locator('#reviewAlertPanel').evaluate(el=>el.hidden),false);
+
+   const ownIgnored=await state(()=>{
+     const key=window.__reviewAlertTestKey;
+     ownRecentCommentIds.add('review-mine-1');
+     processReviewMonitorBundle_({
+       [key]:[
+         {id:'review-mine-1',nickname:'QA',comment:'내 후기',createdAt:'11:01',canDelete:true},
+         {id:'review-new-1',nickname:'동료',comment:'새 후기입니다',createdAt:'11:00',canDelete:false},
+         {id:'review-old-1',nickname:'기존',comment:'기존 후기',createdAt:'10:00',canDelete:false}
+       ]
+     },{notify:false});
+     stopReviewMonitor_();
+     return unreadReviewItems.length;
+   });
+   assert.equal(ownIgnored,1);
+
+   await page.locator('#reviewAlertList .review-alert-item').first().click();
+   await page.waitForTimeout(140);
+   assert.equal(await state(()=>unreadReviewItems.length),0);
+   assert.equal(await page.locator('#reviewAlertButton').evaluate(el=>el.hidden),true);
+   assert.equal(await page.locator('#reviewAlertPanel').evaluate(el=>el.hidden),true);
+   assert.ok(await state(()=>document.querySelector('[data-detail-tab="reviews"]').classList.contains('active')));
+
+   await state(()=>{
+     stopReviewMonitor_();
+     clearSelectedRows();
+     currentAccount=null;
+     reviewMonitorBaselineReady=false;
+     reviewMonitorKnownIds=new Set();
+     unreadReviewItems=[];
+     ownRecentCommentIds.clear();
+     localStorage.removeItem(REVIEW_KNOWN_IDS_KEY);
+     localStorage.removeItem(REVIEW_UNREAD_IDS_KEY);
+     localStorage.removeItem(REVIEW_MONITOR_INIT_KEY);
+     syncReviewAlertUI();
+     delete window.__reviewAlertTestKey;
+   });
+ });
  await check('admin Place text import opens without selecting a restaurant',async()=>{
    assert.equal(await page.locator('#placeCaptureButton').count(),1);
    assert.equal(await page.locator('#detailCaptureButton').count(),1);
