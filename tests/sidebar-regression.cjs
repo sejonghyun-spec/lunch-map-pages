@@ -10,6 +10,7 @@ const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const data=JSON.parse(fs.readFileSync(path.join(root,'restaurants.json'),'utf8'));
+const awardData=JSON.parse(fs.readFileSync(path.join(root,'awards.json'),'utf8'));
 const origin='https://sejonghyun-spec.github.io';
 const url=origin+'/lunch-map-pages/';
 const key=x=>x.name.trim()+'||'+(x.address||'').trim();
@@ -28,6 +29,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
  const context=await browser.newContext({viewport:{width:1440,height:1000},ignoreHTTPSErrors:true,permissions:['geolocation'],geolocation:{latitude:37.55,longitude:126.914}});
  await context.route(url,r=>r.fulfill({contentType:'text/html',body:html}));
  await context.route(url+'restaurants.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify(data)}));
+ await context.route(url+'awards.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify(awardData)}));
  await context.route('https://script.google.com/**',r=>{
    const u=new URL(r.request().url());const mode=u.searchParams.get('mode');apiRequests.push(mode||r.request().method());
    const callback=u.searchParams.get('callback');
@@ -46,6 +48,42 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
  await check('real Kakao SDK, initial rows, markers and result count',async()=>{
    const s=await state(()=>({cards:document.querySelectorAll('#list .card').length,rows:getRows().length,markers:markerByRow.size,label:document.getElementById('listSub').textContent}));
    assert.equal(s.cards,s.rows);assert.equal(s.markers,s.rows);assert.equal(s.label,s.rows+'곳');assert.ok(s.rows>40);
+ });
+ await check('source-linked awards appear on matching desktop, mobile and detail records only',async()=>{
+   await page.waitForFunction(()=>awardRegistry.size===3);
+   const checked=await state(()=>{
+     const registered=displayRestaurants().filter(row=>awardsFor(row).length);
+     const summary=registered.map(row=>({name:row.name,labels:awardsFor(row).map(awardLabel)}));
+     return {registered:summary,registrySize:awardRegistry.size,
+       badUrl:awardSafeUrl('javascript:alert(1)'),wrongAddress:awardsFor({
+         name:'교다이야',address:'서울 마포구 성지길 40'
+       }).length};
+   });
+   assert.equal(checked.registrySize,3);
+   assert.equal(checked.registered.length,3);
+   assert.equal(checked.wrongAddress,0);
+   assert.equal(checked.badUrl,'');
+   const labels=checked.registered.find(x=>x.name==='교다이야').labels;
+   assert.deepEqual(labels,['미쉐린 빕 구르망','블루리본 2개']);
+   assert.equal(await page.locator('#list .award-chip').count(),4);
+   assert.equal(await page.locator('#mobileList .award-chip').count(),4);
+   const row=await state(()=>getRows().find(x=>x.name==='교다이야').row);
+   await state(row=>selectRow(row,false,false),row);
+   const detail=page.locator('#detailInfo .detail-awards-info');
+   assert.equal(await detail.count(),1);
+   assert.ok((await detail.innerText()).includes('블루리본 2개'));
+   assert.ok((await detail.innerText()).includes('KInside (2차 출처'));
+   const links=await detail.locator('a').evaluateAll(els=>els.map(el=>({
+     href:el.href,target:el.target,rel:el.rel
+   })));
+   assert.equal(links.length,2);
+   assert.ok(links.every(x=>x.href.startsWith('https://')&&x.target==='_blank'&&x.rel.includes('noopener')));
+   await state(()=>clearSelectedRows());
+   const restored=await state(()=>{const rows=allData.map(x=>({...x}));
+     applyDbRows(rows);
+     return awardsFor(allDisplayRestaurants().find(x=>x.name==='오레노라멘')).length;
+   });
+   assert.equal(restored,1,'live DB replacement must preserve independently sourced awards');
  });
  await check('region selector isolates Hapjeong, Pohang and Chungju with plant-centered distance',async()=>{
    const initial=await state(()=>({
