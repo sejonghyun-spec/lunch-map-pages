@@ -487,6 +487,36 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(!payload.rawText.includes('잘못된길'));
    await page.click('#placeCaptureClose');
  });
+ await check('batch parser reuses preview and suppresses safe no-op entries',async()=>{
+   await state(()=>{currentAccount={email:'sejong.hyun@seah.co.kr',name:'qa'};syncPlaceCaptureUI();});
+   await page.click('#placeCaptureButton');
+   const original=await state(()=>{
+     const row=allData.find(x=>x.name==='자성당');
+     return row?{hours:row.hours,hoursSource:row.hoursSource,hoursCheckedAt:row.hoursCheckedAt}:null;
+   });
+   assert.ok(original);
+   await state(()=>{
+     const row=allData.find(x=>x.name==='자성당');
+     row.hours='11:00-20:00';
+     row.hoursSource='네이버플레이스';
+     row.hoursCheckedAt=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'});
+     placeBatchIndexCache=null;
+   });
+   await page.fill('#placeTextInput','자성당\n서울 마포구 잔다리로7안길 3\n영업시간 11:00-20:00');
+   assert.equal(await page.locator('#placeBatchPreview input:checked').count(),0);
+   assert.ok((await page.locator('#placeBatchPreview').innerText()).includes('당일 확인한 정보와 동일'));
+   assert.equal(await page.locator('#captureDone').isDisabled(),true);
+   await page.fill('#placeTextInput','자성당\n서울 마포구 잔다리로7안길 3\n영업시간 12:00-20:00');
+   assert.equal(await page.locator('#captureDone').isDisabled(),false);
+   assert.ok((await page.locator('#captureStatus').innerText()).includes('판독'));
+   assert.ok(await state(()=>placeBatchAnalyzedText.includes('12:00-20:00')));
+   await state(before=>{
+     const row=allData.find(x=>x.name==='자성당');
+     Object.assign(row,before);
+     placeBatchIndexCache=null;
+   },original);
+   await page.click('#placeCaptureClose');
+ });
  await check('menu tab remains as manual DB viewer without auto collection',async()=>{
    assert.equal(await page.locator('[data-detail-tab="menu"]').count(),1);
    assert.equal(await page.locator('[data-detail-panel="menu"]').count(),1);
