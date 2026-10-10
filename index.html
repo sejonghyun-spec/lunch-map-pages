@@ -7456,22 +7456,72 @@ function buildPlaceTextPayload(rawText){
   return {names:[...new Set(records.map(x=>x.name))],
     compactText:records.map(x=>x.rawText).join('\n\n'),records};
 }
+function placeBatchRangeForCompare(value){
+  const m=String(value||'').trim().match(/^(\d{1,2}):(\d{2})\s*[-~–—]\s*(\d{1,2}):(\d{2})$/);
+  if(!m||Number(m[1])>23||Number(m[3])>23||Number(m[2])>59||Number(m[4])>59)return '';
+  return String(Number(m[1])).padStart(2,'0')+':'+m[2]+'-'+String(Number(m[3])).padStart(2,'0')+':'+m[4];
+}
+function placeBatchComparableFields(record){
+  const obj={};
+  for(const original of record.infoLines||[]){
+    const line=String(original||'').trim();
+    let match=line.match(/^(?:영업시간|운영시간)\s*[:：]?\s*(.*)$/);
+    if(match){
+      const v=placeBatchRangeForCompare(match[1]);if(!v)return null;
+      obj.hours=v;continue;
+    }
+    match=line.match(/^(?:브레이크(?:타임)?|휴게(?:시간)?)\s*[:：]?\s*(.*)$/);
+    if(match){
+      const v=placeBatchRangeForCompare(match[1]);if(!v)return null;
+      obj.breakTime=v;continue;
+    }
+    match=line.match(/^(?:라스트\s*오더|주문\s*마감)\s*[:：]?\s*(.*)$/);
+    if(match){
+      const m=String(match[1]).trim();
+      if(!/^\d{1,2}:\d{2}(?:\s*[,/·]\s*\d{1,2}:\d{2})*$/.test(m))return null;
+      obj.lastOrder=(m.match(/\d{1,2}:\d{2}/g)||[]).map(x=>x.padStart(5,'0')).join(', ');
+      continue;
+    }
+    // Never skip an ambiguous/day-specific source line.
+    return null;
+  }
+  if(record.phone)obj.phone=String(record.phone).replace(/\D/g,'');
+  return Object.keys(obj).length?obj:null;
+}
+function placeBatchExistingValuesMatch(record,matchedRows){
+  const fields=placeBatchComparableFields(record);
+  if(!fields||!matchedRows.length)return false;
+  const hasSchedule=Object.keys(fields).some(key=>key!=='phone');
+  const today=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'});
+  return matchedRows.every(row=>{
+    if(hasSchedule&&(!/네이버\s*플레이스/i.test(String(row.hoursSource||''))||
+      String(row.hoursCheckedAt||'')!==today))return false;
+    return Object.entries(fields).every(([key,value])=>{
+      const existing=String(row[key]||'').trim();
+      if(key==='phone')return existing.replace(/\D/g,'')===value;
+      if(key==='hours'||key==='breakTime')return placeBatchRangeForCompare(existing)===value;
+      if(key==='lastOrder')return (existing.match(/\d{1,2}:\d{2}/g)||[])
+        .map(x=>x.padStart(5,'0')).join(', ')===value;
+      return false;
+    });
+  });
+}
 function assessPlaceBatchRecords(records){
-  const seen=new Set();
-  return (records||[]).map((record,index)=>{
-    const id=index;
-    const matches=placeBatchIndexedCatalog().byName.get(String(record.name||'').toLowerCase())||[];
+  const seen=new Set(),index=placeBatchIndexedCatalog();
+  return (records||[]).map((record,id)=>{
+    const matches=index.byName.get(String(record.name||'').toLowerCase())||[];
     const incomingKey=placeBatchAddressKey(record.address);
     const exact=matches.filter(row=>incomingKey&&placeBatchAddressKey(row.address)===incomingKey);
     const duplicateKey=record.name.toLowerCase()+'|'+incomingKey;
-    let reason='';
+    let reason='',unchanged=false;
     if(!matches.length)reason='DB에 없는 식당';
     else if(!record.address||!incomingKey)reason='주소 누락 또는 도로명 확인 불가';
     else if(!exact.length)reason='등록 주소와 불일치';
     else if(!record.infoLines.length&&!record.phone)reason='반영할 영업정보 없음';
     else if(seen.has(duplicateKey))reason='중복 입력 (첫 번째만 반영)';
+    else if(placeBatchExistingValuesMatch(record,exact)){reason='당일 확인한 정보와 동일';unchanged=true;}
     if(!reason)seen.add(duplicateKey);
-    return {...record,id,valid:!reason,reason,matchedRows:exact.length};
+    return {...record,id,valid:!reason,unchanged,reason,matchedRows:exact.length};
   });
 }
 function renderPlaceBatchPreview(){
@@ -7482,8 +7532,9 @@ function renderPlaceBatchPreview(){
   }
   const valid=placeBatchItems.filter(x=>x.valid);
   const chosen=valid.filter(x=>placeBatchSelected.has(x.id));
+  const unchanged=placeBatchItems.filter(x=>x.unchanged).length;
   placeBatchPreview.innerHTML='<div class="place-batch-summary">식당 '+placeBatchItems.length+
-    '건 감지 · 주소 확인 '+valid.length+'건 · 반영 선택 '+chosen.length+'건 · 보류 '+(placeBatchItems.length-valid.length)+'건</div>'+
+    '건 감지 · 주소 확인 '+valid.length+'건 · 선택 '+chosen.length+'건 · 동일 '+unchanged+'건 · 보류 '+(placeBatchItems.length-valid.length-unchanged)+'건</div>'+
     placeBatchItems.map(item=>{
       const selected=placeBatchSelected.has(item.id);
       return '<label class="place-batch-row" data-status="'+(item.valid?'ready':'hold')+'">'+
