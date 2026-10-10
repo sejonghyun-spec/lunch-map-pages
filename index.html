@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-10-current-hours-v105">
+<meta name="lunch-map-build" content="2026-10-10-quick-filter-v106">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -4121,6 +4121,43 @@ html[data-theme="bistro"] .map-floating-tools button{color:#302a24;background:#f
   .map-floating-tools #myLocation{display:none}
   .map-floating-tools #showAll{min-height:36px;padding:0 9px;font-size:11px}
 }
+
+/* Quick filters stay visible under search; extra conditions live behind "상세 필터". */
+.explore-controls:has(.quick-filter-strip){
+  justify-content:space-between;align-items:center;gap:6px;padding:3px 10px 10px
+}
+.quick-filter-strip{
+  display:flex;flex:1 1 auto;min-width:0;align-items:center;gap:5px;
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain
+}
+.quick-filter-strip::-webkit-scrollbar{display:none}
+.quick-filter-chip{
+  flex:0 0 auto;min-height:34px;padding:0 9px;border:1px solid var(--line);
+  border-radius:18px;background:var(--theme-control-bg,#fff);color:var(--text);
+  font-size:11.5px;font-weight:720;white-space:nowrap;cursor:pointer;
+  transition:border-color .15s,background-color .15s
+}
+.quick-filter-chip.active,.quick-filter-chip[aria-pressed="true"]{
+  background:var(--soft);border-color:var(--brand);color:var(--brand-dark);font-weight:850
+}
+.quick-filter-chip:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.explore-controls .sidebar-filter-toggle{
+  flex:0 0 auto;min-height:34px;padding:0 8px;gap:4px;font-size:11.5px
+}
+.explore-controls .sidebar-filter-toggle .filter-chevron{font-size:15px}
+html[data-theme="night"] .quick-filter-chip{border-color:#4a5861;background:#242c31;color:#d9e4eb}
+html[data-theme="night"] .quick-filter-chip.active{border-color:#8ebfc7;background:#1c4546;color:#d2ffff}
+@media(max-width:900px){
+  .mobile-sheet-quick:has(.quick-filter-strip){
+    display:flex;align-items:center;justify-content:space-between;gap:6px;
+    padding:3px 12px 9px;min-width:0
+  }
+  .mobile-sheet-quick .quick-filter-chip{min-height:34px;font-size:11.5px}
+  .mobile-sheet-quick #mobileDetailedFilterToggle{
+    flex:0 0 auto;min-height:34px;padding:0 8px;white-space:nowrap
+  }
+}
 </style>
 </head>
 <body>
@@ -4185,7 +4222,13 @@ html[data-theme="bistro"] .map-floating-tools button{color:#302a24;background:#f
         <input id="search" class="search" type="search" aria-label="식당 이름, 특징, 주소 검색" placeholder="식당 이름 · 특징 · 주소 검색" autocomplete="off" aria-autocomplete="list" aria-controls="searchSuggestions">
         <div id="searchSuggestions" class="search-suggestions" role="listbox"></div>
       </label></div>
-      <div class="explore-controls" role="group" aria-label="상세 필터">
+      <div class="explore-controls" role="group" aria-label="빠른 필터 및 상세 필터">
+        <div class="quick-filter-strip" role="group" aria-label="빠른 검색 조건">
+          <button class="quick-filter-chip" type="button" data-quick-filter="open" aria-pressed="false" title="현재 시간 기준 영업 예상">영업 중</button>
+          <button class="quick-filter-chip" type="button" data-quick-filter="rating4" aria-pressed="false">★ 4점+</button>
+          <button class="quick-filter-chip" type="button" data-quick-filter="reservation" aria-pressed="false">예약</button>
+          <button class="quick-filter-chip" type="button" data-quick-filter="group" aria-pressed="false">단체</button>
+        </div>
         <button id="sidebarFilterToggle" class="sidebar-filter-toggle" type="button" aria-expanded="false" aria-controls="desktopDetailedFilters"><span>☷ 상세 필터</span><span class="filter-counter" id="desktopFilterCount" hidden></span><span class="filter-chevron" aria-hidden="true">⌄</span></button>
       </div>
       <div class="desktop-filters-collapsible" id="desktopDetailedFilters">
@@ -4264,7 +4307,13 @@ html[data-theme="bistro"] .map-floating-tools button{color:#302a24;background:#f
         </label>
       </div>
 
-      <div class="mobile-sheet-quick" role="group" aria-label="상세 필터">
+      <div class="mobile-sheet-quick" role="group" aria-label="빠른 필터 및 상세 필터">
+        <div class="quick-filter-strip" role="group" aria-label="빠른 검색 조건">
+          <button class="quick-filter-chip" type="button" data-quick-filter="open" aria-pressed="false" title="현재 시간 기준 영업 예상">영업 중</button>
+          <button class="quick-filter-chip" type="button" data-quick-filter="rating4" aria-pressed="false">★ 4점+</button>
+          <button class="quick-filter-chip" type="button" data-quick-filter="reservation" aria-pressed="false">예약</button>
+          <button class="quick-filter-chip" type="button" data-quick-filter="group" aria-pressed="false">단체</button>
+        </div>
         <button id="mobileDetailedFilterToggle" type="button" aria-expanded="false" aria-controls="mobileDetailedFilters">☷ 상세 필터 <span id="mobileFilterCount" class="filter-counter" hidden></span></button>
       </div>
 
@@ -4689,7 +4738,7 @@ function getInitialMapLevel(){
 }
 const SUGGEST_URL='https://script.google.com/a/seah.co.kr/macros/s/AKfycbzpCuw9c6Y8K6_4tnqZzwMBoKGIiW3pv-DheDHYD6XpbT1tEqDlZUFFkPgn-7w_q1L7tA/exec';
 let allData=[],selectedCategories=new Set(),searchKeyword='',sortMode='default';
-let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all',distanceFilter='all';
+let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all',distanceFilter='all',openNowOnly=false;
 let favoritesOnly=false,recentOnly=false,mapOnlyMode=false,reviewSortMode='latest';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,regionAnchorOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',hoveredMarkerRow=null,searchTimer=null;
 let lastMapRows=[],lastClusterLevel=null,mapIdleRenderTimer=null,lastDetailRow=null,lastListSignature='';
@@ -4847,7 +4896,7 @@ function highlightMatch(value,query){
 
 function listUiSignature(){
   return [
-    activeRegionKey,searchKeyword,sortMode,ratingFilter,capacityFilter,featureFilter,distanceFilter,
+    activeRegionKey,searchKeyword,sortMode,ratingFilter,capacityFilter,featureFilter,distanceFilter,openNowOnly,
     favoritesOnly,recentOnly,mapOnlyMode,[...selectedCategories].sort().join('|')
   ].join('::');
 }
@@ -5089,7 +5138,7 @@ function updateFilterChipUI(){
   if(mapBtn)mapBtn.classList.toggle('active',mapOnlyMode);
 }
 function activeDetailedFilterCount(){
-  return [ratingFilter,capacityFilter,featureFilter,distanceFilter].filter(v=>v!=='all').length;
+  return [ratingFilter,capacityFilter,featureFilter,distanceFilter].filter(v=>v!=='all').length+Number(openNowOnly);
 }
 function setSidebarFiltersOpen(open){
   const sidebar=document.getElementById('sidebar');
@@ -5101,6 +5150,25 @@ function setSidebarFiltersOpen(open){
   panel.setAttribute('aria-hidden',String(!open));
   // The panel is actually hidden when collapsed (no invisible focusable controls).
   panel.inert=!open;
+}
+function syncQuickFilters(){
+  document.querySelectorAll('[data-quick-filter]').forEach(btn=>{
+    const id=btn.dataset.quickFilter;
+    const active=id==='open'?openNowOnly:
+      id==='rating4'?(ratingFilter==='4'||ratingFilter==='5'):
+      id==='reservation'?featureFilter==='reservation':
+      id==='group'?capacityFilter==='group':false;
+    btn.classList.toggle('active',active);
+    btn.setAttribute('aria-pressed',String(active));
+  });
+}
+function toggleQuickFilter(id){
+  if(id==='open')openNowOnly=!openNowOnly;
+  else if(id==='rating4')ratingFilter=ratingFilter==='4'||ratingFilter==='5'?'all':'4';
+  else if(id==='reservation')featureFilter=featureFilter==='reservation'?'all':'reservation';
+  else if(id==='group')capacityFilter=capacityFilter==='group'?'all':'group';
+  else return;
+  updateMultiFilterUI();render(false);
 }
 function syncDetailedFilterBadges(){
   const count=activeDetailedFilterCount();
@@ -5144,6 +5212,7 @@ function updateMultiFilterUI(){
   ];
   mobilePairs.forEach(([id,value])=>{const el=document.getElementById(id);if(el)el.value=value;});
   updateFilterChipUI();
+  syncQuickFilters();
   syncDetailedFilterBadges();
 }
 function resetMultiFilters(){
@@ -5152,6 +5221,7 @@ function resetMultiFilters(){
   commentFilter='all';
   featureFilter='all';
   distanceFilter='all';
+  openNowOnly=false;
   favoritesOnly=false;
   recentOnly=false;
   mapOnlyMode=false;
@@ -5966,6 +6036,7 @@ function getRows(){
     const distance=distanceFromSeahTower(x);
     if(distanceFilter!=='all'&&(!Number.isFinite(distance)||distance>Number(distanceFilter)))return false;
     if(mapOnlyMode&&!isInCurrentMapBounds(x))return false;
+    if(openNowOnly&&operatingInfo(x).status!=='open')return false;
 
     return true;
   });
@@ -9767,6 +9838,9 @@ document.addEventListener('click',e=>{
   });
 });
 
+document.querySelectorAll('[data-quick-filter]').forEach(btn=>
+  btn.addEventListener('click',()=>toggleQuickFilter(btn.dataset.quickFilter))
+);
 document.getElementById('sidebarFilterToggle')?.addEventListener('click',()=>{
   const sidebar=document.getElementById('sidebar');
   setSidebarFiltersOpen(!sidebar?.classList.contains('filters-open'));
@@ -9815,7 +9889,8 @@ function refreshCurrentHoursIfNeeded(){
   }).format(new Date());
   if(stamp===lastOperatingMinuteStamp)return;
   lastOperatingMinuteStamp=stamp;
-  renderList(getRows());
+  if(openNowOnly)render(false);
+  else renderList(getRows());
   if(commentRestaurant&&commentPanel?.classList.contains('open')){
     renderDetailDecision(commentRestaurant);
     const details=detailInfo?.querySelector('.detail-hours-info .detail-info-value');
