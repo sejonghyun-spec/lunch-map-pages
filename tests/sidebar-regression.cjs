@@ -195,7 +195,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    await page.hover('#search');assert.ok(await state(()=>![...markerByRow.values()].some(x=>x.content.classList.contains('list-hover'))));
  });
  await check('marker hover highlights list and opens/closes preview',async()=>{
-   assert.ok(await state(()=>{const item=[...markerByRow.values()][0];item.content.dispatchEvent(new MouseEvent('mouseenter'));const yes=document.querySelector('#list .card').classList.contains('map-hover');item.content.dispatchEvent(new MouseEvent('mouseleave'));return yes&&!document.querySelector('#list .card').classList.contains('map-hover')}));
+   assert.ok(await state(()=>{const item=[...markerByRow.values()][0];const card=document.querySelector('#list .card[data-row="'+item.data.row+'"]');item.content.dispatchEvent(new MouseEvent('mouseenter'));const yes=card?.classList.contains('map-hover');item.content.dispatchEvent(new MouseEvent('mouseleave'));return yes&&!card?.classList.contains('map-hover')}));
  });
  await check('keyboard restaurant selection, detail placement, review cache, Kakao link',async()=>{
    await page.locator('.card-open').first().focus();await page.keyboard.press('Enter');await page.waitForTimeout(250);
