@@ -1,0 +1,23 @@
+name: Regional data integrity
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'restaurants.json'
+      - 'tests/regional-integrity.cjs'
+      - '.github/workflows/regional-integrity.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'restaurants.json'
+      - 'tests/regional-integrity.cjs'
+      - '.github/workflows/regional-integrity.yml'
+jobs:
+  regional-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate region logic without external services
+        run: node tests/regional-integrity.cjs
