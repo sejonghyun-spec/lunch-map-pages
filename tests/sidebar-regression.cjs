@@ -649,11 +649,11 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    await state(()=>{
      const originalLoadLiveDb=loadLiveDb;
      loadLiveDb=()=>Promise.resolve(true);
-     pendingPlaceText={requestId:999,names:['자성당'],beforeSnapshot:'[]',originalText:String(placeTextInput.value||'')};
+     pendingPlaceText={requestId:'test-999',names:['자성당'],beforeSnapshot:'[]',originalText:String(placeTextInput.value||'')};
      setPlaceCaptureBusy(true);
      window.dispatchEvent(new MessageEvent('message',{
        origin:'https://script.google.com',
-       data:{source:'lunch-map-place-text',ok:true,results:[{name:'자성당'}],skipped:[]}
+       data:{source:'lunch-map-place-text',requestId:'test-999',ok:true,results:[{name:'자성당'}],skipped:[]}
      }));
      loadLiveDb=originalLoadLiveDb;
    });
@@ -661,6 +661,48 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.equal(await page.locator('#placeCaptureModal').evaluate(el=>el.classList.contains('open')),false);
    assert.equal(await state(()=>placeCaptureBusy),false);
    assert.equal(await page.inputValue('#placeTextInput'),'');
+ });
+ await check('Apps Script response reliability: isolated googleusercontent origins, matching IDs, and adaptive wait',async()=>{
+   const origins=await state(()=>({
+     base:isTrustedPlaceResponseOrigin('https://script.google.com'),
+     content:isTrustedPlaceResponseOrigin('https://script.googleusercontent.com'),
+     isolated:isTrustedPlaceResponseOrigin('https://n-abC123-script.googleusercontent.com'),
+     spoof:isTrustedPlaceResponseOrigin('https://script.googleusercontent.com.attacker.invalid'),
+     subspoof:isTrustedPlaceResponseOrigin('https://fake.script.google.com'),
+     insecure:isTrustedPlaceResponseOrigin('http://script.googleusercontent.com'),
+     wait:[placeCaptureWaitMs(1),placeCaptureWaitMs(8),placeCaptureWaitMs(20)]
+   }));
+   assert.deepEqual([origins.base,origins.content,origins.isolated],[true,true,true]);
+   assert.deepEqual([origins.spoof,origins.subspoof,origins.insecure],[false,false,false]);
+   assert.ok(origins.wait[0]>=30000&&origins.wait[1]>origins.wait[0]&&origins.wait[2]<=90000);
+   await state(()=>{currentAccount={email:'sejong.hyun@seah.co.kr',name:'qa'};syncPlaceCaptureUI();});
+   await page.click('#placeCaptureButton');
+   await page.click('#placeCombinedMode');
+   await page.fill('#placeTextInput','자성당\n서울 마포구 잔다리로7안길 3\n영업시간 12:30-19:00');
+   const original=await state(()=>{
+     const inputSig=placeInputSignature();
+     pendingPlaceText={requestId:'reliable-ACK-1',names:['자성당'],
+       beforeSnapshot:'[]',originalText:inputSig,startedAt:performance.now(),recordCount:2};
+     setPlaceCaptureBusy(true);
+     return inputSig;
+   });
+   const dispatch=async(origin,requestId)=>{
+     await state(({origin,requestId})=>{
+       window.dispatchEvent(new MessageEvent('message',{
+         origin,data:{source:'lunch-map-place-text',requestId,ok:true,
+           results:[{name:'자성당'}],skipped:[],elapsedMs:99}
+       }));
+     },{origin,requestId});
+   };
+   await dispatch('https://fake.script.google.com','reliable-ACK-1');
+   assert.equal(await state(()=>placeCaptureBusy),true,'spoofed subdomain must be rejected');
+   await dispatch('https://script.google.com','old-request');
+   assert.equal(await state(()=>placeCaptureBusy),true,'stale request must be ignored');
+   await dispatch('https://n-abC123-script.googleusercontent.com','reliable-ACK-1');
+   assert.equal(await state(()=>placeCaptureBusy),false);
+   assert.ok(!(await page.locator('#placeCaptureModal').evaluate(el=>el.classList.contains('open'))));
+   assert.equal(await page.inputValue('#placeTextInput'),'');
+   assert.ok(original.includes('자성당'));
  });
  await check('batch Place text import validates addresses, skips duplicates and submits selected only',async()=>{
    await state(()=>{currentAccount={email:'sejong.hyun@seah.co.kr',name:'qa'};syncPlaceCaptureUI();});
