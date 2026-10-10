@@ -450,6 +450,43 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.equal(await state(()=>placeCaptureBusy),false);
    assert.equal(await page.inputValue('#placeTextInput'),'');
  });
+ await check('batch Place text import validates addresses, skips duplicates and submits selected only',async()=>{
+   await state(()=>{currentAccount={email:'sejong.hyun@seah.co.kr',name:'qa'};syncPlaceCaptureUI();});
+   await page.click('#placeCaptureButton');
+   await page.fill('#placeTextInput',[
+     '자성당','서울 마포구 잔다리로7안길 3','영업시간 11:00~20:00',
+     '교다이야','서울 마포구 성지길 39','영업시간 11:00~20:30',
+     '오베이글','서울 마포구 잘못된길 99','영업시간 10:00~19:00',
+     '교다이야','서울 마포구 성지길 39','영업시간 12:00~20:30'
+   ].join('\n'));
+   assert.equal(await page.locator('#placeBatchPreview .place-batch-row').count(),4);
+   assert.equal(await page.locator('#placeBatchPreview input:checked').count(),2);
+   assert.equal(await page.locator('#placeBatchPreview input:disabled').count(),2);
+   assert.ok((await page.locator('#placeBatchPreview').innerText()).includes('등록 주소와 불일치'));
+   assert.ok((await page.locator('#placeBatchPreview').innerText()).includes('중복 입력'));
+   await page.locator('#placeBatchPreview input:not(:disabled)').first().uncheck();
+   assert.equal(await page.locator('#captureDone').innerText(),'1건 선택 반영');
+   const payload=await state(()=>{
+     const originalSubmit=submitPlaceCaptureForm;
+     const originalArm=armPlaceCaptureTimeout;
+     let output=null;
+     submitPlaceCaptureForm=fields=>{output=fields;};
+     armPlaceCaptureTimeout=()=>{};
+     submitPlaceText();
+     submitPlaceCaptureForm=originalSubmit;
+     armPlaceCaptureTimeout=originalArm;
+     pendingPlaceText=null;
+     setPlaceCaptureBusy(false);
+     return output;
+   });
+   assert.ok(payload,'Selected batch must submit a payload');
+   const records=JSON.parse(payload.structuredJson);
+   assert.equal(records.length,1);
+   assert.equal(records[0].name,'교다이야');
+   assert.ok(payload.rawText.includes('서울 마포구 성지길 39'));
+   assert.ok(!payload.rawText.includes('잘못된길'));
+   await page.click('#placeCaptureClose');
+ });
  await check('menu tab remains as manual DB viewer without auto collection',async()=>{
    assert.equal(await page.locator('[data-detail-tab="menu"]').count(),1);
    assert.equal(await page.locator('[data-detail-panel="menu"]').count(),1);
