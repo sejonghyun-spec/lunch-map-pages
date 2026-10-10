@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-10-awards-badges-v102">
+<meta name="lunch-map-build" content="2026-10-10-phase1-map-trust-time-v103">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -676,11 +676,26 @@ button,input,select,textarea{font:inherit}
 .card-favorite[aria-pressed="true"]{color:var(--brand)}
 .card .badge{min-height:23px;margin-left:0;padding:4px 8px;font-size:11.5px;gap:5px}
 .card .badge-dot{width:5px;height:5px}
+
+.visit-time-bar{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;padding:6px 10px;margin:3px 0 5px;border-radius:10px;border:1px solid var(--line);background:var(--soft)}
+.visit-time-bar label{display:flex;align-items:center;gap:8px;font-weight:800;font-size:12px;white-space:nowrap;color:var(--text)}
+.visit-time-bar select{font:inherit;font-weight:700;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:5px 8px;max-width:175px;min-height:29px}
+.visit-time-bar.active{border-color:#b98b70}
+.visit-time-bar #visitTimeHint{font-size:10.5px;color:var(--muted);line-height:1.3;overflow-wrap:anywhere}
+.mobile-visit-time-note{grid-column:1/-1;font-size:10.5px;line-height:1.35;color:var(--muted)}
+.hours-source-chip{display:inline-flex;align-items:center;gap:3px;border:1px solid #e1e2e6;border-radius:5px;padding:1px 5px;color:#616d75;background:#f4f5f6;font-size:10.5px;font-weight:750;line-height:1.55}
+.hours-source-chip[data-source-tier="naver"]{color:#176f4a;border-color:#b7d9ca;background:#eaf7f1}
+.hours-source-chip[data-source-tier="stale"]{color:#a05d1c;border-color:#e2cdaf;background:#fbf3e7}
+.hours-source-chip[data-source-tier="unknown"]{color:#856c5d;border-style:dashed;background:transparent}
+html[data-theme="night"] .hours-source-chip{background:#26343b;border-color:#50616e;color:#d3e0e4}
+html[data-theme="night"] .hours-source-chip[data-source-tier="naver"]{background:#1c392d;border-color:#4a8671;color:#a5e0c7}
+html[data-theme="night"] .visit-time-bar{background:#252b31;border-color:#414a51}
+html[data-theme="night"] .visit-time-bar select{background:#1b2026;color:#f3f3f3;border-color:#4b555d}
 .card-stats{display:flex;align-items:center;flex-wrap:wrap;gap:4px 7px;margin-top:5px;font-size:12.5px;line-height:1.5;color:#7c7168}
 .card-stats .rating{min-height:0;margin:0;font-size:14px;color:#a75a19;font-weight:800}
 .card-evaluations,.card-review{color:#81766e;font-variant-numeric:tabular-nums}
 .card-evaluations + .card-review:not([hidden])::before{content:'·';margin-right:7px;color:#b2a79d}
-.card-stats:not(:has(.rating,.card-distance,.card-review:not([hidden]))){display:none}
+.card-stats:not(:has(.rating,.card-distance,.card-hours,.hours-source-chip,.card-review:not([hidden]))){display:none}
 .card-distance{margin-left:auto;font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:650;color:#655c55;white-space:nowrap}
 
 .award-badges{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:7px;min-width:0}
@@ -4119,6 +4134,10 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
         <button class="filter-chip" type="button" data-chip="map">현재 지도</button>
         <button id="mobileFilterToggle" class="filter-chip mobile-filter-toggle" type="button" aria-expanded="false">☰ 필터</button>
       </div>
+      <div class="visit-time-bar" role="group" aria-label="방문 예정시간 검색">
+        <label for="visitTimeFilter">방문 예정 <select id="visitTimeFilter" aria-label="오늘 방문 예정시간"><option value="all">방문시간 전체</option><option value="11:00">오늘 11:00</option><option value="11:30">오늘 11:30</option><option value="12:00">오늘 12:00</option><option value="12:30">오늘 12:30</option><option value="13:00">오늘 13:00</option><option value="13:30">오늘 13:30</option><option value="14:00">오늘 14:00</option><option value="18:00">오늘 18:00</option><option value="19:00">오늘 19:00</option></select></label>
+        <span id="visitTimeHint">저장된 영업시간 기준 · 실제 방문 전 확인</span>
+      </div>
       <div class="quick-row" role="group" aria-label="위치 및 지도 제어">
         <span class="map-tools-label">지도</span>
         <button id="myLocation" class="quick-btn">◎ 내 위치</button>
@@ -4173,6 +4192,8 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
         <label><span>거리</span><select id="mobileDistanceFilter">
           <option value="all">전체</option><option value="300">300m</option><option value="500">500m</option><option value="700">700m</option><option value="1000">1km</option>
         </select></label>
+        <label class="mobile-visit-time" for="mobileVisitTimeFilter"><span>방문 예정</span><select id="mobileVisitTimeFilter" aria-label="오늘 방문 예정시간"><option value="all">방문시간 전체</option><option value="11:00">오늘 11:00</option><option value="11:30">오늘 11:30</option><option value="12:00">오늘 12:00</option><option value="12:30">오늘 12:30</option><option value="13:00">오늘 13:00</option><option value="13:30">오늘 13:30</option><option value="14:00">오늘 14:00</option><option value="18:00">오늘 18:00</option><option value="19:00">오늘 19:00</option></select></label>
+        <div class="mobile-visit-time-note">영업 예상 시간 기준 · 미확인 식당은 제외됩니다.</div>
         <button id="mobileFilterReset" class="mobile-filter-reset" type="button">초기화</button>
       </div>
 
@@ -4577,7 +4598,7 @@ function getInitialMapLevel(){
 }
 const SUGGEST_URL='https://script.google.com/a/seah.co.kr/macros/s/AKfycbzpCuw9c6Y8K6_4tnqZzwMBoKGIiW3pv-DheDHYD6XpbT1tEqDlZUFFkPgn-7w_q1L7tA/exec';
 let allData=[],selectedCategories=new Set(),searchKeyword='',sortMode='default';
-let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all',distanceFilter='all';
+let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all',distanceFilter='all',visitTimeFilter='all';
 let favoritesOnly=false,recentOnly=false,mapOnlyMode=false,reviewSortMode='latest';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,regionAnchorOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',hoveredMarkerRow=null,searchTimer=null;
 let lastMapRows=[],lastClusterLevel=null,mapIdleRenderTimer=null,lastDetailRow=null,lastListSignature='';
@@ -4717,7 +4738,7 @@ function highlightMatch(value,query){
 
 function listUiSignature(){
   return [
-    activeRegionKey,searchKeyword,sortMode,ratingFilter,capacityFilter,featureFilter,distanceFilter,
+    activeRegionKey,searchKeyword,sortMode,ratingFilter,capacityFilter,featureFilter,distanceFilter,visitTimeFilter,
     favoritesOnly,recentOnly,mapOnlyMode,[...selectedCategories].sort().join('|')
   ].join('::');
 }
@@ -4998,6 +5019,14 @@ function updateMultiFilterUI(){
     const label=el.parentElement.querySelector('.compact-filter-label');
     if(label)label.textContent=labels[id][value]||labels[id].all;
   });
+  const visitSelect=document.getElementById('visitTimeFilter');
+  const mobileVisitSelect=document.getElementById('mobileVisitTimeFilter');
+  if(visitSelect)visitSelect.value=visitTimeFilter;
+  if(mobileVisitSelect)mobileVisitSelect.value=visitTimeFilter;
+  document.querySelector('.visit-time-bar')?.classList.toggle('active',visitTimeFilter!=='all');
+  const hint=document.getElementById('visitTimeHint');
+  if(hint)hint.textContent=visitTimeFilter==='all'?'저장된 영업시간 기준 · 실제 방문 전 확인':
+    visitTimeFilter+' 영업 예상만 · 미확인 제외';
   const mobilePairs=[
     ['mobileRatingFilter',ratingFilter],
     ['mobileCapacityFilter',capacityFilter],
@@ -5013,6 +5042,7 @@ function resetMultiFilters(){
   commentFilter='all';
   featureFilter='all';
   distanceFilter='all';
+  visitTimeFilter='all';
   favoritesOnly=false;
   recentOnly=false;
   mapOnlyMode=false;
@@ -5390,7 +5420,7 @@ function renderDetailDecision(row){
   const hours=operatingInfo(row),distance=formatDistanceFromSeahTower(row);
   const reviewCount=commentCountFor(row);
   const parts=[];
-  if(hours.label)parts.push('<span class="decision-primary hours-state '+esc(hours.status)+'">'+esc(hours.label)+'</span>');
+  if(hours.label)parts.push('<span class="decision-primary hours-state '+esc(hours.status)+'">'+esc(scheduleDisplayLabel(row,hours))+'</span>');
   if(hours.text)parts.push('<span>'+esc(hours.text)+'</span>');
   if(distance)parts.push('<span>'+esc(distance)+'</span>');
   if(reviewCount)parts.push('<span>후기 '+reviewCount+'개</span>');
@@ -5844,6 +5874,7 @@ function getRows(){
     if(favoritesOnly&&!favorites.has(restaurantKey(x)))return false;
     if(recentOnly&&!recent.has(restaurantKey(x)))return false;
     if(mapOnlyMode&&!isInCurrentMapBounds(x))return false;
+    if(visitTimeFilter!=='all'&&!visitTimeOpenAt(x,visitTimeFilter))return false;
 
     return true;
   });
@@ -5873,11 +5904,11 @@ function updateCardReviewCounts(){
 function updateListHeading(count){
   const searchMode=!!searchKeyword.trim();
   document.getElementById('listTitle').textContent=searchMode?'검색 결과':'주변 식당';
-  document.getElementById('listSub').textContent=count+'곳';
+  document.getElementById('listSub').textContent=count+'곳'+(visitTimeFilter!=='all'?' · '+visitTimeFilter+' 영업 예상':'');
   const mobileTitle=document.getElementById('mobileListTitle');
   const mobileSub=document.getElementById('mobileListSub');
   if(mobileTitle)mobileTitle.textContent=searchMode?'검색 결과':'주변 식당';
-  if(mobileSub)mobileSub.textContent=count+'곳';
+  if(mobileSub)mobileSub.textContent=count+'곳'+(visitTimeFilter!=='all'?' · '+visitTimeFilter+' 영업 예상':'');
 }
 function renderMobileList(rows){
   const el=document.getElementById('mobileList');
@@ -5908,7 +5939,8 @@ function renderMobileList(rows){
       '<div class="mobile-card-meta">'+
         (score?'<span class="mobile-card-rating">★ '+score.toFixed(1)+'</span><span>평가 '+(Number(x._ratingCount)||1)+'</span>':'')+
         '<span class="card-review" data-review-key="'+esc(restaurantCommentKey(x))+'" hidden></span>'+
-        (hours.status!=='unknown'?'<span class="mobile-card-hours '+esc(hours.status)+'">'+esc(hours.label)+'</span>':'')+
+        (hours.status!=='unknown'?'<span class="mobile-card-hours '+esc(hours.status)+'">'+esc(scheduleDisplayLabel(x,hours))+'</span>':'')+
+        hoursSourceBadge(x)+
         (distance?'<span class="mobile-card-distance">↔ '+esc(distance)+'</span>':'')+
       '</div>'+
       awardBadgesHtml(x)+
@@ -5964,7 +5996,8 @@ function renderList(rows){
       '<div class="card-stats">'+
         (score?'<span class="rating">★ '+score.toFixed(1)+'</span><span class="card-evaluations">평가 '+(Number(x._ratingCount)||1)+'</span>':'')+
         '<span class="card-review" data-review-key="'+esc(restaurantCommentKey(x))+'" hidden></span>'+
-        (hours.status!=='unknown'?'<span class="card-hours '+esc(hours.status)+'">'+esc(hours.label)+'</span>':'')+
+        (hours.status!=='unknown'?'<span class="card-hours '+esc(hours.status)+'">'+esc(scheduleDisplayLabel(x,hours))+'</span>':'')+
+        hoursSourceBadge(x)+
         (distance?'<span class="card-distance" title="'+esc(currentAnchorLabel())+' 기준 직선거리" aria-label="'+esc(currentAnchorLabel())+'에서 직선거리 '+esc(distance)+'">↔ '+esc(distance)+'</span>':'')+
       '</div>'+
       awardBadgesHtml(x)+
@@ -6474,7 +6507,7 @@ function renderWeeklyHours(row){
 
   const today=seoulDateInfo();
   const summary=[];
-  if(current.label)summary.push('<span class="hours-state '+esc(current.status)+'">'+esc(current.label)+'</span>');
+  if(current.label)summary.push('<span class="hours-state '+esc(current.status)+'">'+esc(scheduleDisplayLabel(row,current))+'</span>');
   if(current.lastOrder)summary.push('<span>'+esc(current.lastOrder)+' 라스트오더</span>');
   else if(current.text)summary.push('<span>'+esc(current.text)+'</span>');
   else if(closedDays)summary.push('<span>'+esc(closedDays)+'</span>');
@@ -6504,6 +6537,53 @@ function renderWeeklyHours(row){
     '<summary><span class="detail-hours-summary-copy">'+summary.join('<span aria-hidden="true">·</span>')+'</span></summary>'+
     '<div class="detail-hours-panel">'+rows+irregularNote+'</div>'+
   '</details>';
+}
+
+function hoursSourceTrust(row){
+  const checked=String(firstField(row,['hoursCheckedAt','영업시간확인일'])||'').trim();
+  const source=String(firstField(row,['hoursSource','영업시간출처'])||'').trim();
+  const hasHours=weeklyOperatingSchedule(row).some(d=>d.hours||d.closed||d.breakTime||d.lastOrders.length);
+  if(!hasHours)return {tier:'unknown',label:'시간 미확인',source,checked};
+  let tier=/네이버\s*플레이스/i.test(source)?'naver':source?'reference':'unknown';
+  let label=tier==='naver'?'네이버 자료':tier==='reference'?'외부 참고':'출처 미확인';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(checked)){
+    const ts=Date.parse(checked+'T00:00:00+09:00');
+    if(Number.isFinite(ts)&&(Date.now()-ts)>30*86400000){
+      tier='stale';label='재확인 필요';
+    }
+  }
+  return {tier,label,source,checked};
+}
+function hoursSourceBadge(row){
+  const trust=hoursSourceTrust(row);
+  const note=[trust.source,trust.checked?'확인 '+trust.checked:''].filter(Boolean).join(' · ')||'출처·확인일 없음';
+  return '<span class="hours-source-chip" data-source-tier="'+esc(trust.tier)+'" title="'+esc(note)+'">'+esc(trust.label)+'</span>';
+}
+function scheduleDisplayLabel(row,info){
+  if(!info.label)return '영업시간 확인 필요';
+  if(info.status==='open')return '영업 예상';
+  if(info.status==='closed'&&info.label==='오늘 휴무')return '오늘 휴무 예정';
+  if(info.status==='break')return '브레이크 예상';
+  return info.label;
+}
+function visitTimeOpenAt(row,time){
+  const text=String(time||'');
+  if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(text))return false;
+  const minute=Number(text.slice(0,2))*60+Number(text.slice(3));
+  const today=seoulDateInfo();
+  const day=weeklyOperatingSchedule(row)[today.weekdayIndex];
+  if(!day||day.closed||isClosedToday(firstField(row,['closedDays','closedDay','휴무일'])))return false;
+  const range=timeRangeMinutes(day.hours);
+  if(!range||!minuteInRange(minute,range))return false;
+  const breakRange=timeRangeMinutes(day.breakTime);
+  if(breakRange&&minuteInRange(minute,breakRange))return false;
+  const orders=Array.isArray(day.lastOrders)?day.lastOrders:[];
+  if(orders.length&&orders.every(clock=>clockMinutes_(clock)<=minute))return false;
+  return true;
+}
+function clockMinutes_(clock){
+  const x=String(clock||'').match(/(\d{1,2}):(\d{2})/);
+  return x?Number(x[1])*60+Number(x[2]):Number.NaN;
 }
 function operatingInfo(row){
   const closedDays=firstField(row,['closedDays','closedDay','휴무일']);
@@ -6547,6 +6627,8 @@ function renderRestaurantDetailInfo(row,place){
   ].filter(x=>String(x[1]||'').trim());
 
   let html=awardDetailHtml(row);
+  html+='<div class="detail-info-row"><div class="detail-info-label">영업정보</div><div class="detail-info-value">'+
+    hoursSourceBadge(row)+'<span class="detail-info-sub"> · 저장된 시간표 기준으로, 공휴일·임시휴무는 방문 전 확인이 필요합니다.</span></div></div>';
   if(weeklyHoursHtml){
     html+='<div class="detail-info-row detail-hours-info"><div class="detail-info-label">영업시간</div><div class="detail-info-value">'+weeklyHoursHtml+'</div></div>';
   }else if(placeUrl){
@@ -6703,13 +6785,24 @@ async function hydrateMissingRows(){
   }
 }
 
+const pinnedStaticCoords=new Map();
+function cachePinnedCoordinates(rows){
+  (Array.isArray(rows)?rows:[]).forEach(row=>{
+    if(hasValidCoords(row)){
+      const key=restaurantIdentityKey(row);
+      if(key)pinnedStaticCoords.set(key,{lat:Number(row.lat),lng:Number(row.lng)});
+    }
+  });
+}
 function applyDbRows(rows){
   if(!Array.isArray(rows)||!rows.length)return false;
-  allData=rows.map(x=>({
-    ...x,
-    lat:x.lat==null?null:Number(x.lat),
-    lng:x.lng==null?null:Number(x.lng)
-  }));
+  allData=rows.map(x=>{
+    const pinned=pinnedStaticCoords.get(restaurantIdentityKey(x));
+    return {...x,
+      lat:hasValidCoords(x)?Number(x.lat):pinned?.lat??null,
+      lng:hasValidCoords(x)?Number(x.lng):pinned?.lng??null
+    };
+  });
   // Preserve the currently selected restaurant across static/live DB refreshes.
   reconcileSelectedRestaurant();
   buildFilters();
@@ -6728,7 +6821,10 @@ function loadStaticData(){
     .then(p=>{
       const rows=Array.isArray(p)?p:(Array.isArray(p.rows)?p.rows:[]);
       if(rows.length){
+        cachePinnedCoordinates(rows);
         if(!dbLoadDone)applyDbRows(rows);
+        else if(allData.some(row=>!hasValidCoords(row)&&pinnedStaticCoords.has(restaurantIdentityKey(row))))
+          applyDbRows(allData);
         return true;
       }
       return false;
@@ -9595,6 +9691,13 @@ document.addEventListener('click',e=>{
   });
 });
 
+['visitTimeFilter','mobileVisitTimeFilter'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('change',event=>{
+    visitTimeFilter=event.target.value;
+    updateMultiFilterUI();
+    render(false);
+  });
+});
 document.getElementById('multiFilterReset').addEventListener('click',()=>{
   resetMultiFilters();
   render(true);

@@ -85,6 +85,66 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    });
    assert.equal(restored,1,'live DB replacement must preserve independently sourced awards');
  });
+ await check('phase 1: pinned regional coordinates survive live DB refresh',async()=>{
+   await page.waitForFunction(()=>pinnedStaticCoords.size>=70);
+   const result=await state(()=>{
+     const regional=allData.filter(r=>regionKeyForRow(r)!=='hapjeong');
+     const before=regional.every(hasValidCoords);
+     const original=allData.map(r=>({...r}));
+     const mutated=original.map(r=>regionKeyForRow(r)==='pohang'||regionKeyForRow(r)==='chungju'
+       ? {...r,lat:null,lng:null}:r);
+     applyDbRows(mutated);
+     const after=allData.filter(r=>regionKeyForRow(r)!=='hapjeong').every(hasValidCoords);
+     const restored=allData.filter(r=>regionKeyForRow(r)!=='hapjeong').length;
+     applyDbRows(original);
+     return {before,after,restored,cache:pinnedStaticCoords.size};
+   });
+   assert.ok(result.before,'18 verified regional coordinates must be present at startup');
+   assert.ok(result.after,'Static coordinates must survive missing coordinates from live DB');
+   assert.equal(result.restored,18);
+   assert.ok(result.cache>=70);
+ });
+ await check('phase 1: hours provenance is explicit and planned visit filter syncs on desktop/mobile',async()=>{
+   const qualities=await state(()=>{
+     const find=name=>allData.find(x=>x.name===name);
+     const sample={hours:'11:00-20:00',breakTime:'15:00-17:00',lastOrder:'14:30, 19:30',closedDays:''};
+     return {
+       naver:hoursSourceTrust(find('자성당')).tier,
+       thirdparty:hoursSourceTrust(find('교다이야')).tier,
+       unknown:hoursSourceTrust(find('의정부부대찌개')).tier,
+       labels:[scheduleDisplayLabel(find('자성당'),{status:'open',label:'영업중'}),
+         scheduleDisplayLabel(find('자성당'),{status:'closed',label:'오늘 휴무'})],
+       testOpen:visitTimeOpenAt(sample,'12:00'),
+       testBreak:visitTimeOpenAt(sample,'15:30'),
+       testOrder:visitTimeOpenAt(sample,'19:45'),
+       testClosed:visitTimeOpenAt({...sample,closedDays:seoulDateInfo().weekdayName},'12:00')
+     };
+   });
+   assert.equal(qualities.naver,'naver');
+   assert.equal(qualities.thirdparty,'reference');
+   assert.equal(qualities.unknown,'unknown');
+   assert.deepEqual(qualities.labels,['영업 예상','오늘 휴무 예정']);
+   assert.equal(qualities.testOpen,true);
+   assert.equal(qualities.testBreak,false);
+   assert.equal(qualities.testOrder,false);
+   assert.equal(qualities.testClosed,false);
+   assert.equal(await page.locator('#list .hours-source-chip').count(),await page.locator('#list .card').count());
+   assert.equal(await page.locator('#mobileList .hours-source-chip').count(),await page.locator('#mobileList .card').count());
+   const expected=await state(()=>displayRestaurants().filter(x=>visitTimeOpenAt(x,'12:00')).length);
+   await page.selectOption('#visitTimeFilter','12:00');
+   assert.equal(await page.locator('#list .card').count(),expected);
+   assert.equal(await page.locator('#mobileVisitTimeFilter').inputValue(),'12:00');
+   assert.match(await page.locator('#listSub').innerText(),/12:00 영업 예상/);
+   assert.equal(await state(()=>getRows().every(row=>visitTimeOpenAt(row,'12:00'))),true);
+   await state(()=>{
+     const select=document.getElementById('mobileVisitTimeFilter');
+     select.value='13:00';select.dispatchEvent(new Event('change',{bubbles:true}));
+   });
+   assert.equal(await page.locator('#visitTimeFilter').inputValue(),'13:00');
+   await reset();
+   assert.equal(await page.locator('#visitTimeFilter').inputValue(),'all');
+   assert.equal(await page.locator('#mobileVisitTimeFilter').inputValue(),'all');
+ });
  await check('region selector isolates Hapjeong, Pohang and Chungju with plant-centered distance',async()=>{
    const initial=await state(()=>({
      activeRegionKey,
@@ -265,7 +325,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
  await check('no fabricated tags, missing rating, note escaping and aggregated rating count',async()=>{
    assert.deepEqual(await state(()=>cardFeatureParts({feature:'룸 없음'}).tags),['룸 없음']);
    assert.ok(await state(()=>{const a=aggregateRestaurantRows([{row:999,name:'검증',address:'주소',rating:5},{row:1000,name:'검증',address:'주소',rating:4}])[0];renderList([a]);return document.querySelector('.rating').textContent==='★ 4.5'&&document.querySelector('.card-evaluations').textContent==='평가 2'}));
-   assert.ok(await state(()=>{renderList([{row:999,name:'검증',feature:'',note:'<img src=x onerror=alert(1)>',capacity:'~'}]);return !document.querySelector('#list .card .rating')&&!document.querySelector('#list .card img')&&getComputedStyle(document.querySelector('.card-stats')).display==='none'&&document.querySelector('.card-feature').textContent.includes('<img')}));await reset();
+   assert.ok(await state(()=>{renderList([{row:999,name:'검증',feature:'',note:'<img src=x onerror=alert(1)>',capacity:'~'}]);return !document.querySelector('#list .card .rating')&&!document.querySelector('#list .card img')&&document.querySelector('#list .card .hours-source-chip')?.textContent==='시간 미확인'&&document.querySelector('.card-feature').textContent.includes('<img')}));await reset();
  });
  await check('search autocomplete, quick action bar, clustering helpers, review insight and hours parser',async()=>{
    await page.setViewportSize({width:1440,height:900});await reset();
