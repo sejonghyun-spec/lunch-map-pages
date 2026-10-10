@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-07-review-alerts-v95">
+<meta name="lunch-map-build" content="2026-10-10-regions-v96">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -77,10 +77,13 @@ button,input,select,textarea{font:inherit}
   height:100%;
   display:flex;
   align-items:center;
-  padding:0 20px;
+  justify-content:space-between;
+  gap:12px;
+  padding:0 16px 0 20px;
   border-right:1px solid var(--line);
   min-width:0;
 }
+.brand-copy{min-width:0}
 .brand-title{
   font-size:24px;
   font-weight:800;
@@ -93,6 +96,35 @@ button,input,select,textarea{font:inherit}
   color:var(--muted);
   font-size:13px;
   font-weight:600;
+}
+.region-select{
+  flex:0 0 auto;
+  height:36px;
+  min-width:88px;
+  border:1px solid #d9d1cb;
+  border-radius:10px;
+  padding:0 28px 0 10px;
+  background:var(--theme-control-bg);
+  color:#4f575c;
+  font-size:13px;
+  font-weight:800;
+  cursor:pointer;
+  outline:none;
+}
+.region-select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(154,79,49,.10)}
+.region-anchor-marker{
+  display:flex;align-items:center;gap:7px;white-space:nowrap;
+  transform:translateY(-6px);pointer-events:none
+}
+.region-anchor-pin{
+  display:grid;place-items:center;width:30px;height:30px;border:3px solid #fff;border-radius:50%;
+  background:#2f3b43;color:#fff;font-size:14px;font-weight:900;
+  box-shadow:0 4px 12px rgba(21,32,38,.28)
+}
+.region-anchor-label{
+  padding:5px 8px;border:1px solid rgba(56,68,75,.16);border-radius:8px;
+  background:rgba(255,255,255,.96);color:#293238;font-size:12px;font-weight:850;
+  box-shadow:0 4px 12px rgba(36,48,56,.14)
 }
 .top-filters{
   display:flex;
@@ -2076,8 +2108,18 @@ html[data-theme="bistro"] .capture-paste-zone{border-color:#a89886;border-radius
     grid-column:1;
     grid-row:1;
     border-right:0;
-    padding:0 6px 0 14px;
+    padding:0 4px 0 12px;
     overflow:hidden;
+    gap:6px;
+  }
+  .brand-copy{overflow:hidden}
+  .region-select{
+    min-width:69px;
+    width:69px;
+    height:34px;
+    padding:0 20px 0 7px;
+    border-radius:9px;
+    font-size:12px;
   }
   .brand-title{
     overflow:hidden;
@@ -2770,6 +2812,9 @@ html[data-theme="night"] .suggest-btn{background:#f0a93d;color:#16110a;box-shado
 html[data-theme="night"] .roulette-btn{color:#ffd28b}
 html[data-theme="night"] .account-btn.connected{border-color:#315b43;background:#17271e;color:#8dd7a7}
 html[data-theme="night"] .account-btn.needs-auth{border-color:#70463d;background:#2b1d1a;color:#ffad97}
+html[data-theme="night"] .region-select{border-color:#3a424b;background:#171b21;color:#e8edf0}
+html[data-theme="night"] .region-anchor-label{border-color:#3a424b;background:rgba(23,27,33,.96);color:#f0f3f5}
+html[data-theme="night"] .region-anchor-pin{border-color:#171b21;background:#e6e9eb;color:#1c2227}
 html[data-theme="night"] .review-alert-btn.has-unread{border-color:#8c7428;background:#302914;color:#ffd978}
 html[data-theme="night"] .review-alert-panel{border-color:#343b43;background:#1b2026;box-shadow:0 18px 48px rgba(0,0,0,.48)}
 html[data-theme="night"] .review-alert-head{border-color:#30363d}
@@ -3913,7 +3958,12 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
 <div class="app">
   <header class="topbar">
     <div class="brand">
-      <div><div class="brand-title">막냉이 합정 점심 뭐먹지 🍴</div><div class="brand-sub">합정·망원 점심 식당 지도</div></div>
+      <div class="brand-copy"><div id="brandTitle" class="brand-title">막냉이 합정 점심 뭐먹지 🍴</div><div id="brandSub" class="brand-sub">합정·망원 점심 식당 지도</div></div>
+      <select id="regionSelect" class="region-select" aria-label="지역 선택">
+        <option value="hapjeong">합정</option>
+        <option value="pohang">포항</option>
+        <option value="chungju">충주</option>
+      </select>
     </div>
     <div id="filters" class="top-filters"></div>
     <div id="themeControl" class="theme-control">
@@ -4383,6 +4433,7 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
       <input id="suggestLng" type="hidden" name="lng">
       <input id="suggestPlaceId" type="hidden" name="placeId">
       <input id="suggestPlaceUrl" type="hidden" name="placeUrl">
+      <input id="suggestRegion" type="hidden" name="region" value="합정">
       <input class="honeypot" type="text" name="website" tabindex="-1" autocomplete="off">
 
       <div id="suggestStatus" class="form-status"></div>
@@ -4409,10 +4460,45 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
 const KAKAO_KEY='c6656c45b7640edcf233a408bf0afa9a';
 const COLORS={'한식':'#d97706','일식':'#2563eb','중식':'#dc2626','양식':'#7c3aed','아시아':'#059669','분식':'#db2777','카페':'#92400e','회식':'#475569'};
 const ORDER=['전체','한식','일식','중식','양식','아시아','분식','카페','회식'];
-const HOME_LAT=37.5501151,HOME_LNG=126.9146385;
-const SEAH_TOWER_LAT=37.55076110,SEAH_TOWER_LNG=126.91420060;
-const DESKTOP_INITIAL_MAP_LEVEL=2;
-const MOBILE_INITIAL_MAP_LEVEL=4;
+const REGION_CONFIG={
+  hapjeong:{
+    key:'hapjeong',db:'합정',label:'합정',title:'막냉이 합정 점심 뭐먹지 🍴',
+    documentTitle:'막냉이 합정 점심 뭐먹지',sub:'합정·망원 점심 식당 지도',
+    anchorLabel:'세아타워',anchorFullLabel:'세아타워',
+    centerLat:37.5501151,centerLng:126.9146385,anchorLat:37.55076110,anchorLng:126.91420060,
+    desktopLevel:2,mobileLevel:4
+  },
+  pohang:{
+    key:'pohang',db:'포항',label:'포항',title:'막냉이 포항 점심 뭐먹지 🍴',
+    documentTitle:'막냉이 포항 점심 뭐먹지',sub:'세아특수강 포항공장 주변 점심 식당 지도',
+    anchorLabel:'포항공장',anchorFullLabel:'세아특수강 포항공장',
+    centerLat:35.985646806619,centerLng:129.37393419854,anchorLat:35.985646806619,anchorLng:129.37393419854,
+    desktopLevel:5,mobileLevel:6
+  },
+  chungju:{
+    key:'chungju',db:'충주',label:'충주',title:'막냉이 충주 점심 뭐먹지 🍴',
+    documentTitle:'막냉이 충주 점심 뭐먹지',sub:'세아특수강 충주1공장 주변 점심 식당 지도',
+    anchorLabel:'충주1공장',anchorFullLabel:'세아특수강 충주1공장',
+    centerLat:37.012150943227,centerLng:127.94439170246,anchorLat:37.012150943227,anchorLng:127.94439170246,
+    desktopLevel:5,mobileLevel:6
+  }
+};
+const REGION_STORAGE_KEY='lunchMapRegionV1';
+function initialRegionKey(){
+  const query=new URL(location.href).searchParams.get('region');
+  if(REGION_CONFIG[query])return query;
+  try{
+    const saved=localStorage.getItem(REGION_STORAGE_KEY);
+    if(REGION_CONFIG[saved])return saved;
+  }catch(e){}
+  return 'hapjeong';
+}
+let activeRegionKey=initialRegionKey();
+let HOME_LAT=REGION_CONFIG[activeRegionKey].centerLat,HOME_LNG=REGION_CONFIG[activeRegionKey].centerLng;
+let SEAH_TOWER_LAT=REGION_CONFIG[activeRegionKey].anchorLat,SEAH_TOWER_LNG=REGION_CONFIG[activeRegionKey].anchorLng;
+let DESKTOP_INITIAL_MAP_LEVEL=REGION_CONFIG[activeRegionKey].desktopLevel;
+let MOBILE_INITIAL_MAP_LEVEL=REGION_CONFIG[activeRegionKey].mobileLevel;
+function currentRegionConfig(){return REGION_CONFIG[activeRegionKey]||REGION_CONFIG.hapjeong;}
 function useMobileInitialView(){
   const ua=String(navigator.userAgent||'');
   return window.matchMedia('(max-width:900px)').matches ||
@@ -4425,7 +4511,7 @@ const SUGGEST_URL='https://script.google.com/a/seah.co.kr/macros/s/AKfycbzpCuw9c
 let allData=[],selectedCategories=new Set(),searchKeyword='',sortMode='default';
 let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all',distanceFilter='all';
 let favoritesOnly=false,recentOnly=false,mapOnlyMode=false,reviewSortMode='latest';
-let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',hoveredMarkerRow=null,searchTimer=null;
+let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,regionAnchorOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',hoveredMarkerRow=null,searchTimer=null;
 let lastMapRows=[],lastClusterLevel=null,mapIdleRenderTimer=null,lastDetailRow=null,lastListSignature='';
 let compareKeys=[],deepLinkHandled=false;
 let pendingPlaceText=null,placeCaptureBusy=false,placeCaptureTimeoutTimer=null,placeCaptureRequestSeq=0,menuRequestSeq=0;
