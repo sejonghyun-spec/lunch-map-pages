@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-10-regions-v96">
+<meta name="lunch-map-build" content="2026-10-10-regional-zoom-v97">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -4983,6 +4983,8 @@ function initMap(){
     const initialLevel=getInitialMapLevel();
     mapEl.dataset.initialLevel=String(initialLevel);
     map=new kakao.maps.Map(mapEl,{center:new kakao.maps.LatLng(HOME_LAT,HOME_LNG),level:initialLevel});
+    map.setZoomable(true);
+    map.setDraggable(true);
     map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
     infoOverlay=new kakao.maps.CustomOverlay({zIndex:30,yAnchor:1.12});
     placesService=new kakao.maps.services.Places();
@@ -5522,8 +5524,12 @@ function renderMap(rows,fit=true){
   lastClusterLevel=map.getLevel();
 
   if(!validRows.length){
-    map.setCenter(new kakao.maps.LatLng(HOME_LAT,HOME_LNG));
-    map.setLevel(getInitialMapLevel());
+    // Passive redraws (idle/resize/hydration) must never undo a user's zoom.
+    // Only an explicit fitted render may restore the regional home view.
+    if(fit){
+      map.setCenter(new kakao.maps.LatLng(HOME_LAT,HOME_LNG));
+      map.setLevel(getInitialMapLevel());
+    }
     return;
   }
 
@@ -5601,7 +5607,7 @@ function renderMap(rows,fit=true){
 
   syncSelectedRowsUI();
 
-  if(validRows.length===1){
+  if(validRows.length===1&&fit){
     const only=validRows[0];
     map.setCenter(new kakao.maps.LatLng(Number(only.lat),Number(only.lng)));
     map.setLevel(3);
