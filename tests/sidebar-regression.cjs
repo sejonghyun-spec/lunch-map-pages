@@ -257,8 +257,24 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
      assert.equal(await page.locator('[data-theme-option="'+theme+'"]').getAttribute('aria-current'),'true');
    }
  });
- await check('search, four compact native selects, quick bar geometry',async()=>{
-   assert.ok(await state(()=>{const boxes=[...document.querySelectorAll('.compact-filter')].map(x=>x.getBoundingClientRect());return boxes.every(b=>b.top===boxes[0].top&&b.width>60)&&document.getElementById('search').getBoundingClientRect().height>=48}));
+ await check('compact search panel has no All/favorites/recent tabs and expands only on demand',async()=>{
+   assert.equal(await page.locator('[data-category="전체"]').count(),0);
+   assert.equal(await page.locator('#filterChipRow,.filter-chip,[data-mobile-chip]').count(),0);
+   assert.equal(await page.locator('#sidebarFilterToggle').getAttribute('aria-expanded'),'false');
+   assert.ok(!(await page.locator('#desktopDetailedFilters').isVisible()));
+   const rect=await state(()=>{
+     const list=document.getElementById('list').getBoundingClientRect();
+     const search=document.getElementById('search').getBoundingClientRect();
+     return {searchHeight:search.height,listTop:list.top,sidebarTop:document.getElementById('sidebar').getBoundingClientRect().top};
+   });
+   assert.ok(rect.searchHeight>=44 && rect.listTop-rect.sidebarTop<210,JSON.stringify(rect));
+   await page.click('#sidebarFilterToggle');
+   assert.ok(await page.locator('#desktopDetailedFilters').isVisible());
+   assert.equal(await page.locator('#sidebarFilterToggle').getAttribute('aria-expanded'),'true');
+   assert.ok(await state(()=>{const boxes=[...document.querySelectorAll('.compact-filter')].map(x=>x.getBoundingClientRect());return boxes.every(b=>b.top===boxes[0].top&&b.width>60);}));
+   await page.click('#sidebarFilterToggle');
+   assert.equal(await page.locator('#sidebarFilterToggle').getAttribute('aria-expanded'),'false');
+   assert.ok(!(await page.locator('#desktopDetailedFilters').isVisible()));
  });
  await shot('desktop');
  for(const [label,term] of [['name','자성당'],['feature','쫄면'],['address','월드컵로']])await check('search by '+label,async()=>{
@@ -268,6 +284,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
  await check('multi-category selection and all categories',async()=>{
    await page.click('[data-category="한식"]');await page.click('[data-category="일식"]');assert.ok(await state(()=>selectedCategories.size===2&&getRows().every(x=>['한식','일식'].includes(x.category))));await reset();
  });
+ await page.click('#sidebarFilterToggle');
  for(const [id,values] of [['ratingFilter',['5','4','3']],['capacityFilter',['4','8','group']],['featureFilter',['waiting','reservation','room','group','fast']],['distanceFilter',['300','500','700','1000']]]){
    await check(id+' all options and active labels',async()=>{
      for(const value of values){await choose(id,value);assert.ok(await page.locator('#'+id).evaluate(el=>el.classList.contains('active')));assert.ok(await state(()=>document.querySelectorAll('#list .card').length===getRows().length));
@@ -278,12 +295,26 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
      }await reset();
    });
  }
- await check('quick rating filter synchronizes native select and aria-pressed',async()=>{await page.click('[data-chip="rating4"]');assert.equal(await page.inputValue('#ratingFilter'),'4');assert.equal(await page.getAttribute('[data-chip="rating4"]','aria-pressed'),'true');await reset();});
- await check('favorite toggle, favorites filter and map results stay synchronized',async()=>{
-   await page.locator('.card-favorite').first().click();assert.equal(await page.locator('.card-favorite').first().getAttribute('aria-pressed'),'true');
+ await check('detailed rating filter counter and reset preserve all-default behavior',async()=>{
+   await choose('ratingFilter','4');
+   assert.equal(await page.inputValue('#ratingFilter'),'4');
+   assert.equal(await page.locator('#desktopFilterCount').innerText(),'1');
+   assert.equal(await page.locator('#mobileFilterCount').innerText(),'1');
+   await page.click('#multiFilterReset');
+   assert.equal(await page.inputValue('#ratingFilter'),'all');
+   assert.equal(await page.locator('#sidebarFilterToggle').getAttribute('aria-expanded'),'false');
+   await page.click('#sidebarFilterToggle');
+ });
+ await check('favorite heart remains in card and does not narrow the restaurant list',async()=>{
+   const before=await page.locator('#list .card').count();
+   await page.locator('#list .card-favorite').first().click();
+   assert.equal(await page.locator('#list .card-favorite').first().getAttribute('aria-pressed'),'true');
+   assert.equal(await page.locator('#list .card').count(),before);
    assert.ok(await state(()=>!commentPanel.classList.contains('open')));
-   await page.click('[data-chip="favorites"]');assert.equal(await page.locator('#list .card').count(),1);
-   await page.locator('.card-favorite').click();assert.equal(await page.locator('#list .card').count(),0);assert.equal(await state(()=>markerByRow.size),0);await reset();
+   await page.locator('#list .card-favorite').first().click();
+   assert.equal(await page.locator('#list .card').count(),before);
+   assert.equal(await page.locator('#list .card-favorite').first().getAttribute('aria-pressed'),'false');
+   await reset();
  });
  await check('list hover highlights corresponding marker and clears',async()=>{
    const hoverRow=await state(()=>[...markerByRow.keys()][0]);
@@ -304,19 +335,41 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    await page.click('[data-detail-tab="reviews"]');assert.equal(await page.locator('.comment-item').count(),2);
    await shot('desktop-detail');await page.click('#commentClose');
  });
- await check('recent filter and selected marker',async()=>{
-   await page.click('[data-chip="recent"]');assert.equal(await page.locator('#list .card').count(),1);await reset();
-   await state(()=>[...markerByRow.values()][0].content.click());assert.equal(await page.locator('#list .card.active').count(),1);await page.click('#commentClose');
+ await check('recently viewed label stays inside cards and never filters other restaurants',async()=>{
+   const row=await state(()=>getRows()[0].row),before=await page.locator('#list .card').count();
+   await state(row=>selectRow(row,false,false),row);
+   assert.equal(await page.locator('#list .card').count(),before);
+   assert.equal(await page.locator('#list .card[data-row="'+row+'"] .card-recent').innerText(),'최근 본');
+   assert.equal(await page.locator('#mobileList .mobile-card[data-row="'+row+'"] .card-recent').innerText(),'최근 본');
+   await page.click('#commentClose');
+   await state(()=>[...markerByRow.values()][0].content.click());
+   assert.equal(await page.locator('#list .card.active').count(),1);
+   await page.click('#commentClose');
  });
- await check('current-map filter and full reset',async()=>{
-   await page.click('[data-chip="map"]');assert.ok(await state(()=>mapOnlyMode&&getRows().every(isInCurrentMapBounds)));
-   await page.click('#multiFilterReset');assert.ok(await state(()=>!mapOnlyMode&&!favoritesOnly&&!recentOnly&&ratingFilter==='all'));
+ await check('map-only filtering remains on map and all-conditions reset lives in detailed filters',async()=>{
+   await page.click('#mapBoundsButton');
+   assert.ok(await state(()=>mapOnlyMode&&getRows().every(isInCurrentMapBounds)));
+   await page.click('#sidebarFilterToggle');
+   await page.click('#multiFilterReset');
+   assert.ok(await state(()=>!mapOnlyMode&&ratingFilter==='all'&&selectedCategories.size===0));
+   assert.equal(await page.locator('#sidebarFilterToggle').getAttribute('aria-expanded'),'false');
+   await page.click('#sidebarFilterToggle');
  });
  for(const sort of ['rating','name','distance','default'])await check('sorting '+sort,async()=>{
    await page.click('#sortButton');await page.click('[data-sort="'+sort+'"]');
    assert.ok(await page.evaluate(s=>{const rows=getRows();return sortMode===s&&rows.every((x,i)=>!i||s==='default'||(s==='rating'?ratingScore(rows[i-1])>=ratingScore(x):s==='distance'?distanceFromSeahTower(rows[i-1])<=distanceFromSeahTower(x):rows[i-1].name.localeCompare(x.name,'ko')<=0))},sort));
  });
- await check('my location',async()=>{await page.click('#myLocation');await page.waitForTimeout(250);assert.ok(await state(()=>Math.abs(map.getCenter().getLat()-37.55)<0.0001));await reset();});
+ await check('map controls are over the map: locate and return to region center without clearing filters',async()=>{
+   assert.ok(await page.locator('.map-wrap .map-floating-tools #myLocation').isVisible());
+   assert.ok(await page.locator('.map-wrap .map-floating-tools #showAll').isVisible());
+   await choose('ratingFilter','4');
+   await page.click('#myLocation');
+   await page.waitForFunction(()=>Math.abs(map.getCenter().getLat()-37.55)<0.0001);
+   await page.click('#showAll');
+   assert.equal(await state(()=>ratingFilter),'4');
+   assert.ok(await state(()=>Math.abs(map.getCenter().getLat()-HOME_LAT)<0.001));
+   await reset();
+ });
  await check('cached review updates preserve card node/scroll and issue no requests',async()=>{
    const before=apiRequests.length;
    assert.ok(await state(()=>{const list=document.getElementById('list');list.scrollTop=100;const top=list.scrollTop;const first=list.firstElementChild;const key=first.querySelector('.card-review').dataset.reviewKey;applyCommentBundle({[key]:[{comment:'cache test'}]});return first===list.firstElementChild&&top===list.scrollTop&&first.querySelector('.card-review').textContent==='후기 1'}));
@@ -754,11 +807,13 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.equal(await page.locator('#mobileList .mobile-card').count(),await state(()=>getRows().length));
    await page.fill('#mobileSearch','');await page.waitForTimeout(180);
 
-   await page.click('[data-mobile-chip="rating4"]');
-   assert.equal(await page.getAttribute('[data-mobile-chip="rating4"]','aria-pressed'),'true');
+   assert.equal(await page.locator('[data-mobile-chip]').count(),0);
+   await page.click('#mobileDetailedFilterToggle');await page.waitForTimeout(140);
+   await choose('mobileRatingFilter','4');
    assert.ok(await state(()=>ratingFilter==='4'&&getRows().every(x=>ratingScore(x)>=4)));
-   await state(()=>resetMultiFilters());await page.waitForTimeout(100);
-
+   assert.equal(await page.locator('#mobileFilterCount').innerText(),'1');
+   await page.click('#mobileFilterReset');
+   await page.click('#mobileDetailedFilterToggle');await page.waitForTimeout(140);
    await page.click('#mobileDetailedFilterToggle');await page.waitForTimeout(140);
    assert.ok(await state(()=>sheetState==='full'&&mobileSheet.classList.contains('filters-open')));
    assert.ok(await page.locator('#mobileDetailedFilters').isVisible());
