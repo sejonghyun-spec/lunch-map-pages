@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-10-regional-zoom-v97">
+<meta name="lunch-map-build" content="2026-10-10-integrity-audit-v98">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -4524,7 +4524,7 @@ let pendingPlaceText=null,placeCaptureBusy=false,placeCaptureTimeoutTimer=null,p
 const PLACE_CAPTURE_TIMEOUT_MS=12000;
 const menuCache=new Map();
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,selectedEditRestaurant=null,suggestMode='new',suggestPending=false,pendingSuggestionTemp=null,pendingEditUpdate=null;
-let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
+let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,enrichQueuePending=false,liveDbPromise=null;
 let currentAccount=null,lastAuthRetry=0;
 let accountPopup=null,authPollTimer=null,authPollDeadline=0,authCheckInFlight=false;
 const COMMENT_ADMIN_EMAILS=new Set(['sejong.hyun@seah.co.kr']);
@@ -5972,7 +5972,16 @@ function searchPlaceForRow(row){
     };
     placesService.keywordSearch(row.name,(data,status)=>{
       if(status!==kakao.maps.services.Status.OK)return resolve(null);
-      resolve(bestExactKakaoPlace(row,data)||chooseBestKakaoPlace(row,data));
+      const best=bestExactKakaoPlace(row,data);
+      if(!best||scoreKakaoPlaceMatch(row,best)<75)return resolve(null);
+      // A similarly named restaurant in a different region must never overwrite this row.
+      const bestAddress=String(best.road_address_name||best.address_name||'');
+      const expectedRegion=regionKeyForRow(row);
+      if(expectedRegion!=='hapjeong'&&regionKeyForRow({address:bestAddress})!==expectedRegion)return resolve(null);
+      const lat=Number(best.y),lng=Number(best.x);
+      if(!Number.isFinite(lat)||!Number.isFinite(lng))return resolve(null);
+      if(distanceMeters(center,{lat,lng})>30000)return resolve(null);
+      resolve(best);
     },opts);
   });
 }
@@ -6509,11 +6518,18 @@ async function enrichOneRow(row){
 }
 
 async function hydrateMissingRows(){
-  if(enrichQueueRunning||!placesService||!allData.length)return;
+  if(!placesService||!allData.length)return;
+  if(enrichQueueRunning){
+    enrichQueuePending=true;
+    return;
+  }
   enrichQueueRunning=true;
+  const targetRegion=activeRegionKey;
   try{
-    const targets=displayRestaurants().filter(x=>
-      x&&x.name&&(
+    // Work on canonical source rows, not displayRestaurants()' aggregated copies.
+    // Otherwise geocoded coordinates never reach markers until a full DB reload.
+    const targets=allData.filter(x=>
+      x&&x.name&&regionKeyForRow(x)===targetRegion&&(
         !String(x.address||'').trim()||
         !hasValidCoords(x)||
         !String(x.category||'').trim()
@@ -6521,7 +6537,16 @@ async function hydrateMissingRows(){
     );
 
     for(const row of targets){
+      // Switching region or replacing the live DB invalidates the old queue.
+      if(activeRegionKey!==targetRegion||!allData.includes(row)){
+        enrichQueuePending=true;
+        break;
+      }
       const changed=await enrichOneRow(row);
+      if(activeRegionKey!==targetRegion||!allData.includes(row)){
+        enrichQueuePending=true;
+        break;
+      }
       if(changed){
         buildFilters();
         render(false);
@@ -6530,6 +6555,10 @@ async function hydrateMissingRows(){
     }
   }finally{
     enrichQueueRunning=false;
+    if(enrichQueuePending){
+      enrichQueuePending=false;
+      setTimeout(hydrateMissingRows,0);
+    }
   }
 }
 
