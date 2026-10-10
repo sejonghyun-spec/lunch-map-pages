@@ -4762,7 +4762,7 @@ function aggregateRestaurantRows(rows){
 
     // Prefer the most complete values while keeping the first row id stable.
     [...group].reverse().forEach(x=>{
-      ['category','feature','capacity','address','lat','lng','note','locationHint','_placeId'].forEach(k=>{
+      ['category','feature','capacity','address','lat','lng','note','locationHint','region','_placeId'].forEach(k=>{
         if((base[k]==null||base[k]==='')&&x[k]!=null&&x[k]!=='')base[k]=x[k];
       });
     });
@@ -5966,7 +5966,7 @@ function searchPlaceForRow(row){
     };
     placesService.keywordSearch(row.name,(data,status)=>{
       if(status!==kakao.maps.services.Status.OK)return resolve(null);
-      resolve(chooseBestKakaoPlace(row,data));
+      resolve(bestExactKakaoPlace(row,data)||chooseBestKakaoPlace(row,data));
     },opts);
   });
 }
