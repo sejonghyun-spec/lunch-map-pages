@@ -47,6 +47,75 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    const s=await state(()=>({cards:document.querySelectorAll('.card').length,rows:getRows().length,markers:markerByRow.size,label:document.getElementById('listSub').textContent}));
    assert.equal(s.cards,s.rows);assert.equal(s.markers,s.rows);assert.equal(s.label,s.rows+'곳');assert.ok(s.rows>40);
  });
+ await check('region selector isolates Hapjeong, Pohang and Chungju with plant-centered distance',async()=>{
+   const initial=await state(()=>({
+     activeRegionKey,
+     title:document.getElementById('brandTitle').textContent,
+     sub:document.getElementById('brandSub').textContent,
+     count:getRows().length,
+     regions:[...new Set(allData.map(x=>regionKeyForRow(x)))].sort(),
+     select:document.getElementById('regionSelect').value
+   }));
+   assert.equal(initial.activeRegionKey,'hapjeong');
+   assert.ok(initial.title.includes('합정'));
+   assert.equal(initial.select,'hapjeong');
+   assert.ok(initial.count>=50);
+   assert.deepEqual(initial.regions,['chungju','hapjeong','pohang']);
+
+   await page.selectOption('#regionSelect','pohang');
+   await page.waitForTimeout(100);
+   const pohang=await state(()=>({
+     key:activeRegionKey,
+     count:getRows().length,
+     allPohang:getRows().every(x=>regionKeyForRow(x)==='pohang'),
+     title:document.getElementById('brandTitle').textContent,
+     sub:document.getElementById('brandSub').textContent,
+     anchor:currentAnchorLabel(),
+     center:[HOME_LAT,HOME_LNG],
+     zero:distanceFromSeahTower({lat:REGION_CONFIG.pohang.anchorLat,lng:REGION_CONFIG.pohang.anchorLng}),
+     search:location.search,
+     suggestRegion:document.getElementById('suggestRegion').value
+   }));
+   assert.equal(pohang.key,'pohang');
+   assert.equal(pohang.count,11);
+   assert.ok(pohang.allPohang);
+   assert.ok(pohang.title.includes('포항'));
+   assert.ok(pohang.sub.includes('포항공장'));
+   assert.equal(pohang.anchor,'포항공장');
+   assert.ok(Math.abs(pohang.center[0]-35.985646806619)<1e-9);
+   assert.ok(pohang.zero<1);
+   assert.ok(pohang.search.includes('region=pohang'));
+   assert.equal(pohang.suggestRegion,'포항');
+
+   await page.selectOption('#regionSelect','chungju');
+   await page.waitForTimeout(100);
+   const chungju=await state(()=>({
+     key:activeRegionKey,
+     count:getRows().length,
+     allChungju:getRows().every(x=>regionKeyForRow(x)==='chungju'),
+     title:document.getElementById('brandTitle').textContent,
+     sub:document.getElementById('brandSub').textContent,
+     anchor:currentAnchorLabel(),
+     center:[HOME_LAT,HOME_LNG],
+     zero:distanceFromSeahTower({lat:REGION_CONFIG.chungju.anchorLat,lng:REGION_CONFIG.chungju.anchorLng}),
+     search:location.search,
+     suggestRegion:document.getElementById('suggestRegion').value
+   }));
+   assert.equal(chungju.key,'chungju');
+   assert.equal(chungju.count,7);
+   assert.ok(chungju.allChungju);
+   assert.ok(chungju.title.includes('충주'));
+   assert.ok(chungju.sub.includes('충주1공장'));
+   assert.equal(chungju.anchor,'충주1공장');
+   assert.ok(Math.abs(chungju.center[0]-37.012150943227)<1e-9);
+   assert.ok(chungju.zero<1);
+   assert.ok(chungju.search.includes('region=chungju'));
+   assert.equal(chungju.suggestRegion,'충주');
+
+   await page.selectOption('#regionSelect','hapjeong');
+   await page.waitForTimeout(100);
+   assert.equal(await state(()=>activeRegionKey),'hapjeong');
+ });
  await check('all static DOM ids unique; event targets present',async()=>{
    const s=await state(()=>{const ids=[...document.querySelectorAll('[id]')].map(x=>x.id);return ids.filter((id,i)=>ids.indexOf(id)!==i)});assert.deepEqual(s,[]);
    const ids=[...html.matchAll(/getElementById\(['"]([^'"]+)['"]\)/g)].map(m=>m[1]);
