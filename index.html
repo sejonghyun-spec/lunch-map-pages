@@ -8290,49 +8290,211 @@ function clearPlaceText(){
   updatePlaceTextHint();
   (placeImportMode==='separate'?placeCardInputs()[0]:placeTextInput)?.focus();
 }
-function submitPlaceText(){
+function placeImportNamesCompatible(a,b){
+  const left=String(a||'').toLowerCase().replace(/[^가-힣a-z0-9]/g,'');
+  const right=String(b||'').toLowerCase().replace(/[^가-힣a-z0-9]/g,'');
+  return !!left&&!!right&&(left===right||
+    placeBranchNameCompatible(a,b)||placeBranchNameCompatible(b,a));
+}
+function placeImportRegionForAddress(address){
+  const value=placeBatchNormalizeAddress(address);
+  if(/포항/.test(value))return '포항';
+  if(/충주/.test(value))return '충주';
+  if(/서울|마포/.test(value))return '합정';
+  return '';
+}
+function findVerifiedKakaoRestaurant(item){
+  return new Promise((resolve,reject)=>{
+    if(!placesService||!window.kakao?.maps?.services){
+      reject(new Error('카카오 장소 검색을 사용할 수 없습니다. 지도 연결을 확인해 주세요.'));
+      return;
+    }
+    const addressKey=placeBatchAddressKey(item.address);
+    const queries=[item.sourceName+' '+item.address,item.sourceName].filter(Boolean);
+    let queryIndex=0,finished=false;
+    const timer=setTimeout(()=>finish(new Error('장소 주소 확인 시간이 초과되었습니다.')),12000);
+    function finish(err,result){
+      if(finished)return;
+      finished=true;clearTimeout(timer);
+      if(err)reject(err);else resolve(result);
+    }
+    function next(){
+      if(finished)return;
+      if(queryIndex>=queries.length){
+        finish(new Error('카카오맵에서 식당명과 동일 주소를 함께 확인하지 못했습니다.'));
+        return;
+      }
+      const query=queries[queryIndex++];
+      try{
+        placesService.keywordSearch(query,(rows,status)=>{
+          if(finished)return;
+          const match=(status===kakao.maps.services.Status.OK?rows:[]).find(place=>{
+            const sameAddress=[place.road_address_name,place.address_name].some(
+              value=>placeBatchAddressKey(value)===addressKey);
+            return sameAddress&&placeImportNamesCompatible(item.sourceName,place.place_name);
+          });
+          if(match)finish(null,match);else next();
+        },{size:15});
+      }catch(err){finish(new Error('장소 주소를 확인하지 못했습니다.'));}
+    }
+    next();
+  });
+}
+function registerNewPlaceFromText(item,place){
+  return new Promise((resolve,reject)=>{
+    if(suggestPending){
+      reject(new Error('다른 식당 등록이 진행 중입니다. 완료 후 다시 시도해 주세요.'));
+      return;
+    }
+    const region=placeImportRegionForAddress(item.address);
+    const lat=Number(place.y),lng=Number(place.x);
+    if(!region||!Number.isFinite(lat)||!Number.isFinite(lng)||!place.id){
+      reject(new Error('신규 등록에 필요한 지역 또는 지도 위치가 불명확합니다.'));
+      return;
+    }
+    let settled=false;
+    const timer=setTimeout(()=>finish(new Error('신규 등록 응답이 지연되었습니다. DB 확인 후 다시 시도해 주세요.')),30000);
+    function finish(err,result){
+      if(settled)return;
+      settled=true;
+      clearTimeout(timer);
+      window.removeEventListener('message',handle);
+      if(err)reject(err);else resolve(result);
+    }
+    function handle(event){
+      if(!isAppsScriptMessageOrigin(event.origin))return;
+      const data=event.data||{};
+      if(data.source!=='lunch-map-suggest')return;
+      if(data.authRequired||!data.ok){
+        finish(new Error(data.message||'신규 식당 등록이 거절되었습니다.'));
+        return;
+      }
+      finish(null,data);
+    }
+    window.addEventListener('message',handle);
+    try{
+      submitPlaceCaptureForm({
+        mode:'suggest',
+        name:String(place.place_name||item.sourceName),
+        address:String(place.road_address_name||place.address_name||item.address),
+        region,
+        category:inferCategory(place)||'기타',
+        rating:'',feature:'',capacity:'',note:'',
+        lat:String(lat),lng:String(lng),placeId:String(place.id),
+        placeUrl:String(place.place_url||''),website:''
+      },'placeNewRestaurantSink');
+    }catch(err){finish(new Error('신규 등록 전송을 시작하지 못했습니다.'));}
+  });
+}
+async function submitPlaceText(){
   const rawText=placeInputText().trim();
   if(placeCaptureBusy||!rawText)return;
+  if(!isCommentAdmin()){
+    setCaptureStatus('관리자 계정 연결 후 반영할 수 있습니다.','error');
+    return;
+  }
   if(placeBatchAnalyzedText!==placeInputSignature())updatePlaceTextHint();
-  const selection=placeBatchItems.filter(item=>item.valid&&placeBatchSelected.has(item.id));
-  if(selection.length>20){
+  const originalSelection=placeBatchItems.filter(item=>item.valid&&placeBatchSelected.has(item.id));
+  if(originalSelection.length>20){
     setCaptureStatus('서버 안정성을 위해 한 번에 최대 20개를 선택해 주세요.','error');
     return;
   }
-  if(!selection.length){
+  if(!originalSelection.length){
     setCaptureStatus('등록하거나 업데이트할 식당을 하나 이상 선택해야 합니다.','error');
     return;
   }
-  const names=[...new Set(selection.map(x=>x.name))];
-  const compact=selection.map(x=>x.rawText).join('\n\n');
-  const records=selection.map(({name,sourceName,address,phone,infoLines,rawText})=>
-    ({name:sourceName||name,address,phone,infoLines,rawText}));
-  const requestId='place-'+Date.now().toString(36)+'-'+(++placeCaptureRequestSeq).toString(36)+
-    '-'+Math.random().toString(36).slice(2);
-  pendingPlaceText={
-    requestId,names,
-    beforeSnapshot:placeImportSnapshot(names),
-    originalText:placeInputSignature(),
-    recordCount:selection.length,
-    startedAt:performance.now()
-  };
+  let selection=originalSelection,createdCount=0;
   setPlaceCaptureBusy(true);
-  setCaptureStatus('판독 '+(placeBatchParseMs/1000).toFixed(3)+'초 · 서버에 '+selection.length+'건 일괄 반영 중…');
-  submitPlaceCaptureForm({
-    mode:'placeText',
-    rawText:compact,
-    structuredJson:JSON.stringify(records),
-    detectedNames:names.join('\n'),
-    clientParsed:'1',
-    requestId:String(requestId)
-  });
-  armPlaceCaptureTimeout(requestId);
+  try{
+    if(selection.some(item=>item.isNew)){
+      setCaptureStatus('신규 식당 주소 중복 여부를 최신 DB에서 다시 확인 중…');
+      if(!await loadLiveDb())throw new Error('최신 DB를 조회하지 못해 신규 등록을 중단했습니다.');
+      selection=assessPlaceBatchRecords(originalSelection);
+      const invalid=selection.find(item=>!item.valid);
+      if(invalid)throw new Error(invalid.sourceName+': '+invalid.reason+' (최신 DB 확인 결과)');
+      const newOnes=selection.filter(item=>item.isNew);
+      // Resolve all locations before writing anything to avoid partial
+      // creation caused by an unverifiable address later in the batch.
+      const verified=[];
+      for(const item of newOnes){
+        setCaptureStatus(item.sourceName+' · 주소 및 장소 확인 중 ('+(verified.length+1)+'/'+newOnes.length+')');
+        const place=await findVerifiedKakaoRestaurant(item);
+        verified.push({item,place});
+      }
+      for(const entry of verified){
+        const {item,place}=entry;
+        // Recheck against the in-memory DB as well as earlier registrations
+        // from this batch. Only an unseen address may create a new row.
+        const key=placeBatchAddressKey(item.address);
+        if(placeImportCatalog().some(row=>placeBatchAddressKey(row.address)===key))
+          throw new Error(item.sourceName+': 같은 주소가 이미 등록되어 있습니다.');
+        setCaptureStatus(item.sourceName+' · 신규 식당 저장 중 ('+(createdCount+1)+'/'+verified.length+')');
+        await registerNewPlaceFromText(item,place);
+        item.name=String(place.place_name||item.sourceName);
+        createdCount++;
+        // Track the submitted address immediately, even before the data endpoint
+        // reflects this row. Never send another new registration for this key.
+        if(!selection._createdKeys)selection._createdKeys=new Set();
+        selection._createdKeys.add(key);
+      }
+      if(createdCount){
+        setCaptureStatus('신규 '+createdCount+'건 저장 응답 확인 · DB 등록 결과 확인 중…');
+        if(!await loadLiveDb())throw new Error('신규 식당 저장 후 DB 조회에 실패했습니다. 중복 등록하지 말고 DB를 확인해 주세요.');
+        const missing=verified.find(({item,place})=>!placeImportCatalog().some(row=>
+          placeBatchAddressKey(row.address)===placeBatchAddressKey(item.address)&&
+          placeImportNamesCompatible(row.name,place.place_name)));
+        if(missing)throw new Error(missing.item.sourceName+': 서버 DB에서 신규 등록을 확인하지 못했습니다. 다시 등록하지 마세요.');
+      }
+    }
+    const updates=selection.filter(item=>item.infoLines.length||item.phone);
+    if(!updates.length){
+      resetPlaceImportInputs();
+      setPlaceCaptureBusy(false);
+      closePlaceCaptureModal();
+      showToast('신규 식당 '+createdCount+'건 등록 확인 완료');
+      return;
+    }
+    const names=[...new Set(updates.map(x=>x.name))];
+    const compact=updates.map(x=>[x.name,x.address,x.phone,...x.infoLines].filter(Boolean).join('\n')).join('\n\n');
+    const records=updates.map(({name,address,phone,infoLines})=>
+      ({name,address,phone,infoLines,rawText:[name,address,phone,...infoLines].filter(Boolean).join('\n')}));
+    const requestId='place-'+Date.now().toString(36)+'-'+(++placeCaptureRequestSeq).toString(36)+
+      '-'+Math.random().toString(36).slice(2);
+    pendingPlaceText={
+      requestId,names,createdCount,
+      beforeSnapshot:placeImportSnapshot(names),
+      originalText:placeInputSignature(),
+      recordCount:updates.length,
+      startedAt:performance.now()
+    };
+    setCaptureStatus('신규 '+createdCount+'건 확인 · 영업정보 '+updates.length+'건 업데이트 중…');
+    submitPlaceCaptureForm({
+      mode:'placeText',
+      rawText:compact,
+      structuredJson:JSON.stringify(records),
+      detectedNames:names.join('\n'),
+      clientParsed:'1',
+      requestId:String(requestId)
+    });
+    armPlaceCaptureTimeout(requestId);
+  }catch(err){
+    setPlaceCaptureBusy(false);
+    pendingPlaceText=null;
+    const message=String(err&&err.message||'DB 반영에 실패했습니다.');
+    setCaptureStatus(message,'error');
+    showToast(message);
+    if(createdCount)liveDbPromise=loadLiveDb().then(()=>{
+      updatePlaceTextHint();
+      setCaptureStatus(message,'error');
+    }).catch(()=>false);
+  }
 }
+
 function placeTextResultSummary(data){
   const results=Array.isArray(data.results)?data.results:[];
   const skipped=Array.isArray(data.skipped)?data.skipped:[];
   const elapsed=Number(data.elapsedMs)||0;
-  let text=results.length+'개 식당 반영 완료';
+  let text=(Number(pendingPlaceText&&pendingPlaceText.createdCount)||0?('신규 '+pendingPlaceText.createdCount+'개 등록 · '):'')+results.length+'개 식당 영업정보 반영 완료';
   if(elapsed)text+=' · '+(elapsed/1000).toFixed(2)+'초';
   if(results.length)text+=' · '+results.map(x=>x.name).join(', ');
   if(skipped.length)text+=' / '+skipped.length+'개 보류: '+skipped.map(x=>(x.name||'식당')+'('+x.reason+')').join(', ');
