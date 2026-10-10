@@ -8681,20 +8681,58 @@ window.addEventListener('message',e=>{
     return;
   }
 
-  const elapsed=performance.now()-Number(pendingPlaceText.startedAt||performance.now());
+  const pending=pendingPlaceText;
+  const elapsed=performance.now()-Number(pending.startedAt||performance.now());
   const summary=placeTextResultSummary(data)+' · 응답 '+(elapsed/1000).toFixed(2)+'초';
   const skipped=Array.isArray(data.skipped)&&data.skipped.length>0;
-  setCaptureStatus(summary,skipped?'error':'success');
-  showToast(summary);
-  pendingPlaceText=null;
-  setPlaceCaptureBusy(false);
-  if(!skipped){
-    resetPlaceImportInputs();
-    closePlaceCaptureModal();
+  const renamePlan=Array.isArray(pending.renamePlan)?pending.renamePlan:[];
+  if(!renamePlan.length){
+    setCaptureStatus(summary,skipped?'error':'success');
+    showToast(summary);
+    pendingPlaceText=null;
+    setPlaceCaptureBusy(false);
+    if(!skipped){
+      resetPlaceImportInputs();
+      closePlaceCaptureModal();
+    }
+    updatePlaceTextHint();
+    if(skipped)setCaptureStatus(summary,'error');
+    liveDbPromise=loadLiveDb().catch(()=>false);
+    return;
   }
-  updatePlaceTextHint();
-  if(skipped)setCaptureStatus(summary,'error');
-  liveDbPromise=loadLiveDb().catch(()=>false);
+  // An old Apps Script deployment can ACK the hours update while ignoring
+  // canonical-name fields. Do not tell the user a rename succeeded without
+  // confirming the changed name in the actual backing database.
+  setCaptureStatus('영업정보 응답 수신 · 식당명 저장 여부를 운영 DB에서 확인 중…');
+  loadLiveDb().then(ok=>{
+    if(pendingPlaceText!==pending)return;
+    pendingPlaceText=null;
+    setPlaceCaptureBusy(false);
+    const missing=ok?renamePlan.filter(p=>!placeImportRenameVerified(p)):renamePlan;
+    if(missing.length){
+      const message=(ok?'영업정보 응답 수신 · 이름 변경 미반영: ':'DB 조회 실패 · 이름 변경 미확인: ')+
+        missing.map(p=>p.from+' → '+p.to).join(', ')+
+        ' · Apps Script 이름 변경/후기 연결 처리 확인 필요';
+      updatePlaceTextHint();
+      setCaptureStatus(message,'error');
+      showToast('식당명 변경을 확인하지 못했습니다. 입력 내용을 유지합니다.');
+      return;
+    }
+    const message=summary+' · 식당명 '+renamePlan.length+'건 DB 반영 확인';
+    if(!skipped){
+      resetPlaceImportInputs();
+      closePlaceCaptureModal();
+    }
+    updatePlaceTextHint();
+    setCaptureStatus(message,skipped?'error':'success');
+    showToast(message);
+  }).catch(()=>{
+    if(pendingPlaceText!==pending)return;
+    pendingPlaceText=null;
+    setPlaceCaptureBusy(false);
+    updatePlaceTextHint();
+    setCaptureStatus('서버 응답 후 이름 변경 확인 실패 · 입력 내용을 유지했습니다.','error');
+  });
 });
 
 function renderReviewSummary(rows){
