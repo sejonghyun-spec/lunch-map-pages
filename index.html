@@ -8051,7 +8051,7 @@ function assessPlaceBatchRecords(records){
   const seen=new Set(),index=placeBatchIndexedCatalog(),catalog=placeImportCatalog();
   return (records||[]).map((record,id)=>{
     const sourceName=String(record.sourceName||record.name||'').trim();
-    const providedAddress=String(record.address||'').trim();
+    const providedAddress=String(record.importAddress===undefined?record.address:record.importAddress||'').trim();
     const suppliedKey=placeBatchAddressKey(providedAddress);
     const exactName=index.byName.get(sourceName.toLowerCase())||[];
     const candidates=exactName.length?exactName:
@@ -8085,7 +8085,7 @@ function assessPlaceBatchRecords(records){
     else if(accepted&&!record.infoLines.length&&!record.phone)reason='반영할 영업정보 없음';
     else if(accepted&&placeBatchExistingValuesMatch(record,compatible)){reason='당일 확인한 정보와 동일';unchanged=true;}
     if(!reason)seen.add(incomingKey);
-    return {...record,address,name:accepted?.name||record.name,sourceName,id,
+    return {...record,address,importAddress:providedAddress,name:accepted?.name||record.name,sourceName,id,
       valid:!reason,isNew:!reason&&isNew,matchedWithoutAddress,
       unchanged,reason,matchedRows:compatible.length};
   });
@@ -8448,9 +8448,9 @@ async function submitPlaceText(){
   let selection=originalSelection,createdCount=0;
   setPlaceCaptureBusy(true);
   try{
-    if(selection.some(item=>item.isNew)){
-      setCaptureStatus('신규 식당 주소 중복 여부를 최신 DB에서 다시 확인 중…');
-      if(!await loadLiveDb())throw new Error('최신 DB를 조회하지 못해 신규 등록을 중단했습니다.');
+    if(selection.some(item=>item.isNew||item.matchedWithoutAddress)){
+      setCaptureStatus('최신 DB에서 식당 및 주소 일치 여부를 다시 확인 중…');
+      if(!await loadLiveDb())throw new Error('최신 DB를 조회하지 못해 등록·업데이트를 중단했습니다.');
       selection=assessPlaceBatchRecords(originalSelection);
       const invalid=selection.find(item=>!item.valid);
       if(invalid)throw new Error(invalid.sourceName+': '+invalid.reason+' (최신 DB 확인 결과)');
