@@ -8246,7 +8246,7 @@ function updatePlaceTextHint(){
   renderPlaceBatchPreview();
   updatePlaceCardStatuses();
   captureDone.disabled=!placeBatchSelected.size;
-  captureDone.textContent=placeBatchSelected.size+'건 등록/업데이트';
+  captureDone.textContent=placeBatchSelected.size+'건 선택 반영';
   captureClear.disabled=!value;
   const metric=' · 판독 '+(placeBatchParseMs/1000).toFixed(3)+'초';
   if(!value)setCaptureStatus('식당별 칸에 한 업체씩 붙여넣으세요. 식당명과 주소를 대조합니다.');
@@ -8263,7 +8263,7 @@ placeBatchPreview?.addEventListener('change',event=>{
   if(target.checked)placeBatchSelected.add(id);else placeBatchSelected.delete(id);
   renderPlaceBatchPreview();
   captureDone.disabled=!placeBatchSelected.size;
-  captureDone.textContent=placeBatchSelected.size+'건 등록/업데이트';
+  captureDone.textContent=placeBatchSelected.size+'건 선택 반영';
 });
 function openPlaceCaptureModal(){
   if(!isCommentAdmin()){
@@ -8432,10 +8432,6 @@ async function submitPlaceText(){
         await registerNewPlaceFromText(item,place);
         item.name=String(place.place_name||item.sourceName);
         createdCount++;
-        // Track the submitted address immediately, even before the data endpoint
-        // reflects this row. Never send another new registration for this key.
-        if(!selection._createdKeys)selection._createdKeys=new Set();
-        selection._createdKeys.add(key);
       }
       if(createdCount){
         setCaptureStatus('신규 '+createdCount+'건 저장 응답 확인 · DB 등록 결과 확인 중…');
@@ -8455,9 +8451,12 @@ async function submitPlaceText(){
       return;
     }
     const names=[...new Set(updates.map(x=>x.name))];
-    const compact=updates.map(x=>[x.name,x.address,x.phone,...x.infoLines].filter(Boolean).join('\n')).join('\n\n');
-    const records=updates.map(({name,address,phone,infoLines})=>
-      ({name,address,phone,infoLines,rawText:[name,address,phone,...infoLines].filter(Boolean).join('\n')}));
+    const records=updates.map(({name,sourceName,isNew,address,phone,infoLines})=>{
+      const textName=isNew?name:(sourceName||name);
+      return {name:textName,address,phone,infoLines,
+        rawText:[textName,address,phone,...infoLines].filter(Boolean).join('\n')};
+    });
+    const compact=records.map(x=>x.rawText).join('\n\n');
     const requestId='place-'+Date.now().toString(36)+'-'+(++placeCaptureRequestSeq).toString(36)+
       '-'+Math.random().toString(36).slice(2);
     pendingPlaceText={
