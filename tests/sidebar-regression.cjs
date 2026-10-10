@@ -745,13 +745,14 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.equal(await page.locator('#placeBatchPreview input:checked').count(),1);
    assert.match(await page.locator('#placeBatchPreview').innerText(),/기존 DB 이름: 교다이야 → 플레이스: 교다이야 합정점/);
    assert.match(await page.locator('#placeSeparatedList .place-entry-state').first().innerText(),/교다이야.*지점명\/주소 일치/);
-   const outbound=await state(()=>{
-     const savedSubmit=submitPlaceCaptureForm,savedTimeout=armPlaceCaptureTimeout;
+   const outbound=await state(async()=>{
+     const savedSubmit=submitPlaceCaptureForm,savedTimeout=armPlaceCaptureTimeout,savedLoad=loadLiveDb;
      let output=null;
      submitPlaceCaptureForm=value=>{output=value;};
      armPlaceCaptureTimeout=()=>{};
-     submitPlaceText();
-     submitPlaceCaptureForm=savedSubmit;armPlaceCaptureTimeout=savedTimeout;
+     loadLiveDb=async()=>true;
+     await submitPlaceText();
+     submitPlaceCaptureForm=savedSubmit;armPlaceCaptureTimeout=savedTimeout;loadLiveDb=savedLoad;
      pendingPlaceText=null;setPlaceCaptureBusy(false);
      return output;
    });
