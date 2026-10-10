@@ -5097,7 +5097,11 @@ function awardLabel(award){
   }
   return String(award.label||'선정 식당').slice(0,32);
 }
-function awardsFor(row){return awardRegistry.get(restaurantIdentityKey(row))||[];}
+function awardsFor(row){
+  const key=restaurantIdentityKey(row);
+  return awardRegistry.get(key)||
+    (verifiedRenameAliases.has(key)?awardRegistry.get(verifiedRenameAliases.get(key)):null)||[];
+}
 function awardBadgesHtml(row){
   const awards=awardsFor(row);
   return awards.length?'<div class="award-badges" aria-label="선정 내역">'+awards.map(a=>
@@ -7019,10 +7023,52 @@ function cachePinnedCoordinates(rows){
     }
   });
 }
+const verifiedRenameAliases=new Map();
+function preserveRestaurantKeysOnRename(beforeRows,afterRows){
+  const uniques=rows=>{
+    const index=new Map();
+    (rows||[]).forEach(row=>{
+      const address=placeBatchNormalizeAddress(row.address);
+      if(!address)return;
+      if(!index.has(address))index.set(address,new Map());
+      index.get(address).set(restaurantIdentityKey(row),row);
+    });
+    return index;
+  };
+  const before=uniques(beforeRows),after=uniques(afterRows),changes=new Map();
+  for(const [address, oldValues] of before){
+    const newValues=after.get(address);
+    if(!newValues||oldValues.size!==1||newValues.size!==1)continue;
+    const oldRow=[...oldValues.values()][0],newRow=[...newValues.values()][0];
+    const a=restaurantIdentityKey(oldRow),b=restaurantIdentityKey(newRow);
+    if(a&&b&&a!==b){
+      changes.set(a,b);
+      verifiedRenameAliases.set(b,a);
+    }
+  }
+  if(!changes.size)return changes;
+  for(const key of [FAVORITES_KEY,RECENTS_KEY,ROULETTE_HISTORY_KEY]){
+    const existing=readLocalJson(key,[]);
+    if(!Array.isArray(existing))continue;
+    const mapped=[...new Set(existing.map(x=>changes.get(String(x))||String(x)))];
+    if(mapped.some((x,i)=>x!==existing[i])||mapped.length!==existing.length){
+      writeLocalJson(key,key===RECENTS_KEY?mapped.slice(0,10):mapped);
+    }
+  }
+  compareKeys=compareKeys.map(key=>changes.get(key)||key);
+  if(selectedRestaurantKey)selectedRestaurantKey=changes.get(selectedRestaurantKey)||selectedRestaurantKey;
+  return changes;
+}
 function applyDbRows(rows){
   if(!Array.isArray(rows)||!rows.length)return false;
+  preserveRestaurantKeysOnRename(allData,rows);
   allData=rows.map(x=>{
-    const pinned=pinnedStaticCoords.get(restaurantIdentityKey(x));
+    const pinned=pinnedStaticCoords.get(restaurantIdentityKey(x))||
+      (()=>{
+        // A renamed row keeps its old static coordinates until JSON catches up.
+        const alias=verifiedRenameAliases.get(restaurantIdentityKey(x));
+        return alias?pinnedStaticCoords.get(alias):null;
+      })();
     return {...x,
       lat:hasValidCoords(x)?Number(x.lat):pinned?.lat??null,
       lng:hasValidCoords(x)?Number(x.lng):pinned?.lng??null
@@ -8096,9 +8142,17 @@ function assessPlaceBatchRecords(records){
     const fullAddressIdentities=new Map(exactAddress.map(row=>[
       String(row.name||'').trim()+'|'+placeBatchNormalizeAddress(row.address),row
     ]));
+    const fullAddressMatch=fullAddressIdentities.size===1?[...fullAddressIdentities.values()][0]:null;
+    const hasDifferentNamedBranch=!!fullAddressMatch&&
+      /^(.*?)(?:\s+)([^\s]+점|본점|직영점|\d{1,3}호점)$/.test(String(fullAddressMatch.name||''))&&
+      (()=>{
+        const m=String(fullAddressMatch.name).match(/^(.*?)(?:\s+)([^\s]+점|본점|직영점|\d{1,3}호점)$/);
+        return m&&sourceName.startsWith(m[1]+' ')&&
+          sourceName!==String(fullAddressMatch.name||'');
+      })();
     const addressOnlyCandidate=!unique.size&&addressRows.length&&
       new Set(addressRows.map(row=>placeBatchNormalizeAddress(row.address))).size===1&&
-      fullAddressIdentities.size===1?[...fullAddressIdentities.values()][0]:null;
+      fullAddressMatch&&!hasDifferentNamedBranch?fullAddressMatch:null;
     const accepted=unique.size===1?[...unique.values()][0]:addressOnlyCandidate;
     const canonicalName=placeImportCanonicalStoreName(sourceName);
     const renameTo=accepted&&canonicalName&&canonicalName!==String(accepted.name||'').trim()
