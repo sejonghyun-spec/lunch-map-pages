@@ -49,7 +49,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    const s=await state(()=>({cards:document.querySelectorAll('#list .card').length,rows:getRows().length,markers:markerByRow.size,label:document.getElementById('listSub').textContent}));
    assert.equal(s.cards,s.rows);assert.equal(s.markers,s.rows);assert.equal(s.label,s.rows+'곳');assert.ok(s.rows>40);
  });
- await check('source-linked awards appear on matching desktop, mobile and detail records only',async()=>{
+ await check('verified awards remain visible without source text or links',async()=>{
    await page.waitForFunction(()=>awardRegistry.size===3);
    const checked=await state(()=>{
      const registered=displayRestaurants().filter(row=>awardsFor(row).length);
@@ -72,12 +72,16 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    const detail=page.locator('#detailInfo .detail-awards-info');
    assert.equal(await detail.count(),1);
    assert.ok((await detail.innerText()).includes('블루리본 2개'));
-   assert.ok((await detail.innerText()).includes('KInside (2차 출처'));
-   const links=await detail.locator('a').evaluateAll(els=>els.map(el=>({
-     href:el.href,target:el.target,rel:el.rel
-   })));
-   assert.equal(links.length,2);
-   assert.ok(links.every(x=>x.href.startsWith('https://')&&x.target==='_blank'&&x.rel.includes('noopener')));
+   const visible=await page.locator('#detailInfo').innerText();
+   assert.ok(!visible.includes('KInside'));
+   assert.ok(!visible.includes('미쉐린 가이드 공식'));
+   assert.ok(!visible.includes('정보 기준'));
+   assert.ok(!visible.includes('출처 '));
+   assert.equal(await detail.locator('a').count(),0);
+   assert.equal(await detail.locator('.award-chip').count(),2);
+   assert.equal(await detail.locator('small').count(),0);
+   assert.equal(await page.locator('#detailInfo .detail-info-label').filter({hasText:'영업정보'}).count(),0);
+   assert.ok((await page.locator('#detailInfo .detail-hours-info').count())>=1);
    await state(()=>{clearSelectedRows();writeLocalJson(RECENTS_KEY,[]);});
    const restored=await state(()=>{const rows=allData.map(x=>({...x}));
      applyDbRows(rows);
@@ -140,8 +144,9 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.deepEqual(qualities.statuses,{lunch:'open',break:'break',afterClose:'closed',missing:'unknown',closedDay:'closed'});
    assert.ok(qualities.clock>=0&&qualities.clock<1440);
    assert.equal(await page.locator('#visitTimeFilter,#mobileVisitTimeFilter,.visit-time-bar,.mobile-visit-time').count(),0);
-   assert.equal(await page.locator('#list .hours-source-chip').count(),await page.locator('#list .card').count());
-   assert.equal(await page.locator('#mobileList .hours-source-chip').count(),await page.locator('#mobileList .card').count());
+   assert.equal(await page.locator('#list .hours-source-chip,#mobileList .hours-source-chip').count(),0);
+   assert.equal(await page.locator('#detailInfo .award-detail-source').count(),0);
+   assert.ok((await page.locator('#list .card').count())>0);
    assert.equal(await page.locator('#list .card').count(),qualities.rows);
    const refresh=await state(()=>{
      const before=getRows().length;
@@ -433,7 +438,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
  await check('no fabricated tags, missing rating, note escaping and aggregated rating count',async()=>{
    assert.deepEqual(await state(()=>cardFeatureParts({feature:'룸 없음'}).tags),['룸 없음']);
    assert.ok(await state(()=>{const a=aggregateRestaurantRows([{row:999,name:'검증',address:'주소',rating:5},{row:1000,name:'검증',address:'주소',rating:4}])[0];renderList([a]);return document.querySelector('.rating').textContent==='★ 4.5'&&document.querySelector('.card-evaluations').textContent==='평가 2'}));
-   assert.ok(await state(()=>{renderList([{row:999,name:'검증',feature:'',note:'<img src=x onerror=alert(1)>',capacity:'~'}]);return !document.querySelector('#list .card .rating')&&!document.querySelector('#list .card img')&&document.querySelector('#list .card .hours-source-chip')?.textContent==='시간 미확인'&&document.querySelector('.card-feature').textContent.includes('<img')}));await reset();
+   assert.ok(await state(()=>{renderList([{row:999,name:'검증',feature:'',note:'<img src=x onerror=alert(1)>',capacity:'~'}]);return !document.querySelector('#list .card .rating')&&!document.querySelector('#list .card img')&&document.querySelector('#list .card .card-hours.unknown')?.textContent==='시간 미확인'&&document.querySelector('.card-feature').textContent.includes('<img')}));await reset();
  });
  await check('search autocomplete, quick action bar, clustering helpers, review insight and hours parser',async()=>{
    await page.setViewportSize({width:1440,height:900});await reset();

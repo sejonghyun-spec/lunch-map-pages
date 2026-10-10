@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-10-place-sticky-actions-v107">
+<meta name="lunch-map-build" content="2026-10-10-clean-detail-no-source-v108">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -695,7 +695,7 @@ html[data-theme="night"] .visit-time-bar select{background:#1b2026;color:#f3f3f3
 .card-stats .rating{min-height:0;margin:0;font-size:14px;color:#a75a19;font-weight:800}
 .card-evaluations,.card-review{color:#81766e;font-variant-numeric:tabular-nums}
 .card-evaluations + .card-review:not([hidden])::before{content:'·';margin-right:7px;color:#b2a79d}
-.card-stats:not(:has(.rating,.card-distance,.card-hours,.hours-source-chip,.card-review:not([hidden]))){display:none}
+.card-stats:not(:has(.rating,.card-distance,.card-hours,.card-review:not([hidden]))){display:none}
 .card-distance{margin-left:auto;font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:650;color:#655c55;white-space:nowrap}
 
 .award-badges{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:7px;min-width:0}
@@ -5087,7 +5087,7 @@ function awardsFor(row){return awardRegistry.get(restaurantIdentityKey(row))||[]
 function awardBadgesHtml(row){
   const awards=awardsFor(row);
   return awards.length?'<div class="award-badges" aria-label="선정 내역">'+awards.map(a=>
-    '<span class="award-chip" data-award-type="'+esc(a.type)+'" title="'+esc(a.sourceName)+'">'+esc(awardLabel(a))+'</span>').join('')+'</div>':'';
+    '<span class="award-chip" data-award-type="'+esc(a.type)+'">'+esc(awardLabel(a))+'</span>').join('')+'</div>':'';
 }
 function renderDetailAwardHeader(row){
   if(!detailTags)return;
@@ -5098,13 +5098,9 @@ function awardDetailHtml(row){
   const awards=awardsFor(row);
   if(!awards.length)return '';
   return '<div class="detail-info-row detail-awards-info"><div class="detail-info-label">선정 이력</div>'+
-    '<div class="detail-info-value award-detail-list">'+awards.map(a=>{
-      const url=awardSafeUrl(a.sourceUrl);
-      return '<div class="award-detail-item"><span class="award-chip" data-award-type="'+esc(a.type)+'">'+esc(awardLabel(a))+'</span>'+
-        (url?'<a class="detail-info-link award-detail-source" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(a.sourceName)+' ↗</a>':
-          '<span class="award-detail-source">'+esc(a.sourceName)+'</span>')+
-        '<small class="award-detail-source">확인 '+esc(a.checkedAt)+'</small></div>';
-    }).join('')+'</div></div>';
+    '<div class="detail-info-value award-detail-list">'+awards.map(a=>
+      '<div class="award-detail-item"><span class="award-chip" data-award-type="'+esc(a.type)+'">'+esc(awardLabel(a))+'</span></div>'
+    ).join('')+'</div></div>';
 }
 function applyAwardRegistry(data){
   const next=new Map();
@@ -6179,7 +6175,7 @@ function renderMobileList(rows){
         (score?'<span class="mobile-card-rating">★ '+score.toFixed(1)+'</span><span>평가 '+(Number(x._ratingCount)||1)+'</span>':'')+
         '<span class="card-review" data-review-key="'+esc(restaurantCommentKey(x))+'" hidden></span>'+
         (hours.status!=='unknown'?'<span class="mobile-card-hours '+esc(hours.status)+'">'+esc(scheduleDisplayLabel(x,hours))+'</span>':'')+
-        hoursSourceBadge(x)+
+        (hours.status==='unknown'?'<span class="mobile-card-hours unknown">시간 미확인</span>':'')+
         (recent.has(restaurantKey(x))?'<span class="card-recent">최근 본</span>':'')+
         (distance?'<span class="mobile-card-distance">↔ '+esc(distance)+'</span>':'')+
       '</div>'+
@@ -6238,7 +6234,7 @@ function renderList(rows){
         (score?'<span class="rating">★ '+score.toFixed(1)+'</span><span class="card-evaluations">평가 '+(Number(x._ratingCount)||1)+'</span>':'')+
         '<span class="card-review" data-review-key="'+esc(restaurantCommentKey(x))+'" hidden></span>'+
         (hours.status!=='unknown'?'<span class="card-hours '+esc(hours.status)+'">'+esc(scheduleDisplayLabel(x,hours))+'</span>':'')+
-        hoursSourceBadge(x)+
+        (hours.status==='unknown'?'<span class="card-hours unknown">시간 미확인</span>':'')+
         (recent.has(restaurantKey(x))?'<span class="card-recent">최근 본</span>':'')+
         (distance?'<span class="card-distance" title="'+esc(currentAnchorLabel())+' 기준 직선거리" aria-label="'+esc(currentAnchorLabel())+'에서 직선거리 '+esc(distance)+'">↔ '+esc(distance)+'</span>':'')+
       '</div>'+
@@ -6839,8 +6835,6 @@ function renderRestaurantDetailInfo(row,place){
   const roadAddress=String(place&&place.road_address_name||'').trim();
   const address=roadAddress||String(row.address||'').trim();
   const hours=operatingInfo(row);
-  const checkedAt=firstField(row,['hoursCheckedAt','영업시간확인일']);
-  const hoursSource=firstField(row,['hoursSource','영업시간출처']);
   const placeUrl=String(place&&place.place_url||row._placeUrl||'').trim().replace(/^http:/i,'https:');
   const weeklyHoursHtml=renderWeeklyHours(row);
 
@@ -6850,8 +6844,6 @@ function renderRestaurantDetailInfo(row,place){
   ].filter(x=>String(x[1]||'').trim());
 
   let html=awardDetailHtml(row);
-  html+='<div class="detail-info-row"><div class="detail-info-label">영업정보</div><div class="detail-info-value">'+
-    hoursSourceBadge(row)+'<span class="detail-info-sub"> · 저장된 시간표 기준으로, 공휴일·임시휴무는 방문 전 확인이 필요합니다.</span></div></div>';
   if(weeklyHoursHtml){
     html+='<div class="detail-info-row detail-hours-info"><div class="detail-info-label">영업시간</div><div class="detail-info-value">'+weeklyHoursHtml+'</div></div>';
   }else if(placeUrl){
@@ -6867,10 +6859,6 @@ function renderRestaurantDetailInfo(row,place){
     return '<div class="detail-info-row"><div class="detail-info-label">'+esc(label)+'</div><div class="detail-info-value">'+rendered+'</div></div>';
   }).join('');
 
-  if(checkedAt||hoursSource){
-    const meta=[checkedAt?('확인 '+checkedAt):'',hoursSource?('출처 '+hoursSource):''].filter(Boolean).join(' · ');
-    html+='<div class="detail-info-row"><div class="detail-info-label">정보 기준</div><div class="detail-info-value detail-info-sub">'+esc(meta)+'</div></div>';
-  }
   detailInfo.innerHTML=html||'<div class="comment-empty">등록된 상세 정보가 없습니다.</div>';
   syncDetailActionLinks(row,place);
 }
