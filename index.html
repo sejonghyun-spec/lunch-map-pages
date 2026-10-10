@@ -695,6 +695,7 @@ button,input,select,textarea{font:inherit}
 .card-note{font-size:12.25px;color:#786e66;-webkit-line-clamp:1}
 .card-note-label{color:#867970;font-weight:650;margin-right:6px}
 .card-address{margin-top:7px;font-size:12.25px;color:#82776f;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mobile-card-address{margin-top:5px;color:#78848a;font-size:12.5px;font-weight:600;line-height:1.45;word-break:keep-all;overflow-wrap:anywhere}
 .search-hit{border-radius:3px;background:#fff0a8;color:inherit}
 
 .badge{
@@ -5746,6 +5747,7 @@ function updateListHeading(count){
 }
 function renderMobileList(rows){
   const el=document.getElementById('mobileList');
+  const q=searchKeyword.trim();
   if(!el)return;
   const signature=listUiSignature(),keepScroll=signature===lastListSignature,oldScroll=el.scrollTop;
   if(!rows.length){
@@ -5761,6 +5763,7 @@ function renderMobileList(rows){
     if(capacity&&/[\p{L}\p{N}]/u.test(capacity))rawTags.push('인원 '+capacity);
     const tags=[...new Set(rawTags)].slice(0,2);
     const hours=operatingInfo(x);
+    const matchedAddress=q&&String(x.address||'').toLowerCase().includes(q.toLowerCase());
     return '<div class="card mobile-card" data-row="'+x.row+'" style="--card-color:'+colorFor(x.category)+';--mobile-card-color:'+colorFor(x.category)+'">'+
       '<span class="zine-index">'+String(index+1).padStart(2,'0')+'</span>'+
       '<div class="mobile-card-head">'+
@@ -5775,6 +5778,7 @@ function renderMobileList(rows){
         (distance?'<span class="mobile-card-distance">↔ '+esc(distance)+'</span>':'')+
       '</div>'+
       (tags.length?'<div class="mobile-card-tags">'+tags.map(t=>'<span class="mobile-card-tag">'+esc(t)+'</span>').join('')+'</div>':'')+
+      (matchedAddress?'<div class="mobile-card-address">'+highlightMatch(x.address,q)+'</div>':'')+
     '</div>';
   }).join('');
   if(keepScroll)requestAnimationFrame(()=>{el.scrollTop=oldScroll;});
@@ -5816,6 +5820,7 @@ function renderList(rows){
     const tags=[...new Set(rawTags)].slice(0,2);
     const summary=features.description||(note&&note!==String(x.feature||'').trim()?note:'');
     const hours=operatingInfo(x);
+    const matchedAddress=q&&String(x.address||'').toLowerCase().includes(q.toLowerCase());
     return '<div class="card" data-row="'+x.row+'" style="--card-color:'+colorFor(x.category)+'">'+
       '<span class="zine-index">'+String(index+1).padStart(2,'0')+'</span>'+
       '<div class="card-head"><button type="button" class="name card-open" title="'+esc(x.name)+'">'+highlightMatch(x.name,q)+'</button>'+
@@ -5829,7 +5834,7 @@ function renderList(rows){
       '</div>'+
       (tags.length?'<div class="card-tags">'+tags.map(t=>'<span class="card-tag" title="'+esc(t)+'">'+highlightMatch(t,q)+'</span>').join('')+'</div>':'')+
       (!tags.length&&summary?'<div class="card-feature">'+highlightMatch(summary,q)+'</div>':'')+
-      (!tags.length&&!summary&&x.address?'<div class="card-address">'+highlightMatch(x.address,q)+'</div>':'')+
+      ((matchedAddress||(!tags.length&&!summary&&x.address))?'<div class="card-address">'+highlightMatch(x.address,q)+'</div>':'')+
     '</div>';
   }).join('');
 
