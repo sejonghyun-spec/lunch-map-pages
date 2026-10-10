@@ -564,8 +564,8 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(!(await page.locator('#mobileSearch').isVisible())&&await page.locator('.mobile-list-head').isVisible());
    await page.click('#mobileSheetHandle');assert.ok(await state(()=>sheetState==='mid'));
 
-   await page.click('#mobileMyLocation');await page.waitForTimeout(250);
-   assert.ok(await state(()=>Math.abs(map.getCenter().getLat()-37.55)<0.0001));
+   await page.click('#mobileMyLocation');
+   await page.waitForFunction(()=>Math.abs(map.getCenter().getLat()-37.55)<0.0001,null,{timeout:4000});
 
    await page.locator('#mobileList .mobile-card-name').first().click();await page.waitForTimeout(250);
    assert.ok(await state(()=>commentPanel.classList.contains('open')&&sheetState==='hidden'&&document.body.classList.contains('detail-mobile-open')));
