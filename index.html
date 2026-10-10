@@ -4555,6 +4555,53 @@ function readLocalJson(key,fallback){
 function writeLocalJson(key,value){
   try{localStorage.setItem(key,JSON.stringify(value));}catch(e){}
 }
+function regionKeyForValue(value){
+  const raw=String(value||'').trim().toLowerCase();
+  if(raw==='포항'||raw==='pohang')return 'pohang';
+  if(raw==='충주'||raw==='chungju'||raw==='충주1')return 'chungju';
+  if(raw==='합정'||raw==='hapjeong'||raw==='서울')return 'hapjeong';
+  return '';
+}
+function regionKeyForRow(row){
+  const explicit=regionKeyForValue(row&&row.region);
+  if(explicit)return explicit;
+  const address=String(row&&row.address||'');
+  if(/포항/.test(address))return 'pohang';
+  if(/충주/.test(address))return 'chungju';
+  return 'hapjeong';
+}
+function regionCenterForRow(row){
+  const key=regionKeyForRow(row);
+  const cfg=REGION_CONFIG[key]||currentRegionConfig();
+  return {lat:cfg.centerLat,lng:cfg.centerLng};
+}
+function syncRegionRuntime(){
+  const cfg=currentRegionConfig();
+  HOME_LAT=cfg.centerLat;HOME_LNG=cfg.centerLng;
+  SEAH_TOWER_LAT=cfg.anchorLat;SEAH_TOWER_LNG=cfg.anchorLng;
+  DESKTOP_INITIAL_MAP_LEVEL=cfg.desktopLevel;
+  MOBILE_INITIAL_MAP_LEVEL=cfg.mobileLevel;
+}
+function syncRegionUI(){
+  const cfg=currentRegionConfig();
+  const title=document.getElementById('brandTitle');
+  const sub=document.getElementById('brandSub');
+  const select=document.getElementById('regionSelect');
+  const suggestRegion=document.getElementById('suggestRegion');
+  if(title)title.textContent=cfg.title;
+  if(sub)sub.textContent=cfg.sub;
+  if(select)select.value=cfg.key;
+  if(suggestRegion)suggestRegion.value=cfg.db;
+  document.title=cfg.documentTitle;
+}
+function updateRegionUrl_(removePlace=true){
+  try{
+    const url=new URL(location.href);
+    url.searchParams.set('region',activeRegionKey);
+    if(removePlace)url.searchParams.delete('place');
+    history.replaceState(history.state||{},'',url);
+  }catch(e){}
+}
 function favoriteSet(){
   return new Set((readLocalJson(FAVORITES_KEY,[])||[]).map(String));
 }
@@ -4600,7 +4647,7 @@ function highlightMatch(value,query){
 
 function listUiSignature(){
   return [
-    searchKeyword,sortMode,ratingFilter,capacityFilter,featureFilter,distanceFilter,
+    activeRegionKey,searchKeyword,sortMode,ratingFilter,capacityFilter,featureFilter,distanceFilter,
     favoritesOnly,recentOnly,mapOnlyMode,[...selectedCategories].sort().join('|')
   ].join('::');
 }
@@ -4721,8 +4768,11 @@ function aggregateRestaurantRows(rows){
     return base;
   });
 }
-function displayRestaurants(){
+function allDisplayRestaurants(){
   return aggregateRestaurantRows(allData);
+}
+function displayRestaurants(){
+  return allDisplayRestaurants().filter(row=>regionKeyForRow(row)===activeRegionKey);
 }
 const ratingScore=x=>{
   const avg=Number(x&&x._ratingAvg);
@@ -5493,7 +5543,7 @@ function renderMap(rows,fit=true){
   setTimeout(syncMarkerLabelVisibility,0);
 }
 function buildFilters(){
-  const cats=[...new Set(allData.map(x=>x.category).filter(Boolean))];
+  const cats=[...new Set(displayRestaurants().map(x=>x.category).filter(Boolean))];
   const validCats=new Set(cats);
 
   // Live/static DB refreshes can change available categories. Keep only valid selections.
