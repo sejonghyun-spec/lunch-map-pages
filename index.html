@@ -4121,6 +4121,43 @@ html[data-theme="bistro"] .map-floating-tools button{color:#302a24;background:#f
   .map-floating-tools #myLocation{display:none}
   .map-floating-tools #showAll{min-height:36px;padding:0 9px;font-size:11px}
 }
+
+/* Quick filters stay visible under search; extra conditions live behind "상세 필터". */
+.explore-controls:has(.quick-filter-strip){
+  justify-content:space-between;align-items:center;gap:6px;padding:3px 10px 10px
+}
+.quick-filter-strip{
+  display:flex;flex:1 1 auto;min-width:0;align-items:center;gap:5px;
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain
+}
+.quick-filter-strip::-webkit-scrollbar{display:none}
+.quick-filter-chip{
+  flex:0 0 auto;min-height:34px;padding:0 9px;border:1px solid var(--line);
+  border-radius:18px;background:var(--theme-control-bg,#fff);color:var(--text);
+  font-size:11.5px;font-weight:720;white-space:nowrap;cursor:pointer;
+  transition:border-color .15s,background-color .15s
+}
+.quick-filter-chip.active,.quick-filter-chip[aria-pressed="true"]{
+  background:var(--soft);border-color:var(--brand);color:var(--brand-dark);font-weight:850
+}
+.quick-filter-chip:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.explore-controls .sidebar-filter-toggle{
+  flex:0 0 auto;min-height:34px;padding:0 8px;gap:4px;font-size:11.5px
+}
+.explore-controls .sidebar-filter-toggle .filter-chevron{font-size:15px}
+html[data-theme="night"] .quick-filter-chip{border-color:#4a5861;background:#242c31;color:#d9e4eb}
+html[data-theme="night"] .quick-filter-chip.active{border-color:#8ebfc7;background:#1c4546;color:#d2ffff}
+@media(max-width:900px){
+  .mobile-sheet-quick:has(.quick-filter-strip){
+    display:flex;align-items:center;justify-content:space-between;gap:6px;
+    padding:3px 12px 9px;min-width:0
+  }
+  .mobile-sheet-quick .quick-filter-chip{min-height:34px;font-size:11.5px}
+  .mobile-sheet-quick #mobileDetailedFilterToggle{
+    flex:0 0 auto;min-height:34px;padding:0 8px;white-space:nowrap
+  }
+}
 </style>
 </head>
 <body>
