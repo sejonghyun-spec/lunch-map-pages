@@ -4051,6 +4051,12 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
             <option value="500">500m 이내</option>
             <option value="700">700m 이내</option>
             <option value="1000">1km 이내</option>
+                <option value="2000">2km 이내</option>
+                <option value="3000">3km 이내</option>
+                <option value="5000">5km 이내</option>
+            <option value="2000">2km 이내</option>
+            <option value="3000">3km 이내</option>
+            <option value="5000">5km 이내</option>
           </select>
           </label>
         </div>
@@ -4852,7 +4858,7 @@ function updateMultiFilterUI(){
       ratingFilter:{all:'평점',5:'5점',4:'4점↑',3:'3점↑'},
       capacityFilter:{all:'인원',4:'4명+',8:'8명+',group:'단체'},
       featureFilter:{all:'특징',waiting:'웨이팅',reservation:'예약',room:'룸',group:'단체',fast:'빠른 식사'},
-      distanceFilter:{all:'거리',300:'300m',500:'500m',700:'700m',1000:'1km'}
+      distanceFilter:{all:'거리',300:'300m',500:'500m',700:'700m',1000:'1km',2000:'2km',3000:'3km',5000:'5km'}
     };
     const label=el.parentElement.querySelector('.compact-filter-label');
     if(label)label.textContent=labels[id][value]||labels[id].all;
@@ -5143,6 +5149,8 @@ function kakaoDirectionUrl(row,place){
 }
 function shareUrlFor(row){
   const url=new URL(location.href);
+  const rowRegion=regionKeyForRow(row);
+  url.searchParams.set('region',rowRegion);
   url.searchParams.set('place',restaurantKey(row));
   return url.toString();
 }
@@ -5151,7 +5159,8 @@ async function shareRestaurant(row){
   const url=shareUrlFor(row);
   try{
     if(navigator.share){
-      await navigator.share({title:row.name+' · 막냉이 합정 점심',text:row.name+' 여기 어때요?',url});
+      const cfg=REGION_CONFIG[regionKeyForRow(row)]||currentRegionConfig();
+      await navigator.share({title:row.name+' · 막냉이 '+cfg.label+' 점심',text:row.name+' 여기 어때요?',url});
       return;
     }
     await navigator.clipboard.writeText(url);
@@ -5168,9 +5177,11 @@ function openDeepLinkedPlace(){
   if(deepLinkHandled||!allData.length)return;
   const token=new URL(location.href).searchParams.get('place');
   if(!token)return;
-  const row=displayRestaurants().find(x=>restaurantKey(x)===token||String(x.name||'')===token);
+  const row=allDisplayRestaurants().find(x=>restaurantKey(x)===token||String(x.name||'')===token);
   if(!row)return;
   deepLinkHandled=true;
+  const targetRegion=regionKeyForRow(row);
+  if(targetRegion!==activeRegionKey)setActiveRegion(targetRegion,{updateUrl:false,moveMap:true,notify:false});
   setTimeout(()=>selectRow(row.row,true,false),0);
 }
 function compareRows(){
@@ -6022,8 +6033,8 @@ function kakaoKeywordSearchPromise(keyword,row){
     if(!placesService||!String(keyword||'').trim())return resolve(null);
     const opts={
       location:new kakao.maps.LatLng(
-        hasValidCoords(row)?Number(row.lat):HOME_LAT,
-        hasValidCoords(row)?Number(row.lng):HOME_LNG
+        hasValidCoords(row)?Number(row.lat):regionCenterForRow(row).lat,
+        hasValidCoords(row)?Number(row.lng):regionCenterForRow(row).lng
       ),
       radius:20000,
       size:15,
@@ -6746,7 +6757,7 @@ function flattenReviewBundle_(bundle){
   return items;
 }
 function reviewRestaurantForKey_(key){
-  return displayRestaurants().find(row=>restaurantCommentKey(row)===key)||null;
+  return allDisplayRestaurants().find(row=>restaurantCommentKey(row)===key)||null;
 }
 function reviewRestaurantName_(item){
   const restaurant=reviewRestaurantForKey_(item&&item.key);
@@ -6867,6 +6878,8 @@ function openUnreadReview_(id){
     showToast('해당 식당을 찾지 못했습니다.');
     return;
   }
+  const targetRegion=regionKeyForRow(restaurant);
+  if(targetRegion!==activeRegionKey)setActiveRegion(targetRegion,{updateUrl:true,moveMap:true,notify:false});
   selectRow(restaurant.row,true,false);
   setTimeout(()=>{
     setDetailTab('reviews',false);
@@ -8708,6 +8721,7 @@ suggestForm.addEventListener('submit',e=>{
   const item={
     row:tempRow,
     category,
+    region:currentRegionConfig().db,
     name,
     note,
     rating,
