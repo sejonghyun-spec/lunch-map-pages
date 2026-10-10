@@ -5097,7 +5097,11 @@ function awardLabel(award){
   }
   return String(award.label||'선정 식당').slice(0,32);
 }
-function awardsFor(row){return awardRegistry.get(restaurantIdentityKey(row))||[];}
+function awardsFor(row){
+  const key=restaurantIdentityKey(row);
+  return awardRegistry.get(key)||
+    (verifiedRenameAliases.has(key)?awardRegistry.get(verifiedRenameAliases.get(key)):null)||[];
+}
 function awardBadgesHtml(row){
   const awards=awardsFor(row);
   return awards.length?'<div class="award-badges" aria-label="선정 내역">'+awards.map(a=>
@@ -7019,10 +7023,52 @@ function cachePinnedCoordinates(rows){
     }
   });
 }
+const verifiedRenameAliases=new Map();
+function preserveRestaurantKeysOnRename(beforeRows,afterRows){
+  const uniques=rows=>{
+    const index=new Map();
+    (rows||[]).forEach(row=>{
+      const address=placeBatchNormalizeAddress(row.address);
+      if(!address)return;
+      if(!index.has(address))index.set(address,new Map());
+      index.get(address).set(restaurantIdentityKey(row),row);
+    });
+    return index;
+  };
+  const before=uniques(beforeRows),after=uniques(afterRows),changes=new Map();
+  for(const [address, oldValues] of before){
+    const newValues=after.get(address);
+    if(!newValues||oldValues.size!==1||newValues.size!==1)continue;
+    const oldRow=[...oldValues.values()][0],newRow=[...newValues.values()][0];
+    const a=restaurantIdentityKey(oldRow),b=restaurantIdentityKey(newRow);
+    if(a&&b&&a!==b){
+      changes.set(a,b);
+      verifiedRenameAliases.set(b,a);
+    }
+  }
+  if(!changes.size)return changes;
+  for(const key of [FAVORITES_KEY,RECENTS_KEY,ROULETTE_HISTORY_KEY]){
+    const existing=readLocalJson(key,[]);
+    if(!Array.isArray(existing))continue;
+    const mapped=[...new Set(existing.map(x=>changes.get(String(x))||String(x)))];
+    if(mapped.some((x,i)=>x!==existing[i])||mapped.length!==existing.length){
+      writeLocalJson(key,key===RECENTS_KEY?mapped.slice(0,10):mapped);
+    }
+  }
+  compareKeys=compareKeys.map(key=>changes.get(key)||key);
+  if(selectedRestaurantKey)selectedRestaurantKey=changes.get(selectedRestaurantKey)||selectedRestaurantKey;
+  return changes;
+}
 function applyDbRows(rows){
   if(!Array.isArray(rows)||!rows.length)return false;
+  preserveRestaurantKeysOnRename(allData,rows);
   allData=rows.map(x=>{
-    const pinned=pinnedStaticCoords.get(restaurantIdentityKey(x));
+    const pinned=pinnedStaticCoords.get(restaurantIdentityKey(x))||
+      (()=>{
+        // A renamed row keeps its old static coordinates until JSON catches up.
+        const alias=verifiedRenameAliases.get(restaurantIdentityKey(x));
+        return alias?pinnedStaticCoords.get(alias):null;
+      })();
     return {...x,
       lat:hasValidCoords(x)?Number(x.lat):pinned?.lat??null,
       lng:hasValidCoords(x)?Number(x.lng):pinned?.lng??null
@@ -8055,6 +8101,15 @@ function placeBatchExistingValuesMatch(record,matchedRows){
     });
   });
 }
+function placeImportCanonicalStoreName(raw){
+  const name=placeImportGenericNameLine(raw);
+  return name&&name.length<=60&&!/[\r\n]/.test(name)?name:'';
+}
+function placeImportRenameVerified(plan){
+  return placeImportCatalog().some(row=>
+    String(row.name||'').trim()===plan.to&&
+    placeBatchAddressKey(row.address)===placeBatchAddressKey(plan.address));
+}
 function assessPlaceBatchRecords(records){
   const seen=new Set(),index=placeBatchIndexedCatalog(),catalog=placeImportCatalog();
   return (records||[]).map((record,id)=>{
@@ -8079,22 +8134,46 @@ function assessPlaceBatchRecords(records){
     const addressRows=incomingKey?catalog.filter(row=>placeBatchAddressKey(row.address)===incomingKey):[];
     const compatible=addressRows.filter(row=>placeImportStrongNameMatch(sourceName,row.name));
     const unique=new Map(compatible.map(row=>[String(row.name).toLowerCase()+'|'+incomingKey,row]));
-    const accepted=unique.size===1?[...unique.values()][0]:null;
+    // Hand-entered DB names can differ entirely from the official Place name.
+    // Permit an address-only rename ONLY for one unique DB identity sharing
+    // the *full* written address (not merely the same road/building number).
+    const exactAddress=addressRows.filter(row=>
+      placeBatchNormalizeAddress(row.address)===placeBatchNormalizeAddress(address));
+    const fullAddressIdentities=new Map(exactAddress.map(row=>[
+      String(row.name||'').trim()+'|'+placeBatchNormalizeAddress(row.address),row
+    ]));
+    const fullAddressMatch=fullAddressIdentities.size===1?[...fullAddressIdentities.values()][0]:null;
+    const hasDifferentNamedBranch=!!fullAddressMatch&&
+      /^(.*?)(?:\s+)([^\s]+점|본점|직영점|\d{1,3}호점)$/.test(String(fullAddressMatch.name||''))&&
+      (()=>{
+        const m=String(fullAddressMatch.name).match(/^(.*?)(?:\s+)([^\s]+점|본점|직영점|\d{1,3}호점)$/);
+        return m&&sourceName.startsWith(m[1]+' ')&&
+          sourceName!==String(fullAddressMatch.name||'');
+      })();
+    const addressOnlyCandidate=!unique.size&&addressRows.length&&
+      new Set(addressRows.map(row=>placeBatchNormalizeAddress(row.address))).size===1&&
+      fullAddressMatch&&!hasDifferentNamedBranch?fullAddressMatch:null;
+    const accepted=unique.size===1?[...unique.values()][0]:addressOnlyCandidate;
+    const canonicalName=placeImportCanonicalStoreName(sourceName);
+    const renameTo=accepted&&canonicalName&&canonicalName!==String(accepted.name||'').trim()
+      ?canonicalName:'';
+    const renameFrom=renameTo?String(accepted.name||'').trim():'';
     const isNew=!!suppliedKey&&!addressRows.length&&!candidates.length;
     let reason='',unchanged=false;
     if(!sourceName)reason='식당명을 판별할 수 없습니다';
     else if(!address||!incomingKey)reason=!providedAddress&&candidates.length
       ?'주소 없는 입력: 영업시간이 비어 있는 기존 식당을 하나로 특정할 수 없습니다'
       :'주소 누락 또는 주소 형식 확인 불가';
-    else if(!accepted&&addressRows.length)reason='동일 주소에 다른 식당이 등록되어 있습니다';
+    else if(!accepted&&addressRows.length)reason='동일 건물에 다른 식당이 있거나 정확한 주소가 일치하지 않습니다';
     else if(seen.has(incomingKey))reason='중복 입력 (같은 주소는 첫 번째만 반영)';
     else if(unique.size>1)reason='동일 주소에 후보가 여러 개 있습니다';
     else if(!accepted&&!isNew)reason='등록 주소와 불일치 (기존 식당명 확인 필요)';
-    else if(accepted&&!record.infoLines.length&&!record.phone)reason='반영할 영업정보 없음';
-    else if(accepted&&placeBatchExistingValuesMatch(record,compatible)){reason='당일 확인한 정보와 동일';unchanged=true;}
+    else if(accepted&&!record.infoLines.length&&!record.phone&&!renameTo)reason='반영할 영업정보 없음';
+    else if(accepted&&!renameTo&&placeBatchExistingValuesMatch(record,compatible.length?compatible:exactAddress)){reason='당일 확인한 정보와 동일';unchanged=true;}
     if(!reason)seen.add(incomingKey);
     return {...record,address,importAddress:providedAddress,name:accepted?.name||record.name,sourceName,id,
       valid:!reason,isNew:!reason&&isNew,matchedWithoutAddress,
+      renameFrom:!reason?renameFrom:'',renameTo:!reason?renameTo:'',
       unchanged,reason,matchedRows:compatible.length};
   });
 }
@@ -8109,16 +8188,17 @@ function renderPlaceBatchPreview(){
   const unchanged=placeBatchItems.filter(x=>x.unchanged).length;
   const newCount=valid.filter(x=>x.isNew).length;
   placeBatchPreview.innerHTML='<div class="place-batch-summary">식당 '+placeBatchItems.length+
-    '건 감지 · 신규 '+newCount+'건 · 업데이트 '+(valid.length-newCount)+
+    '건 감지 · 신규 '+newCount+'건 · 이름 변경 '+valid.filter(x=>x.renameTo).length+'건 · 업데이트 '+(valid.length-newCount)+
     '건 · 선택 '+chosen.length+'건 · 동일 '+unchanged+'건 · 보류 '+(placeBatchItems.length-valid.length-unchanged)+'건</div>'+
     placeBatchItems.map(item=>{
       const selected=placeBatchSelected.has(item.id);
       return '<label class="place-batch-row" data-status="'+(item.valid?'ready':'hold')+'">'+
         '<input type="checkbox" data-batch-index="'+item.id+'" '+(item.valid?'':'disabled ')+(selected?'checked':'')+'>'+
-        '<span><strong>'+esc(item.sourceName!==item.name?item.sourceName+' → '+item.name:item.name)+
+        '<span><strong>'+esc(item.renameTo|| (item.sourceName!==item.name?item.sourceName+' → '+item.name:item.name))+
         '</strong><small>'+esc((item.matchedWithoutAddress?'등록된 DB 주소 사용 · ':'')+(item.address||'주소 정보 없음'))+
-        '</small><small>'+esc(item.infoLines.slice(0,2).join(' · ')|| (item.phone?'전화번호만 확인':'영업정보 없음'))+'</small></span>'+
-        '<span class="place-batch-state">'+(item.valid?(item.isNew?'신규 등록':'업데이트'):'보류')+
+        '</small><small>'+esc(item.infoLines.slice(0,2).join(' · ')|| (item.phone?'전화번호만 확인':'영업정보 없음'))+'</small>'+ 
+        (item.renameTo?'<small>기존 DB 이름: '+esc(item.renameFrom)+' → 플레이스: '+esc(item.renameTo)+'</small>':'')+'</span>'+
+        '<span class="place-batch-state">'+(item.valid?(item.isNew?'신규 등록':item.renameTo?'이름 변경/업데이트':'업데이트'):'보류')+
         (item.reason?'<small>'+esc(item.reason)+'</small>':'')+'</span></label>';
     }).join('');
 }
@@ -8456,7 +8536,7 @@ async function submitPlaceText(){
   let selection=originalSelection,createdCount=0;
   setPlaceCaptureBusy(true);
   try{
-    if(selection.some(item=>item.isNew||item.matchedWithoutAddress)){
+    if(selection.some(item=>item.isNew||item.matchedWithoutAddress||item.renameTo)){
       setCaptureStatus('최신 DB에서 식당 및 주소 일치 여부를 다시 확인 중…');
       if(!await loadLiveDb())throw new Error('최신 DB를 조회하지 못해 등록·업데이트를 중단했습니다.');
       selection=assessPlaceBatchRecords(originalSelection);
@@ -8492,7 +8572,7 @@ async function submitPlaceText(){
         if(missing)throw new Error(missing.item.sourceName+': 서버 DB에서 신규 등록을 확인하지 못했습니다. 다시 등록하지 마세요.');
       }
     }
-    const updates=selection.filter(item=>item.infoLines.length||item.phone);
+    const updates=selection.filter(item=>item.infoLines.length||item.phone||item.renameTo);
     if(!updates.length){
       resetPlaceImportInputs();
       setPlaceCaptureBusy(false);
@@ -8501,9 +8581,9 @@ async function submitPlaceText(){
       return;
     }
     const names=[...new Set(updates.map(x=>x.name))];
-    const records=updates.map(({name,sourceName,isNew,matchedWithoutAddress,address,phone,infoLines})=>{
-      const textName=isNew||matchedWithoutAddress?name:(sourceName||name);
-      return {name:textName,address,phone,infoLines,
+    const records=updates.map(({name,sourceName,isNew,matchedWithoutAddress,address,phone,infoLines,renameFrom,renameTo})=>{
+      const textName=renameTo||(isNew||matchedWithoutAddress?name:(sourceName||name));
+      return {name:textName,address,phone,infoLines,renameFrom:renameFrom||'',renameTo:renameTo||'',
         rawText:[textName,address,phone,...infoLines].filter(Boolean).join('\n')};
     });
     const compact=records.map(x=>x.rawText).join('\n\n');
@@ -8511,6 +8591,7 @@ async function submitPlaceText(){
       '-'+Math.random().toString(36).slice(2);
     pendingPlaceText={
       requestId,names,createdCount,
+      renamePlan:updates.filter(x=>x.renameTo).map(x=>({from:x.renameFrom,to:x.renameTo,address:x.address})),
       beforeSnapshot:placeImportSnapshot(names),
       originalText:placeInputSignature(),
       recordCount:updates.length,
@@ -8523,6 +8604,7 @@ async function submitPlaceText(){
       structuredJson:JSON.stringify(records),
       detectedNames:names.join('\n'),
       clientParsed:'1',
+      renameRequested:'1',
       requestId:String(requestId)
     });
     armPlaceCaptureTimeout(requestId);
@@ -8664,20 +8746,58 @@ window.addEventListener('message',e=>{
     return;
   }
 
-  const elapsed=performance.now()-Number(pendingPlaceText.startedAt||performance.now());
+  const pending=pendingPlaceText;
+  const elapsed=performance.now()-Number(pending.startedAt||performance.now());
   const summary=placeTextResultSummary(data)+' · 응답 '+(elapsed/1000).toFixed(2)+'초';
   const skipped=Array.isArray(data.skipped)&&data.skipped.length>0;
-  setCaptureStatus(summary,skipped?'error':'success');
-  showToast(summary);
-  pendingPlaceText=null;
-  setPlaceCaptureBusy(false);
-  if(!skipped){
-    resetPlaceImportInputs();
-    closePlaceCaptureModal();
+  const renamePlan=Array.isArray(pending.renamePlan)?pending.renamePlan:[];
+  if(!renamePlan.length){
+    setCaptureStatus(summary,skipped?'error':'success');
+    showToast(summary);
+    pendingPlaceText=null;
+    setPlaceCaptureBusy(false);
+    if(!skipped){
+      resetPlaceImportInputs();
+      closePlaceCaptureModal();
+    }
+    updatePlaceTextHint();
+    if(skipped)setCaptureStatus(summary,'error');
+    liveDbPromise=loadLiveDb().catch(()=>false);
+    return;
   }
-  updatePlaceTextHint();
-  if(skipped)setCaptureStatus(summary,'error');
-  liveDbPromise=loadLiveDb().catch(()=>false);
+  // An old Apps Script deployment can ACK the hours update while ignoring
+  // canonical-name fields. Do not tell the user a rename succeeded without
+  // confirming the changed name in the actual backing database.
+  setCaptureStatus('영업정보 응답 수신 · 식당명 저장 여부를 운영 DB에서 확인 중…');
+  loadLiveDb().then(ok=>{
+    if(pendingPlaceText!==pending)return;
+    pendingPlaceText=null;
+    setPlaceCaptureBusy(false);
+    const missing=ok?renamePlan.filter(p=>!placeImportRenameVerified(p)):renamePlan;
+    if(missing.length){
+      const message=(ok?'영업정보 응답 수신 · 이름 변경 미반영: ':'DB 조회 실패 · 이름 변경 미확인: ')+
+        missing.map(p=>p.from+' → '+p.to).join(', ')+
+        ' · Apps Script 이름 변경/후기 연결 처리 확인 필요';
+      updatePlaceTextHint();
+      setCaptureStatus(message,'error');
+      showToast('식당명 변경을 확인하지 못했습니다. 입력 내용을 유지합니다.');
+      return;
+    }
+    const message=summary+' · 식당명 '+renamePlan.length+'건 DB 반영 확인';
+    if(!skipped){
+      resetPlaceImportInputs();
+      closePlaceCaptureModal();
+    }
+    updatePlaceTextHint();
+    setCaptureStatus(message,skipped?'error':'success');
+    showToast(message);
+  }).catch(()=>{
+    if(pendingPlaceText!==pending)return;
+    pendingPlaceText=null;
+    setPlaceCaptureBusy(false);
+    updatePlaceTextHint();
+    setCaptureStatus('서버 응답 후 이름 변경 확인 실패 · 입력 내용을 유지했습니다.','error');
+  });
 });
 
 function renderReviewSummary(rows){

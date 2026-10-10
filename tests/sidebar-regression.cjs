@@ -743,15 +743,16 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    await page.locator('#placeSeparatedList .place-entry-input').first().fill(
      '교다이야 합정점\n서울 마포구 성지길 39\n영업시간 12:00-20:30');
    assert.equal(await page.locator('#placeBatchPreview input:checked').count(),1);
-   assert.match(await page.locator('#placeBatchPreview').innerText(),/교다이야 합정점 → 교다이야/);
+   assert.match(await page.locator('#placeBatchPreview').innerText(),/기존 DB 이름: 교다이야 → 플레이스: 교다이야 합정점/);
    assert.match(await page.locator('#placeSeparatedList .place-entry-state').first().innerText(),/교다이야.*지점명\/주소 일치/);
-   const outbound=await state(()=>{
-     const savedSubmit=submitPlaceCaptureForm,savedTimeout=armPlaceCaptureTimeout;
+   const outbound=await state(async()=>{
+     const savedSubmit=submitPlaceCaptureForm,savedTimeout=armPlaceCaptureTimeout,savedLoad=loadLiveDb;
      let output=null;
      submitPlaceCaptureForm=value=>{output=value;};
      armPlaceCaptureTimeout=()=>{};
-     submitPlaceText();
-     submitPlaceCaptureForm=savedSubmit;armPlaceCaptureTimeout=savedTimeout;
+     loadLiveDb=async()=>true;
+     await submitPlaceText();
+     submitPlaceCaptureForm=savedSubmit;armPlaceCaptureTimeout=savedTimeout;loadLiveDb=savedLoad;
      pendingPlaceText=null;setPlaceCaptureBusy(false);
      return output;
    });
@@ -816,7 +817,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.equal(checked.judged[1].valid,true);
    assert.equal(checked.judged[1].isNew,true);
    assert.equal(checked.judged[2].valid,false,'a different name at a registered address must be blocked');
-   assert.match(checked.judged[2].reason,/동일 주소/);
+   assert.match(checked.judged[2].reason,/동일 건물|동일 주소/);
    assert.equal(checked.judged[3].valid,false,'a second newly pasted name at the same address must be blocked');
    assert.match(checked.judged[3].reason,/중복 입력/);
  });
@@ -886,10 +887,94 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(checked.sent,'updater must submit the address inferred from the unique existing row');
    const payload=JSON.parse(checked.sent.structuredJson);
    assert.equal(payload.length,1);
-   assert.equal(payload[0].name,'뼈칼국수','server must receive canonical DB name');
+   assert.equal(payload[0].name,'평이담백 뼈칼국수 본점','server must receive the Naver Place heading');
+   assert.equal(payload[0].renameFrom,'뼈칼국수');
+   assert.equal(payload[0].renameTo,'평이담백 뼈칼국수 본점');
    assert.equal(payload[0].address,'서울 마포구 양화로7길 84');
    assert.ok(payload[0].rawText.includes('영업 종료11:00에 영업 시작'));
    assert.deepEqual(checked.pending,['뼈칼국수']);
+ });
+ await check('canonical Naver Place names are preserved, previewed and sent for existing restaurants',async()=>{
+   const data=await state(async()=>{
+     const original={currentAccount,loadLiveDb,submitPlaceCaptureForm,armPlaceCaptureTimeout,
+       mode:placeImportMode,placeText:String(placeTextInput.value||'')};
+     let outbound=null;
+     try{
+       currentAccount={email:'sejong.hyun@seah.co.kr',name:'QA'};
+       loadLiveDb=async()=>true;
+       submitPlaceCaptureForm=fields=>{outbound=fields;};
+       armPlaceCaptureTimeout=()=>{};
+       setPlaceImportMode('combined');
+       placeTextInput.value='교다이야 합정점\n서울 마포구 성지길 39\n영업시간 11:00-20:30';
+       updatePlaceTextHint();
+       const preview=placeBatchItems.map(x=>({
+         valid:x.valid,renameFrom:x.renameFrom,renameTo:x.renameTo,
+         isNew:x.isNew
+       }));
+       await submitPlaceText();
+       return {preview,outbound,pendingRenamePlan:pendingPlaceText?.renamePlan};
+     }finally{
+       currentAccount=original.currentAccount;
+       loadLiveDb=original.loadLiveDb;
+       submitPlaceCaptureForm=original.submitPlaceCaptureForm;
+       armPlaceCaptureTimeout=original.armPlaceCaptureTimeout;
+       pendingPlaceText=null;
+       setPlaceCaptureBusy(false);
+       placeTextInput.value=original.placeText;
+       setPlaceImportMode(original.mode);
+       updatePlaceTextHint();
+     }
+   });
+   assert.equal(data.preview[0].valid,true);
+   assert.equal(data.preview[0].renameFrom,'교다이야');
+   assert.equal(data.preview[0].renameTo,'교다이야 합정점');
+   assert.equal(data.preview[0].isNew,false);
+   assert.ok(data.outbound);
+   const records=JSON.parse(data.outbound.structuredJson);
+   assert.equal(records[0].name,'교다이야 합정점','keep original Place name for existing server matching');
+   assert.equal(records[0].renameFrom,'교다이야');
+   assert.equal(records[0].renameTo,'교다이야 합정점');
+   assert.equal(data.pendingRenamePlan[0].to,'교다이야 합정점');
+ });
+ await check('Place rename ACK does not claim success when Apps Script has not changed DB name',async()=>{
+   const result=await state(async()=>{
+     const original={currentAccount,loadLiveDb,mode:placeImportMode};
+     try{
+       currentAccount={email:'sejong.hyun@seah.co.kr',name:'QA'};
+       setPlaceImportMode('combined');
+       placeTextInput.value='교다이야 합정점\n서울 마포구 성지길 39\n영업시간 11:00-20:30';
+       updatePlaceTextHint();
+       placeCaptureModal.classList.add('open');
+       loadLiveDb=async()=>true;
+       pendingPlaceText={requestId:'rename-not-persisted',names:['교다이야'],createdCount:0,
+         renamePlan:[{from:'교다이야',to:'교다이야 합정점',address:'서울 마포구 성지길 39'}],
+         startedAt:performance.now(),recordCount:1};
+       setPlaceCaptureBusy(true);
+       window.dispatchEvent(new MessageEvent('message',{
+         origin:'https://script.google.com',
+         data:{source:'lunch-map-place-text',requestId:'rename-not-persisted',
+           ok:true,results:[{name:'교다이야'}],skipped:[]}
+       }));
+       await new Promise(resolve=>setTimeout(resolve,60));
+       return {open:placeCaptureModal.classList.contains('open'),
+         status:captureStatus.textContent,
+         busy:placeCaptureBusy,
+         preserved:placeTextInput.value.includes('교다이야 합정점')};
+     }finally{
+       currentAccount=original.currentAccount;
+       loadLiveDb=original.loadLiveDb;
+       pendingPlaceText=null;
+       setPlaceCaptureBusy(false);
+       placeCaptureModal.classList.remove('open');
+       placeTextInput.value='';
+       setPlaceImportMode(original.mode);
+       updatePlaceTextHint();
+     }
+   });
+   assert.equal(result.open,true);
+   assert.equal(result.busy,false);
+   assert.equal(result.preserved,true);
+   assert.match(result.status,/이름 변경 미반영/);
  });
  await check('new place import registers once then sends verified opening-hours update',async()=>{
    const result=await state(async()=>{
