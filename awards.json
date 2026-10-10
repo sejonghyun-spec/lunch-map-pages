@@ -1,0 +1,49 @@
+{
+  "updatedAt": "2026-10-10",
+  "policy": "식당명과 도로명주소를 일치시킨 공개 출처만 등록. 연도 또는 리본 수가 확인되지 않으면 추측하지 않음. 출처의 공식/2차 여부를 구분.",
+  "rows": [
+    {
+      "name": "교다이야",
+      "address": "서울 마포구 성지길 39 합정빌딩 1층",
+      "awards": [
+        {
+          "type": "michelin-bib",
+          "sourceName": "미쉐린 가이드 공식",
+          "sourceUrl": "https://guide.michelin.com/kr/ko/seoul-capital-area/kr-seoul/restaurant/kyodaiya",
+          "checkedAt": "2026-10-10"
+        },
+        {
+          "type": "blue-ribbon",
+          "ribbons": 2,
+          "sourceName": "KInside (2차 출처, 선정 연도 미확인)",
+          "sourceUrl": "https://www.kinside.kr/ko/places/restaurants/359",
+          "checkedAt": "2026-10-10"
+        }
+      ]
+    },
+    {
+      "name": "오레노라멘",
+      "address": "서울 마포구 독막로8길 16 1층",
+      "awards": [
+        {
+          "type": "michelin-bib",
+          "sourceName": "미쉐린 가이드 공식",
+          "sourceUrl": "https://guide.michelin.com/kr/ko/seoul-capital-area/kr-seoul/restaurant/oreno-ramen",
+          "checkedAt": "2026-10-10"
+        }
+      ]
+    },
+    {
+      "name": "담택",
+      "address": "서울 마포구 동교로12안길 51 1층",
+      "awards": [
+        {
+          "type": "michelin-bib",
+          "sourceName": "미쉐린 가이드 공식",
+          "sourceUrl": "https://guide.michelin.com/kr/ko/seoul-capital-area/kr-seoul/restaurant/damtaek",
+          "checkedAt": "2026-10-10"
+        }
+      ]
+    }
+  ]
+}
