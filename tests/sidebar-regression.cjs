@@ -287,6 +287,49 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.equal(await page.locator('#sidebarFilterToggle').getAttribute('aria-expanded'),'false');
    assert.ok(!(await page.locator('#desktopDetailedFilters').isVisible()));
  });
+ await check('quick search chips appear under search and sync with advanced filters without favorites/recent tabs',async()=>{
+   const keys=['open','rating4','reservation','group'];
+   assert.equal(await page.locator('#sidebar .quick-filter-chip').count(),4);
+   assert.equal(await page.locator('#mobileSheet .quick-filter-chip').count(),4);
+   assert.equal(await page.locator('[data-category="전체"],[data-quick-filter="favorites"],[data-quick-filter="recent"]').count(),0);
+   const initial=await state(()=>getRows().length);
+   const selectors={
+     open:x=>operatingInfo(x).status==='open',
+     rating4:x=>ratingScore(x)>=4,
+     reservation:x=>matchesFeature(x,'reservation'),
+     group:x=>isGroupFriendly(x)
+   };
+   for(const key of keys){
+     await page.locator('#sidebar [data-quick-filter="'+key+'"]').click();
+     const actual=await state(()=>getRows().map(x=>x.row));
+     const expected=await state(key=>{
+       const predicate=key==='open'?x=>operatingInfo(x).status==='open':
+         key==='rating4'?x=>ratingScore(x)>=4:
+         key==='reservation'?x=>matchesFeature(x,'reservation'):
+         x=>isGroupFriendly(x);
+       return displayRestaurants().filter(predicate).map(x=>x.row);
+     },key);
+     assert.deepEqual([...actual].sort((a,b)=>a-b),[...expected].sort((a,b)=>a-b),'quick '+key+' should match detail predicate');
+     assert.equal(await page.locator('#sidebar [data-quick-filter="'+key+'"]').getAttribute('aria-pressed'),'true');
+     assert.equal(await page.locator('#mobileSheet [data-quick-filter="'+key+'"]').getAttribute('aria-pressed'),'true');
+     await page.locator('#sidebar [data-quick-filter="'+key+'"]').click();
+     assert.equal(await page.locator('#sidebar [data-quick-filter="'+key+'"]').getAttribute('aria-pressed'),'false');
+     assert.equal(await state(()=>getRows().length),initial);
+   }
+   await page.locator('#sidebar [data-quick-filter="rating4"]').click();
+   assert.equal(await state(()=>ratingFilter),'4');
+   await page.click('#sidebarFilterToggle');
+   assert.equal(await page.inputValue('#ratingFilter'),'4');
+   await page.selectOption('#ratingFilter','all');
+   assert.equal(await page.locator('#sidebar [data-quick-filter="rating4"]').getAttribute('aria-pressed'),'false');
+   await page.selectOption('#featureFilter','reservation');
+   assert.equal(await page.locator('#sidebar [data-quick-filter="reservation"]').getAttribute('aria-pressed'),'true');
+   assert.equal(await page.locator('#desktopFilterCount').innerText(),'1');
+   await page.click('#multiFilterReset');
+   assert.equal(await state(()=>getRows().length),initial);
+   assert.equal(await page.locator('#sidebarFilterToggle').getAttribute('aria-expanded'),'false');
+   assert.ok(await state(()=>document.getElementById('sidebar').getBoundingClientRect().width>=250));
+ });
  await shot('desktop');
  for(const [label,term] of [['name','자성당'],['feature','쫄면'],['address','월드컵로']])await check('search by '+label,async()=>{
    await page.fill('#search',term);await page.waitForTimeout(180);assert.ok(await state(()=>getRows().length>0));assert.ok(await page.locator('.search-hit').count());await reset();
@@ -820,6 +863,17 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    await page.fill('#mobileSearch','');await page.waitForTimeout(180);
 
    assert.equal(await page.locator('[data-mobile-chip]').count(),0);
+   assert.equal(await page.locator('#mobileSheet .quick-filter-chip').count(),4);
+   if(width===390){
+     const before=await state(()=>getRows().length);
+     await page.locator('#mobileSheet [data-quick-filter="open"]').click();
+     assert.equal(await state(()=>openNowOnly),true);
+     assert.equal(await page.locator('#sidebar [data-quick-filter="open"]').getAttribute('aria-pressed'),'true');
+     assert.ok(await state(()=>getRows().every(x=>operatingInfo(x).status==='open')));
+     await page.locator('#mobileSheet [data-quick-filter="open"]').click();
+     assert.equal(await state(()=>openNowOnly),false);
+     assert.equal(await state(()=>getRows().length),before);
+   }
    await page.click('#mobileDetailedFilterToggle');await page.waitForTimeout(140);
    await choose('mobileRatingFilter','4');
    assert.ok(await state(()=>ratingFilter==='4'&&getRows().every(x=>ratingScore(x)>=4)));
