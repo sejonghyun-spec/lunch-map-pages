@@ -9113,13 +9113,18 @@ document.getElementById('mapQuickNext')?.addEventListener('click',()=>{
   if(next)selectRow(next.row,true,false);
 });
 
+let wasMobileViewport=isMobile();
 window.addEventListener('resize',()=>{
-  if(!isMobile()){
+  const mobileNow=isMobile();
+  if(!mobileNow){
     setSheetState('peek');
     closeMobileMenu();
-  }else if(!commentPanel.classList.contains('open')&&sheetState==='hidden'){
+  }else if(!commentPanel.classList.contains('open')&&
+           (!wasMobileViewport||sheetState==='hidden'||sheetState==='peek')){
+    // Entering mobile from desktop must expand the restaurant sheet.
     setSheetState('mid');
   }
+  wasMobileViewport=mobileNow;
   updateListHeading(getRows().length);
   if(mapReady&&map){
     requestAnimationFrame(()=>{
