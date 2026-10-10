@@ -1,0 +1,23 @@
+name: Restaurant coordinate audit
+on:
+  pull_request:
+    paths:
+      - 'tests/coordinate-audit.cjs'
+      - '.github/workflows/coordinate-audit.yml'
+  workflow_dispatch:
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare browser
+        run: npm install --no-save --ignore-scripts playwright@1.55.1
+      - name: Query Kakao geocoder for missing regional addresses
+        run: |
+          if [ -x /usr/bin/google-chrome ]; then
+            CHROMIUM_PATH=/usr/bin/google-chrome node tests/coordinate-audit.cjs
+          else
+            npx playwright install --with-deps chromium
+            node tests/coordinate-audit.cjs
+          fi
