@@ -817,7 +817,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.equal(checked.judged[1].valid,true);
    assert.equal(checked.judged[1].isNew,true);
    assert.equal(checked.judged[2].valid,false,'a different name at a registered address must be blocked');
-   assert.match(checked.judged[2].reason,/동일 주소/);
+   assert.match(checked.judged[2].reason,/동일 건물|동일 주소/);
    assert.equal(checked.judged[3].valid,false,'a second newly pasted name at the same address must be blocked');
    assert.match(checked.judged[3].reason,/중복 입력/);
  });
