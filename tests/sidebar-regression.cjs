@@ -325,7 +325,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
  await check('no fabricated tags, missing rating, note escaping and aggregated rating count',async()=>{
    assert.deepEqual(await state(()=>cardFeatureParts({feature:'룸 없음'}).tags),['룸 없음']);
    assert.ok(await state(()=>{const a=aggregateRestaurantRows([{row:999,name:'검증',address:'주소',rating:5},{row:1000,name:'검증',address:'주소',rating:4}])[0];renderList([a]);return document.querySelector('.rating').textContent==='★ 4.5'&&document.querySelector('.card-evaluations').textContent==='평가 2'}));
-   assert.ok(await state(()=>{renderList([{row:999,name:'검증',feature:'',note:'<img src=x onerror=alert(1)>',capacity:'~'}]);return !document.querySelector('#list .card .rating')&&!document.querySelector('#list .card img')&&getComputedStyle(document.querySelector('.card-stats')).display==='none'&&document.querySelector('.card-feature').textContent.includes('<img')}));await reset();
+   assert.ok(await state(()=>{renderList([{row:999,name:'검증',feature:'',note:'<img src=x onerror=alert(1)>',capacity:'~'}]);return !document.querySelector('#list .card .rating')&&!document.querySelector('#list .card img')&&document.querySelector('#list .card .hours-source-chip')?.textContent==='시간 미확인'&&document.querySelector('.card-feature').textContent.includes('<img')}));await reset();
  });
  await check('search autocomplete, quick action bar, clustering helpers, review insight and hours parser',async()=>{
    await page.setViewportSize({width:1440,height:900});await reset();
