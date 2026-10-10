@@ -1,0 +1,25 @@
+name: Lunch map browser regression
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'restaurants.json'
+      - 'tests/sidebar-regression.cjs'
+      - '.github/workflows/browser-regression.yml'
+  workflow_dispatch:
+jobs:
+  browser-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Playwright test runner
+        run: npm install --no-save --ignore-scripts playwright@1.55.1
+      - name: Run browser regression
+        run: |
+          if [ -x /usr/bin/google-chrome ]; then
+            CHROMIUM_PATH=/usr/bin/google-chrome node tests/sidebar-regression.cjs
+          else
+            npx playwright install --with-deps chromium
+            node tests/sidebar-regression.cjs
+          fi
