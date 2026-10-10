@@ -798,6 +798,79 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(!payload.rawText.includes('잘못된길'));
    await page.click('#placeCaptureClose');
  });
+ await check('unknown Naver places become new entries only when their address is unused',async()=>{
+   const checked=await state(()=>{
+     const parsed=buildPlaceTextPayload([
+       '자성당 4.5점','서울 마포구 잔다리로7안길 3','영업시간 11:30-20:00',
+       '새로운우동 4.7점','서울 마포구 테스트로 200','영업시간 11:00-21:00',
+       '동명이식당','서울 마포구 잔다리로7안길 3','영업시간 11:00-20:00',
+       '신규두번째','서울 마포구 테스트로 200','영업시간 12:00-20:00'
+     ].join('\n'));
+     const judged=assessPlaceBatchRecords(parsed.records);
+     return {parsed:parsed.records.map(x=>x.name),
+       judged:judged.map(x=>({name:x.name,valid:x.valid,isNew:x.isNew,reason:x.reason}))};
+   });
+   assert.deepEqual(checked.parsed,['자성당','새로운우동','동명이식당','신규두번째']);
+   assert.equal(checked.judged[0].valid,true,'rating suffix must not change known place identity');
+   assert.equal(checked.judged[0].isNew,false);
+   assert.equal(checked.judged[1].valid,true);
+   assert.equal(checked.judged[1].isNew,true);
+   assert.equal(checked.judged[2].valid,false,'a different name at a registered address must be blocked');
+   assert.match(checked.judged[2].reason,/동일 주소/);
+   assert.equal(checked.judged[3].valid,false,'a second newly pasted name at the same address must be blocked');
+   assert.match(checked.judged[3].reason,/중복 입력/);
+ });
+ await check('new place import registers once then sends verified opening-hours update',async()=>{
+   const result=await state(async()=>{
+     const prior={loadLiveDb,findVerifiedKakaoRestaurant,registerNewPlaceFromText,
+       submitPlaceCaptureForm,armPlaceCaptureTimeout,allData,mode:placeImportMode,
+       account:currentAccount,selected:placeBatchSelected};
+     const calls=[];
+     try{
+       currentAccount={email:'sejong.hyun@seah.co.kr',name:'QA'};
+       loadLiveDb=async()=>true;
+       findVerifiedKakaoRestaurant=async()=>({
+         id:'qa-new-kakao-1',place_name:'새로운우동',road_address_name:'서울 마포구 테스트로 200',
+         address_name:'서울 마포구 테스트로 200',y:'37.552',x:'126.914',
+         category_name:'음식점 > 일식',place_url:'https://place.map.kakao.com/qa'
+       });
+       registerNewPlaceFromText=async(item,place)=>{
+         calls.push('register:'+item.sourceName);
+         allData.push({row:99999,name:place.place_name,address:place.road_address_name,region:'합정'});
+         return {ok:true};
+       };
+       submitPlaceCaptureForm=fields=>{calls.push('hours:'+fields.mode);calls.push(fields);};
+       armPlaceCaptureTimeout=()=>{};
+       setPlaceImportMode('combined');
+       placeTextInput.value='새로운우동 4.7점\n서울 마포구 테스트로 200\n영업시간 11:00-21:00';
+       updatePlaceTextHint();
+       const preview=placeBatchItems.map(x=>({valid:x.valid,isNew:x.isNew}));
+       await submitPlaceText();
+       return {preview,calls,pending:pendingPlaceText?.createdCount,
+         selected:placeBatchItems.filter(x=>x.valid).length};
+     }finally{
+       loadLiveDb=prior.loadLiveDb;
+       findVerifiedKakaoRestaurant=prior.findVerifiedKakaoRestaurant;
+       registerNewPlaceFromText=prior.registerNewPlaceFromText;
+       submitPlaceCaptureForm=prior.submitPlaceCaptureForm;
+       armPlaceCaptureTimeout=prior.armPlaceCaptureTimeout;
+       allData=prior.allData;
+       currentAccount=prior.account;
+       pendingPlaceText=null;
+       setPlaceCaptureBusy(false);
+       placeTextInput.value='';
+       placeBatchIndexCache=null;
+       setPlaceImportMode(prior.mode);
+       updatePlaceTextHint();
+     }
+   });
+   assert.equal(result.preview[0].valid,true);
+   assert.equal(result.preview[0].isNew,true);
+   assert.equal(result.calls[0],'register:새로운우동');
+   assert.equal(result.calls[1],'hours:placeText');
+   assert.equal(JSON.parse(result.calls[2].structuredJson)[0].name,'새로운우동');
+   assert.equal(result.pending,1);
+ });
  await check('batch parser reuses preview and suppresses safe no-op entries',async()=>{
    await state(()=>{currentAccount={email:'sejong.hyun@seah.co.kr',name:'qa'};syncPlaceCaptureUI();});
    await page.click('#placeCaptureButton');
