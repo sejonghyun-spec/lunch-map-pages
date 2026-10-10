@@ -823,7 +823,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
  await check('new place import registers once then sends verified opening-hours update',async()=>{
    const result=await state(async()=>{
      const prior={loadLiveDb,findVerifiedKakaoRestaurant,registerNewPlaceFromText,
-       submitPlaceCaptureForm,armPlaceCaptureTimeout,allData,mode:placeImportMode,
+       submitPlaceCaptureForm,armPlaceCaptureTimeout,allData:allData.slice(),mode:placeImportMode,
        account:currentAccount,selected:placeBatchSelected};
      const calls=[];
      try{
