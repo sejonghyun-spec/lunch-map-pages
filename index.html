@@ -8088,7 +8088,18 @@ function assessPlaceBatchRecords(records){
     const addressRows=incomingKey?catalog.filter(row=>placeBatchAddressKey(row.address)===incomingKey):[];
     const compatible=addressRows.filter(row=>placeImportStrongNameMatch(sourceName,row.name));
     const unique=new Map(compatible.map(row=>[String(row.name).toLowerCase()+'|'+incomingKey,row]));
-    const accepted=unique.size===1?[...unique.values()][0]:null;
+    // Hand-entered DB names can differ entirely from the official Place name.
+    // Permit an address-only rename ONLY for one unique DB identity sharing
+    // the *full* written address (not merely the same road/building number).
+    const exactAddress=addressRows.filter(row=>
+      placeBatchNormalizeAddress(row.address)===placeBatchNormalizeAddress(address));
+    const fullAddressIdentities=new Map(exactAddress.map(row=>[
+      String(row.name||'').trim()+'|'+placeBatchNormalizeAddress(row.address),row
+    ]));
+    const addressOnlyCandidate=!unique.size&&addressRows.length&&
+      new Set(addressRows.map(row=>placeBatchNormalizeAddress(row.address))).size===1&&
+      fullAddressIdentities.size===1?[...fullAddressIdentities.values()][0]:null;
+    const accepted=unique.size===1?[...unique.values()][0]:addressOnlyCandidate;
     const canonicalName=placeImportCanonicalStoreName(sourceName);
     const renameTo=accepted&&canonicalName&&canonicalName!==String(accepted.name||'').trim()
       ?canonicalName:'';
@@ -8099,12 +8110,12 @@ function assessPlaceBatchRecords(records){
     else if(!address||!incomingKey)reason=!providedAddress&&candidates.length
       ?'주소 없는 입력: 영업시간이 비어 있는 기존 식당을 하나로 특정할 수 없습니다'
       :'주소 누락 또는 주소 형식 확인 불가';
-    else if(!accepted&&addressRows.length)reason='동일 주소에 다른 식당이 등록되어 있습니다';
+    else if(!accepted&&addressRows.length)reason='동일 건물에 다른 식당이 있거나 정확한 주소가 일치하지 않습니다';
     else if(seen.has(incomingKey))reason='중복 입력 (같은 주소는 첫 번째만 반영)';
     else if(unique.size>1)reason='동일 주소에 후보가 여러 개 있습니다';
     else if(!accepted&&!isNew)reason='등록 주소와 불일치 (기존 식당명 확인 필요)';
     else if(accepted&&!record.infoLines.length&&!record.phone&&!renameTo)reason='반영할 영업정보 없음';
-    else if(accepted&&!renameTo&&placeBatchExistingValuesMatch(record,compatible)){reason='당일 확인한 정보와 동일';unchanged=true;}
+    else if(accepted&&!renameTo&&placeBatchExistingValuesMatch(record,compatible.length?compatible:exactAddress)){reason='당일 확인한 정보와 동일';unchanged=true;}
     if(!reason)seen.add(incomingKey);
     return {...record,address,importAddress:providedAddress,name:accepted?.name||record.name,sourceName,id,
       valid:!reason,isNew:!reason&&isNew,matchedWithoutAddress,
@@ -8129,10 +8140,10 @@ function renderPlaceBatchPreview(){
       const selected=placeBatchSelected.has(item.id);
       return '<label class="place-batch-row" data-status="'+(item.valid?'ready':'hold')+'">'+
         '<input type="checkbox" data-batch-index="'+item.id+'" '+(item.valid?'':'disabled ')+(selected?'checked':'')+'>'+
-        '<span><strong>'+esc(item.sourceName!==item.name?item.sourceName+' → '+item.name:item.name)+
+        '<span><strong>'+esc(item.renameTo|| (item.sourceName!==item.name?item.sourceName+' → '+item.name:item.name))+
         '</strong><small>'+esc((item.matchedWithoutAddress?'등록된 DB 주소 사용 · ':'')+(item.address||'주소 정보 없음'))+
         '</small><small>'+esc(item.infoLines.slice(0,2).join(' · ')|| (item.phone?'전화번호만 확인':'영업정보 없음'))+'</small>'+ 
-        (item.renameTo?'<small>식당명 변경: '+esc(item.renameFrom)+' → '+esc(item.renameTo)+'</small>':'')+'</span>'+
+        (item.renameTo?'<small>기존 DB 이름: '+esc(item.renameFrom)+' → 플레이스: '+esc(item.renameTo)+'</small>':'')+'</span>'+
         '<span class="place-batch-state">'+(item.valid?(item.isNew?'신규 등록':item.renameTo?'이름 변경/업데이트':'업데이트'):'보류')+
         (item.reason?'<small>'+esc(item.reason)+'</small>':'')+'</span></label>';
     }).join('');
@@ -8517,7 +8528,7 @@ async function submitPlaceText(){
     }
     const names=[...new Set(updates.map(x=>x.name))];
     const records=updates.map(({name,sourceName,isNew,matchedWithoutAddress,address,phone,infoLines,renameFrom,renameTo})=>{
-      const textName=isNew||matchedWithoutAddress?name:(sourceName||name);
+      const textName=renameTo||(isNew||matchedWithoutAddress?name:(sourceName||name));
       return {name:textName,address,phone,infoLines,renameFrom:renameFrom||'',renameTo:renameTo||'',
         rawText:[textName,address,phone,...infoLines].filter(Boolean).join('\n')};
     });
