@@ -4,6 +4,7 @@ on:
     paths:
       - 'index.html'
       - 'restaurants.json'
+      - 'awards.json'
       - 'tests/regional-integrity.cjs'
       - '.github/workflows/regional-integrity.yml'
   push:
