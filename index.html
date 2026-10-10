@@ -7903,8 +7903,16 @@ function placeImportStrongNameMatch(sourceName,registeredName){
   const source=String(sourceName||'').toLowerCase()
     .replace(/[|•·,，]/g,' ').split(/\s+/).filter(Boolean)
     .map(token=>token.replace(/[^가-힣a-z0-9]/g,''));
-  return source.some(token=>token===registered||
-    (token.startsWith(registered)&&/^(?:본점|직영점|\d{1,3}호점|[가-힣]{2,12}점)$/.test(token.slice(registered.length))));
+  // Only allow a distinct brand prefix followed by the complete registered
+  // name and an optional *branch* suffix. An arbitrary sentence starting
+  // with a known name must not become a match.
+  if(source.length<2)return false;
+  return source.some((token,i)=>{
+    if(i===0||token!==registered)return false;
+    const trailing=source.slice(i+1).filter(Boolean);
+    return trailing.length===0||(trailing.length===1&&
+      /^(?:본점|직영점|\d{1,3}호점|[가-힣]{2,12}점)$/.test(trailing[0]));
+  });
 }
 function placeImportMissingHours(row){
   return !String(row&&(
