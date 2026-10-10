@@ -44,7 +44,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
  await page.waitForFunction(()=>mapReady&&markerByRow.size>0&&commentsPreloaded);
  await page.evaluate(()=>document.fonts.ready);
  await check('real Kakao SDK, initial rows, markers and result count',async()=>{
-   const s=await state(()=>({cards:document.querySelectorAll('.card').length,rows:getRows().length,markers:markerByRow.size,label:document.getElementById('listSub').textContent}));
+   const s=await state(()=>({cards:document.querySelectorAll('#list .card').length,rows:getRows().length,markers:markerByRow.size,label:document.getElementById('listSub').textContent}));
    assert.equal(s.cards,s.rows);assert.equal(s.markers,s.rows);assert.equal(s.label,s.rows+'곳');assert.ok(s.rows>40);
  });
  await check('region selector isolates Hapjeong, Pohang and Chungju with plant-centered distance',async()=>{
@@ -166,13 +166,13 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
  for(const [label,term] of [['name','자성당'],['feature','쫄면'],['address','월드컵로']])await check('search by '+label,async()=>{
    await page.fill('#search',term);await page.waitForTimeout(180);assert.ok(await state(()=>getRows().length>0));assert.ok(await page.locator('.search-hit').count());await reset();
  });
- await check('empty search and reset',async()=>{await page.fill('#search','__no_restaurant__');await page.waitForTimeout(180);assert.equal(await page.locator('.card').count(),0);assert.equal(await page.locator('#listSub').textContent(),'0곳');await reset();});
+ await check('empty search and reset',async()=>{await page.fill('#search','__no_restaurant__');await page.waitForTimeout(180);assert.equal(await page.locator('#list .card').count(),0);assert.equal(await page.locator('#listSub').textContent(),'0곳');await reset();});
  await check('multi-category selection and all categories',async()=>{
    await page.click('[data-category="한식"]');await page.click('[data-category="일식"]');assert.ok(await state(()=>selectedCategories.size===2&&getRows().every(x=>['한식','일식'].includes(x.category))));await reset();
  });
  for(const [id,values] of [['ratingFilter',['5','4','3']],['capacityFilter',['4','8','group']],['featureFilter',['waiting','reservation','room','group','fast']],['distanceFilter',['300','500','700','1000']]]){
    await check(id+' all options and active labels',async()=>{
-     for(const value of values){await choose(id,value);assert.ok(await page.locator('#'+id).evaluate(el=>el.classList.contains('active')));assert.ok(await state(()=>document.querySelectorAll('.card').length===getRows().length));
+     for(const value of values){await choose(id,value);assert.ok(await page.locator('#'+id).evaluate(el=>el.classList.contains('active')));assert.ok(await state(()=>document.querySelectorAll('#list .card').length===getRows().length));
        if(id==='ratingFilter')assert.ok(await page.evaluate(v=>getRows().every(x=>ratingScore(x)>=Number(v)),value));
        if(id==='distanceFilter')assert.ok(await page.evaluate(v=>getRows().every(x=>distanceFromSeahTower(x)<=Number(v)),value));
        if(id==='capacityFilter')assert.ok(await page.evaluate(v=>getRows().every(x=>v==='group'?isGroupFriendly(x):v==='8'?capacityMax(x)>=8:capacityMax(x)>=4||isGroupFriendly(x)),value));
@@ -184,19 +184,19 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
  await check('favorite toggle, favorites filter and map results stay synchronized',async()=>{
    await page.locator('.card-favorite').first().click();assert.equal(await page.locator('.card-favorite').first().getAttribute('aria-pressed'),'true');
    assert.ok(await state(()=>!commentPanel.classList.contains('open')));
-   await page.click('[data-chip="favorites"]');assert.equal(await page.locator('.card').count(),1);
-   await page.locator('.card-favorite').click();assert.equal(await page.locator('.card').count(),0);assert.equal(await state(()=>markerByRow.size),0);await reset();
+   await page.click('[data-chip="favorites"]');assert.equal(await page.locator('#list .card').count(),1);
+   await page.locator('.card-favorite').click();assert.equal(await page.locator('#list .card').count(),0);assert.equal(await state(()=>markerByRow.size),0);await reset();
  });
  await check('list hover highlights corresponding marker and clears',async()=>{
-   await page.locator('.card').first().hover();assert.ok(await state(()=>markerByRow.get(Number(document.querySelector('.card').dataset.row)).content.classList.contains('list-hover')));
+   await page.locator('#list .card').first().hover();assert.ok(await state(()=>markerByRow.get(Number(document.querySelector('#list .card').dataset.row)).content.classList.contains('list-hover')));
    await page.hover('#search');assert.ok(await state(()=>![...markerByRow.values()].some(x=>x.content.classList.contains('list-hover'))));
  });
  await check('marker hover highlights list and opens/closes preview',async()=>{
-   assert.ok(await state(()=>{const item=[...markerByRow.values()][0];item.content.dispatchEvent(new MouseEvent('mouseenter'));const yes=document.querySelector('.card').classList.contains('map-hover');item.content.dispatchEvent(new MouseEvent('mouseleave'));return yes&&!document.querySelector('.card').classList.contains('map-hover')}));
+   assert.ok(await state(()=>{const item=[...markerByRow.values()][0];item.content.dispatchEvent(new MouseEvent('mouseenter'));const yes=document.querySelector('#list .card').classList.contains('map-hover');item.content.dispatchEvent(new MouseEvent('mouseleave'));return yes&&!document.querySelector('#list .card').classList.contains('map-hover')}));
  });
  await check('keyboard restaurant selection, detail placement, review cache, Kakao link',async()=>{
    await page.locator('.card-open').first().focus();await page.keyboard.press('Enter');await page.waitForTimeout(250);
-   assert.ok(await state(()=>selectedRow===Number(document.querySelector('.card').dataset.row)&&document.querySelector('.card').classList.contains('active')&&commentPanel.classList.contains('open')));
+   assert.ok(await state(()=>selectedRow===Number(document.querySelector('#list .card').dataset.row)&&document.querySelector('#list .card').classList.contains('active')&&commentPanel.classList.contains('open')));
    assert.equal(await page.locator('.card-review').first().textContent(),'후기 2');
    const panel=await page.locator('#commentPanel').boundingBox();assert.ok(panel.x>=430&&panel.x+panel.width<=1441);
    await page.waitForFunction(()=>document.getElementById('kakaoMapLink').href.includes('map.kakao.com'));
@@ -204,8 +204,8 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    await shot('desktop-detail');await page.click('#commentClose');
  });
  await check('recent filter and selected marker',async()=>{
-   await page.click('[data-chip="recent"]');assert.equal(await page.locator('.card').count(),1);await reset();
-   await state(()=>[...markerByRow.values()][0].content.click());assert.equal(await page.locator('.card.active').count(),1);await page.click('#commentClose');
+   await page.click('[data-chip="recent"]');assert.equal(await page.locator('#list .card').count(),1);await reset();
+   await state(()=>[...markerByRow.values()][0].content.click());assert.equal(await page.locator('#list .card.active').count(),1);await page.click('#commentClose');
  });
  await check('current-map filter and full reset',async()=>{
    await page.click('[data-chip="map"]');assert.ok(await state(()=>mapOnlyMode&&getRows().every(isInCurrentMapBounds)));
@@ -224,7 +224,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
  await check('no fabricated tags, missing rating, note escaping and aggregated rating count',async()=>{
    assert.deepEqual(await state(()=>cardFeatureParts({feature:'룸 없음'}).tags),['룸 없음']);
    assert.ok(await state(()=>{const a=aggregateRestaurantRows([{row:999,name:'검증',address:'주소',rating:5},{row:1000,name:'검증',address:'주소',rating:4}])[0];renderList([a]);return document.querySelector('.rating').textContent==='★ 4.5'&&document.querySelector('.card-evaluations').textContent==='평가 2'}));
-   assert.ok(await state(()=>{renderList([{row:999,name:'검증',feature:'룸 없음',note:'<img src=x onerror=alert(1)>',capacity:'~'}]);return !document.querySelector('.card .rating')&&!document.querySelector('.card img')&&getComputedStyle(document.querySelector('.card-stats')).display==='none'&&document.querySelector('.card-feature').textContent.includes('<img')}));await reset();
+   assert.ok(await state(()=>{renderList([{row:999,name:'검증',feature:'룸 없음',note:'<img src=x onerror=alert(1)>',capacity:'~'}]);return !document.querySelector('#list .card .rating')&&!document.querySelector('#list .card img')&&getComputedStyle(document.querySelector('.card-stats')).display==='none'&&document.querySelector('.card-feature').textContent.includes('<img')}));await reset();
  });
  await check('search autocomplete, quick action bar, clustering helpers, review insight and hours parser',async()=>{
    await page.setViewportSize({width:1440,height:900});await reset();
