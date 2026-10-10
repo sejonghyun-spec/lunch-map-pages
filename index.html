@@ -4084,7 +4084,7 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
       </label></div>
       <div class="explore-controls" role="group" aria-label="방문시간 및 상세 필터">
         <div class="visit-time-bar" role="group" aria-label="방문 예정시간 검색">
-          <label for="visitTimeFilter">방문 예정 <select id="visitTimeFilter" aria-label="오늘 방문 예정시간"><option value="all">방문시간 전체</option><option value="11:00">오늘 11:00</option><option value="11:30">오늘 11:30</option><option value="12:00">오늘 12:00</option><option value="12:30">오늘 12:30</option><option value="13:00">오늘 13:00</option><option value="13:30">오늘 13:30</option><option value="14:00">오늘 14:00</option><option value="18:00">오늘 18:00</option><option value="19:00">오늘 19:00</option></select></label>
+          <label for="visitTimeFilter">방문 예정 <select id="visitTimeFilter" aria-label="오늘 방문 예정시간"><option value="all">시간 무관</option><option value="11:00">오늘 11:00</option><option value="11:30">오늘 11:30</option><option value="12:00">오늘 12:00</option><option value="12:30">오늘 12:30</option><option value="13:00">오늘 13:00</option><option value="13:30">오늘 13:30</option><option value="14:00">오늘 14:00</option><option value="18:00">오늘 18:00</option><option value="19:00">오늘 19:00</option></select></label>
           <span id="visitTimeHint">저장된 영업시간 기준 · 실제 방문 전 확인</span>
         </div>
         <button id="sidebarFilterToggle" class="sidebar-filter-toggle" type="button" aria-expanded="false" aria-controls="desktopDetailedFilters"><span>☷ 상세 필터</span><span class="filter-counter" id="desktopFilterCount" hidden></span><span class="filter-chevron" aria-hidden="true">⌄</span></button>
@@ -4166,7 +4166,7 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
       </div>
 
       <div class="mobile-sheet-quick" role="group" aria-label="방문 예정시간과 상세 필터">
-        <label class="mobile-visit-time" for="mobileVisitTimeFilter"><span>방문 예정</span><select id="mobileVisitTimeFilter" aria-label="오늘 방문 예정시간"><option value="all">방문시간 전체</option><option value="11:00">오늘 11:00</option><option value="11:30">오늘 11:30</option><option value="12:00">오늘 12:00</option><option value="12:30">오늘 12:30</option><option value="13:00">오늘 13:00</option><option value="13:30">오늘 13:30</option><option value="14:00">오늘 14:00</option><option value="18:00">오늘 18:00</option><option value="19:00">오늘 19:00</option></select></label>
+        <label class="mobile-visit-time" for="mobileVisitTimeFilter"><span>방문 예정</span><select id="mobileVisitTimeFilter" aria-label="오늘 방문 예정시간"><option value="all">시간 무관</option><option value="11:00">오늘 11:00</option><option value="11:30">오늘 11:30</option><option value="12:00">오늘 12:00</option><option value="12:30">오늘 12:30</option><option value="13:00">오늘 13:00</option><option value="13:30">오늘 13:30</option><option value="14:00">오늘 14:00</option><option value="18:00">오늘 18:00</option><option value="19:00">오늘 19:00</option></select></label>
         <button id="mobileDetailedFilterToggle" type="button" aria-expanded="false" aria-controls="mobileDetailedFilters">☷ 상세 필터 <span id="mobileFilterCount" class="filter-counter" hidden></span></button>
       </div>
 
@@ -4712,6 +4712,24 @@ function rememberRecent(x){
   if(!key)return;
   const next=[key,...recentKeys().filter(v=>v!==key)].slice(0,10);
   writeLocalJson(RECENTS_KEY,next);
+  syncRecentCardBadges();
+}
+function syncRecentCardBadges(){
+  const recently=new Set(recentKeys());
+  document.querySelectorAll('#list .card,#mobileList .mobile-card').forEach(card=>{
+    const row=dataForRow(Number(card.dataset.row));
+    const show=!!row&&recently.has(restaurantKey(row));
+    const container=card.querySelector('.mobile-card-meta,.card-stats');
+    if(!container)return;
+    let badge=container.querySelector('.card-recent');
+    if(show&&!badge){
+      badge=document.createElement('span');
+      badge.className='card-recent';
+      badge.textContent='최근 본';
+      badge.title='최근 열어본 식당';
+      container.appendChild(badge);
+    }else if(!show&&badge)badge.remove();
+  });
 }
 function rememberRouletteWinner(x){
   const key=restaurantKey(x);
@@ -4969,27 +4987,35 @@ function commentCountFor(x){
   return Array.isArray(rows)?rows.length:0;
 }
 function updateFilterChipUI(){
-  document.querySelectorAll('.filter-chip').forEach(btn=>{
-    const chip=btn.dataset.chip;
-    const active=
-      (chip==='rating4'&&ratingFilter==='4')||
-      (chip==='favorites'&&favoritesOnly)||
-      (chip==='recent'&&recentOnly)||
-      (chip==='map'&&mapOnlyMode);
-    btn.classList.toggle('active',active);
-    btn.setAttribute('aria-pressed',String(active));
-  });
-  document.querySelectorAll('[data-mobile-chip]').forEach(btn=>{
-    const chip=btn.dataset.mobileChip;
-    const active=
-      (chip==='rating4'&&ratingFilter==='4')||
-      (chip==='favorites'&&favoritesOnly)||
-      (chip==='recent'&&recentOnly);
-    btn.classList.toggle('active',active);
-    btn.setAttribute('aria-pressed',String(active));
-  });
   const mapBtn=document.getElementById('mapBoundsButton');
   if(mapBtn)mapBtn.classList.toggle('active',mapOnlyMode);
+}
+function activeDetailedFilterCount(){
+  return [ratingFilter,capacityFilter,featureFilter,distanceFilter].filter(v=>v!=='all').length;
+}
+function setSidebarFiltersOpen(open){
+  const sidebar=document.getElementById('sidebar');
+  const button=document.getElementById('sidebarFilterToggle');
+  const panel=document.getElementById('desktopDetailedFilters');
+  if(!sidebar||!button||!panel)return;
+  sidebar.classList.toggle('filters-open',!!open);
+  button.setAttribute('aria-expanded',String(!!open));
+  panel.setAttribute('aria-hidden',String(!open));
+  // The panel is actually hidden when collapsed (no invisible focusable controls).
+  panel.inert=!open;
+}
+function syncDetailedFilterBadges(){
+  const count=activeDetailedFilterCount();
+  ['desktopFilterCount','mobileFilterCount'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.hidden=count===0;
+    el.textContent=count?String(count):'';
+  });
+  const button=document.getElementById('sidebarFilterToggle');
+  if(button)button.classList.toggle('has-filters',count>0);
+  const mobile=document.getElementById('mobileDetailedFilterToggle');
+  if(mobile)mobile.classList.toggle('has-filters',count>0);
 }
 function updateMultiFilterUI(){
   const pairs=[
@@ -5028,6 +5054,7 @@ function updateMultiFilterUI(){
   ];
   mobilePairs.forEach(([id,value])=>{const el=document.getElementById(id);if(el)el.value=value;});
   updateFilterChipUI();
+  syncDetailedFilterBadges();
 }
 function resetMultiFilters(){
   ratingFilter='all';
@@ -5825,9 +5852,6 @@ function isInCurrentMapBounds(x){
 
 function getRows(){
   const q=searchKeyword.trim().toLowerCase();
-  const favorites=favoriteSet();
-  const recent=new Set(recentKeys());
-
   let rows=displayRestaurants().filter(x=>{
     if(selectedCategories.size&&!selectedCategories.has(x.category))return false;
 
@@ -5852,8 +5876,6 @@ function getRows(){
 
     const distance=distanceFromSeahTower(x);
     if(distanceFilter!=='all'&&(!Number.isFinite(distance)||distance>Number(distanceFilter)))return false;
-    if(favoritesOnly&&!favorites.has(restaurantKey(x)))return false;
-    if(recentOnly&&!recent.has(restaurantKey(x)))return false;
     if(mapOnlyMode&&!isInCurrentMapBounds(x))return false;
     if(visitTimeFilter!=='all'&&!visitTimeOpenAt(x,visitTimeFilter))return false;
 
@@ -5894,6 +5916,7 @@ function updateListHeading(count){
 function renderMobileList(rows){
   const el=document.getElementById('mobileList');
   const q=searchKeyword.trim();
+  const recent=new Set(recentKeys());
   if(!el)return;
   const signature=listUiSignature(),keepScroll=signature===lastListSignature,oldScroll=el.scrollTop;
   if(!rows.length){
@@ -5922,6 +5945,7 @@ function renderMobileList(rows){
         '<span class="card-review" data-review-key="'+esc(restaurantCommentKey(x))+'" hidden></span>'+
         (hours.status!=='unknown'?'<span class="mobile-card-hours '+esc(hours.status)+'">'+esc(scheduleDisplayLabel(x,hours))+'</span>':'')+
         hoursSourceBadge(x)+
+        (recent.has(restaurantKey(x))?'<span class="card-recent">최근 본</span>':'')+
         (distance?'<span class="mobile-card-distance">↔ '+esc(distance)+'</span>':'')+
       '</div>'+
       awardBadgesHtml(x)+
@@ -5950,6 +5974,7 @@ function renderMobileList(rows){
 }
 function renderList(rows){
   const el=document.getElementById('list');
+  const recent=new Set(recentKeys());
   const signature=listUiSignature(),keepScroll=signature===lastListSignature,oldScroll=el.scrollTop;
   updateListHeading(rows.length);
   renderMobileList(rows);
@@ -5979,6 +6004,7 @@ function renderList(rows){
         '<span class="card-review" data-review-key="'+esc(restaurantCommentKey(x))+'" hidden></span>'+
         (hours.status!=='unknown'?'<span class="card-hours '+esc(hours.status)+'">'+esc(scheduleDisplayLabel(x,hours))+'</span>':'')+
         hoursSourceBadge(x)+
+        (recent.has(restaurantKey(x))?'<span class="card-recent">최근 본</span>':'')+
         (distance?'<span class="card-distance" title="'+esc(currentAnchorLabel())+' 기준 직선거리" aria-label="'+esc(currentAnchorLabel())+'에서 직선거리 '+esc(distance)+'">↔ '+esc(distance)+'</span>':'')+
       '</div>'+
       awardBadgesHtml(x)+
@@ -9679,28 +9705,29 @@ document.addEventListener('click',e=>{
     render(false);
   });
 });
-document.getElementById('multiFilterReset').addEventListener('click',()=>{
-  resetMultiFilters();
-  render(true);
+document.getElementById('sidebarFilterToggle')?.addEventListener('click',()=>{
+  const sidebar=document.getElementById('sidebar');
+  setSidebarFiltersOpen(!sidebar?.classList.contains('filters-open'));
 });
-
-document.querySelectorAll('.filter-chip').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    const chip=btn.dataset.chip;
-    if(chip==='rating4')ratingFilter=ratingFilter==='4'?'all':'4';
-    else if(chip==='favorites')favoritesOnly=!favoritesOnly;
-    else if(chip==='recent')recentOnly=!recentOnly;
-    else if(chip==='map')mapOnlyMode=!mapOnlyMode;
-    updateMultiFilterUI();
-    render(false);
-  });
+setSidebarFiltersOpen(false);
+document.getElementById('multiFilterReset').addEventListener('click',()=>{
+  showAll();
+  setSidebarFiltersOpen(false);
 });
 document.getElementById('mapBoundsButton').addEventListener('click',()=>{
   mapOnlyMode=true;
   updateMultiFilterUI();
   render(false);
 });
-document.getElementById('showAll').onclick=showAll;
+document.getElementById('showAll').onclick=()=>{
+  if(!mapReady||!map)return;
+  mapOnlyMode=false;
+  updateFilterChipUI();
+  map.setCenter(new kakao.maps.LatLng(HOME_LAT,HOME_LNG));
+  map.setLevel(getInitialMapLevel());
+  syncRegionAnchorMarker();
+  render(false);
+};
 document.getElementById('myLocation').onclick=locateMe;
 
 window.addEventListener('popstate',()=>{
