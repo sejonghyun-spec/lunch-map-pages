@@ -431,6 +431,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    await page.click('#placeCaptureButton');
    assert.ok(await page.locator('#placeCaptureModal').evaluate(el=>el.classList.contains('open')));
    assert.equal(await page.locator('#captureDone').isDisabled(),true);
+   await page.click('#placeCombinedMode');
    await page.fill('#placeTextInput','자성당\n서울 마포구 잔다리로7안길 3\n영업시간 11:30~21:00');
    assert.equal(await page.locator('#captureDone').isDisabled(),false);
 
@@ -453,6 +454,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
  await check('batch Place text import validates addresses, skips duplicates and submits selected only',async()=>{
    await state(()=>{currentAccount={email:'sejong.hyun@seah.co.kr',name:'qa'};syncPlaceCaptureUI();});
    await page.click('#placeCaptureButton');
+   await page.click('#placeCombinedMode');
    await page.fill('#placeTextInput',[
      '자성당','서울 마포구 잔다리로7안길 3','영업시간 11:00~20:00',
      '교다이야','서울 마포구 성지길 39','영업시간 11:00~20:30',
@@ -502,6 +504,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
      row.hoursCheckedAt=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'});
      placeBatchIndexCache=null;
    });
+   await page.click('#placeCombinedMode');
    await page.fill('#placeTextInput','자성당\n서울 마포구 잔다리로7안길 3\n영업시간 11:00-20:00');
    assert.equal(await page.locator('#placeBatchPreview input:checked').count(),0);
    assert.ok((await page.locator('#placeBatchPreview').innerText()).includes('당일 확인한 정보와 동일'));
@@ -515,6 +518,54 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
      Object.assign(row,before);
      placeBatchIndexCache=null;
    },original);
+   await page.click('#placeCaptureClose');
+ });
+ await check('separate Place cards preserve boundaries, show per-card status and send selected only',async()=>{
+   await state(()=>{currentAccount={email:'sejong.hyun@seah.co.kr',name:'qa'};syncPlaceCaptureUI();});
+   await page.click('#placeCaptureButton');
+   await page.click('#placeCardsMode');
+   assert.equal(await page.locator('#placeSeparatedList .place-entry-card').count(),3);
+   assert.equal(await page.locator('#placeTextInput').isVisible(),false);
+   await page.locator('#placeSeparatedList .place-entry-input').nth(0).fill('자성당\n서울 마포구 잔다리로7안길 3\n영업시간 11:00-20:00\n라스트오더 14:30, 19:30');
+   await page.locator('#placeSeparatedList .place-entry-input').nth(1).fill('교다이야\n서울 마포구 성지길 39\n영업시간 11:00-20:30');
+   await page.locator('#placeSeparatedList .place-entry-input').nth(2).fill('오베이글\n서울 마포구 잘못된길 99\n영업시간 10:00-19:00');
+   await page.click('#placeAddCard');
+   assert.equal(await page.locator('#placeSeparatedList .place-entry-card').count(),4);
+   await page.locator('#placeSeparatedList .place-entry-input').nth(3).fill('윤멘\n서울 마포구 포은로 27\n영업시간 11:00-20:00\n헤키\n서울 마포구 동교로9길 33\n영업시간 11:30-20:30');
+   assert.equal(await page.locator('#placeBatchPreview .place-batch-row').count(),4);
+   assert.equal(await page.locator('#placeBatchPreview input:checked').count(),2);
+   assert.equal(await page.locator('#placeBatchPreview input:disabled').count(),2);
+   const cardStatuses=await page.locator('#placeSeparatedList .place-entry-state').allInnerTexts();
+   assert.match(cardStatuses[0],/자성당.*주소 일치/);
+   assert.match(cardStatuses[1],/교다이야.*주소 일치/);
+   assert.match(cardStatuses[2],/주소와 불일치|등록 주소와 불일치/);
+   assert.match(cardStatuses[3],/여러 식당/);
+   await page.locator('#placeBatchPreview input:not(:disabled)').nth(1).uncheck();
+   assert.equal(await page.locator('#captureDone').innerText(),'1건 선택 반영');
+   const fields=await state(()=>{
+     const submit=submitPlaceCaptureForm,arm=armPlaceCaptureTimeout;
+     let result=null;
+     submitPlaceCaptureForm=values=>{result=values;};
+     armPlaceCaptureTimeout=()=>{};
+     submitPlaceText();
+     submitPlaceCaptureForm=submit;
+     armPlaceCaptureTimeout=arm;
+     pendingPlaceText=null;setPlaceCaptureBusy(false);
+     return result;
+   });
+   assert.ok(fields);
+   const records=JSON.parse(fields.structuredJson);
+   assert.equal(records.length,1);
+   assert.equal(records[0].name,'자성당');
+   assert.ok(records[0].rawText.includes('라스트오더 14:30, 19:30'));
+   assert.ok(!fields.rawText.includes('잘못된길'));
+   assert.ok(!fields.rawText.includes('교다이야'));
+   await page.locator('#placeSeparatedList .place-entry-remove').nth(2).click();
+   assert.equal(await page.locator('#placeSeparatedList .place-entry-card').count(),3);
+   assert.ok((await page.locator('#placeSeparatedList .place-entry-input').nth(1).inputValue()).includes('교다이야'));
+   await page.click('#captureClear');
+   assert.equal(await page.locator('#placeSeparatedList .place-entry-card').count(),3);
+   assert.equal(await page.locator('#placeBatchPreview input:checked').count(),0);
    await page.click('#placeCaptureClose');
  });
  await check('menu tab remains as manual DB viewer without auto collection',async()=>{
