@@ -418,14 +418,14 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
      '브레이크타임 15:00~17:00',
      '02-123-4567',
      '블로그리뷰 123'
-   ].join('\\n')));
+   ].join('\n')));
    assert.deepEqual(parsed.names,['자성당']);
    assert.equal(parsed.records[0].address,'서울 마포구 잔다리로7안길 3');
    assert.equal(parsed.records[0].phone,'02-123-4567');
    assert.ok(parsed.compactText.includes('영업시간 11:30~21:00'));
    assert.ok(parsed.compactText.includes('브레이크타임 15:00~17:00'));
    assert.ok(!parsed.compactText.includes('블로그리뷰 123'));
-   assert.ok(parsed.compactText.length<['자성당','서울 마포구 잔다리로7안길 3','홈','메뉴 99+','영업시간 11:30~21:00','브레이크타임 15:00~17:00','02-123-4567','블로그리뷰 123'].join('\\n').length);
+   assert.ok(parsed.compactText.length<['자성당','서울 마포구 잔다리로7안길 3','홈','메뉴 99+','영업시간 11:30~21:00','브레이크타임 15:00~17:00','02-123-4567','블로그리뷰 123'].join('\n').length);
    await state(()=>{clearSelectedRows();currentAccount={email:'sejong.hyun@seah.co.kr',name:'qa'};syncPlaceCaptureUI();});
    assert.equal(await page.locator('#placeCaptureButton').isDisabled(),false);
    await page.click('#placeCaptureButton');
