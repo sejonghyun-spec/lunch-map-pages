@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-10-regional-zoom-v97">
+<meta name="lunch-map-build" content="2026-10-10-integrity-audit-v98">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -695,6 +695,7 @@ button,input,select,textarea{font:inherit}
 .card-note{font-size:12.25px;color:#786e66;-webkit-line-clamp:1}
 .card-note-label{color:#867970;font-weight:650;margin-right:6px}
 .card-address{margin-top:7px;font-size:12.25px;color:#82776f;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mobile-card-address{margin-top:5px;color:#78848a;font-size:12.5px;font-weight:600;line-height:1.45;word-break:keep-all;overflow-wrap:anywhere}
 .search-hit{border-radius:3px;background:#fff0a8;color:inherit}
 
 .badge{
@@ -2293,7 +2294,7 @@ html[data-theme="bistro"] .capture-paste-zone{border-color:#a89886;border-radius
   .mobile-sheet.sheet-peek .mobile-sheet-quick,
   .mobile-sheet.sheet-peek .mobile-detailed-filters{display:none}
   .mobile-sheet.sheet-mid{height:min(58dvh,560px);min-height:320px}
-  .mobile-sheet.sheet-full{height:calc(100% - 6px);min-height:0}
+  .mobile-sheet.sheet-full{height:calc(100% - 6px);min-height:0;z-index:50}
   .mobile-sheet.filters-open{grid-template-rows:24px auto auto auto auto minmax(0,1fr)}
   .mobile-sheet-handle{
     display:flex;align-items:center;justify-content:center;height:24px;cursor:grab;touch-action:none
@@ -4524,7 +4525,7 @@ let pendingPlaceText=null,placeCaptureBusy=false,placeCaptureTimeoutTimer=null,p
 const PLACE_CAPTURE_TIMEOUT_MS=12000;
 const menuCache=new Map();
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,selectedEditRestaurant=null,suggestMode='new',suggestPending=false,pendingSuggestionTemp=null,pendingEditUpdate=null;
-let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,liveDbPromise=null;
+let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,enrichQueuePending=false,liveDbPromise=null;
 let currentAccount=null,lastAuthRetry=0;
 let accountPopup=null,authPollTimer=null,authPollDeadline=0,authCheckInFlight=false;
 const COMMENT_ADMIN_EMAILS=new Set(['sejong.hyun@seah.co.kr']);
@@ -5746,6 +5747,7 @@ function updateListHeading(count){
 }
 function renderMobileList(rows){
   const el=document.getElementById('mobileList');
+  const q=searchKeyword.trim();
   if(!el)return;
   const signature=listUiSignature(),keepScroll=signature===lastListSignature,oldScroll=el.scrollTop;
   if(!rows.length){
@@ -5761,6 +5763,7 @@ function renderMobileList(rows){
     if(capacity&&/[\p{L}\p{N}]/u.test(capacity))rawTags.push('인원 '+capacity);
     const tags=[...new Set(rawTags)].slice(0,2);
     const hours=operatingInfo(x);
+    const matchedAddress=q&&String(x.address||'').toLowerCase().includes(q.toLowerCase());
     return '<div class="card mobile-card" data-row="'+x.row+'" style="--card-color:'+colorFor(x.category)+';--mobile-card-color:'+colorFor(x.category)+'">'+
       '<span class="zine-index">'+String(index+1).padStart(2,'0')+'</span>'+
       '<div class="mobile-card-head">'+
@@ -5775,6 +5778,7 @@ function renderMobileList(rows){
         (distance?'<span class="mobile-card-distance">↔ '+esc(distance)+'</span>':'')+
       '</div>'+
       (tags.length?'<div class="mobile-card-tags">'+tags.map(t=>'<span class="mobile-card-tag">'+esc(t)+'</span>').join('')+'</div>':'')+
+      (matchedAddress?'<div class="mobile-card-address">'+highlightMatch(x.address,q)+'</div>':'')+
     '</div>';
   }).join('');
   if(keepScroll)requestAnimationFrame(()=>{el.scrollTop=oldScroll;});
@@ -5816,6 +5820,7 @@ function renderList(rows){
     const tags=[...new Set(rawTags)].slice(0,2);
     const summary=features.description||(note&&note!==String(x.feature||'').trim()?note:'');
     const hours=operatingInfo(x);
+    const matchedAddress=q&&String(x.address||'').toLowerCase().includes(q.toLowerCase());
     return '<div class="card" data-row="'+x.row+'" style="--card-color:'+colorFor(x.category)+'">'+
       '<span class="zine-index">'+String(index+1).padStart(2,'0')+'</span>'+
       '<div class="card-head"><button type="button" class="name card-open" title="'+esc(x.name)+'">'+highlightMatch(x.name,q)+'</button>'+
@@ -5829,7 +5834,7 @@ function renderList(rows){
       '</div>'+
       (tags.length?'<div class="card-tags">'+tags.map(t=>'<span class="card-tag" title="'+esc(t)+'">'+highlightMatch(t,q)+'</span>').join('')+'</div>':'')+
       (!tags.length&&summary?'<div class="card-feature">'+highlightMatch(summary,q)+'</div>':'')+
-      (!tags.length&&!summary&&x.address?'<div class="card-address">'+highlightMatch(x.address,q)+'</div>':'')+
+      ((matchedAddress||(!tags.length&&!summary&&x.address))?'<div class="card-address">'+highlightMatch(x.address,q)+'</div>':'')+
     '</div>';
   }).join('');
 
@@ -5972,7 +5977,16 @@ function searchPlaceForRow(row){
     };
     placesService.keywordSearch(row.name,(data,status)=>{
       if(status!==kakao.maps.services.Status.OK)return resolve(null);
-      resolve(bestExactKakaoPlace(row,data)||chooseBestKakaoPlace(row,data));
+      const best=bestExactKakaoPlace(row,data);
+      if(!best||scoreKakaoPlaceMatch(row,best)<75)return resolve(null);
+      // A similarly named restaurant in a different region must never overwrite this row.
+      const bestAddress=String(best.road_address_name||best.address_name||'');
+      const expectedRegion=regionKeyForRow(row);
+      if(expectedRegion!=='hapjeong'&&regionKeyForRow({address:bestAddress})!==expectedRegion)return resolve(null);
+      const lat=Number(best.y),lng=Number(best.x);
+      if(!Number.isFinite(lat)||!Number.isFinite(lng))return resolve(null);
+      if(distanceMeters(center,{lat,lng})>30000)return resolve(null);
+      resolve(best);
     },opts);
   });
 }
@@ -6509,11 +6523,18 @@ async function enrichOneRow(row){
 }
 
 async function hydrateMissingRows(){
-  if(enrichQueueRunning||!placesService||!allData.length)return;
+  if(!placesService||!allData.length)return;
+  if(enrichQueueRunning){
+    enrichQueuePending=true;
+    return;
+  }
   enrichQueueRunning=true;
+  const targetRegion=activeRegionKey;
   try{
-    const targets=displayRestaurants().filter(x=>
-      x&&x.name&&(
+    // Work on canonical source rows, not displayRestaurants()' aggregated copies.
+    // Otherwise geocoded coordinates never reach markers until a full DB reload.
+    const targets=allData.filter(x=>
+      x&&x.name&&regionKeyForRow(x)===targetRegion&&(
         !String(x.address||'').trim()||
         !hasValidCoords(x)||
         !String(x.category||'').trim()
@@ -6521,7 +6542,16 @@ async function hydrateMissingRows(){
     );
 
     for(const row of targets){
+      // Switching region or replacing the live DB invalidates the old queue.
+      if(activeRegionKey!==targetRegion||!allData.includes(row)){
+        enrichQueuePending=true;
+        break;
+      }
       const changed=await enrichOneRow(row);
+      if(activeRegionKey!==targetRegion||!allData.includes(row)){
+        enrichQueuePending=true;
+        break;
+      }
       if(changed){
         buildFilters();
         render(false);
@@ -6530,6 +6560,10 @@ async function hydrateMissingRows(){
     }
   }finally{
     enrichQueueRunning=false;
+    if(enrichQueuePending){
+      enrichQueuePending=false;
+      setTimeout(hydrateMissingRows,0);
+    }
   }
 }
 
@@ -9079,13 +9113,18 @@ document.getElementById('mapQuickNext')?.addEventListener('click',()=>{
   if(next)selectRow(next.row,true,false);
 });
 
+let wasMobileViewport=isMobile();
 window.addEventListener('resize',()=>{
-  if(!isMobile()){
+  const mobileNow=isMobile();
+  if(!mobileNow){
     setSheetState('peek');
     closeMobileMenu();
-  }else if(!commentPanel.classList.contains('open')&&sheetState==='hidden'){
+  }else if(!commentPanel.classList.contains('open')&&
+           (!wasMobileViewport||sheetState==='hidden'||sheetState==='peek')){
+    // Entering mobile from desktop must expand the restaurant sheet.
     setSheetState('mid');
   }
+  wasMobileViewport=mobileNow;
   updateListHeading(getRows().length);
   if(mapReady&&map){
     requestAnimationFrame(()=>{
