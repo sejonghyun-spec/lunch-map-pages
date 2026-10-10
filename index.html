@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-10-clean-detail-no-source-v108">
+<meta name="lunch-map-build" content="2026-10-10-place-response-reliability-v109">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -4820,8 +4820,21 @@ let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,r
 let lastMapRows=[],lastClusterLevel=null,mapIdleRenderTimer=null,lastDetailRow=null,lastListSignature='';
 let compareKeys=[],deepLinkHandled=false;
 let pendingPlaceText=null,placeCaptureBusy=false,placeCaptureTimeoutTimer=null,placeCaptureRequestSeq=0,menuRequestSeq=0;
-const PLACE_CAPTURE_TIMEOUT_MS=12000;
-const PLACE_CAPTURE_MAX_TIMEOUT_MS=60000;
+const PLACE_CAPTURE_TIMEOUT_MS=30000;
+const PLACE_CAPTURE_MAX_TIMEOUT_MS=90000;
+function placeCaptureWaitMs(count){
+  return Math.min(PLACE_CAPTURE_MAX_TIMEOUT_MS,
+    PLACE_CAPTURE_TIMEOUT_MS+Math.max(0,Number(count||1)-1)*2500);
+}
+function isTrustedPlaceResponseOrigin(origin){
+  try{
+    const uri=new URL(origin);
+    if(uri.protocol!=='https:'||uri.username||uri.password||uri.port)return false;
+    const host=uri.hostname.toLowerCase();
+    return host==='script.google.com'||host==='script.googleusercontent.com'||
+      host.endsWith('-script.googleusercontent.com');
+  }catch(e){return false;}
+}
 let placeBatchParseMs=0,placeBatchAnalyzedText="",placeBatchIndexCache=null;
 const menuCache=new Map();
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,selectedEditRestaurant=null,suggestMode='new',suggestPending=false,pendingSuggestionTemp=null,pendingEditUpdate=null;
@@ -7588,14 +7601,14 @@ function applyCommentBundle(bundle,{skipMonitor=false,serverTime=0}={}){
 
 function loadLiveDb(){
   return new Promise(resolve=>{
-    const callback='__lunchMapDbCallback_'+Date.now();
-    let script=null;
+    const callback='__lunchMapDbCallback_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    let script=null,timer=null;
     let finished=false;
 
     function done(ok){
       if(finished)return;
       finished=true;
-      clearTimeout(dbLoadTimer);
+      clearTimeout(timer);
       try{delete window[callback];}catch(e){window[callback]=undefined;}
       if(script)script.remove();
       resolve(ok);
@@ -7628,7 +7641,7 @@ function loadLiveDb(){
     script.onerror=()=>done(false);
     document.head.appendChild(script);
 
-    dbLoadTimer=setTimeout(()=>done(false),12000);
+    timer=setTimeout(()=>done(false),20000);
   });
 }
 
@@ -8012,35 +8025,39 @@ function armPlaceCaptureTimeout(requestId){
   clearPlaceCaptureTimeout();
   placeCaptureTimeoutTimer=setTimeout(()=>{
     const pending=pendingPlaceText;
-    if(!pending||pending.requestId!==requestId)return;
+    if(!pending||pending.requestId!==requestId||!placeCaptureBusy)return;
     const beforeSnapshot=pending.beforeSnapshot;
     const names=pending.names.slice();
-    const originalText=pending.originalText;
-    const timeoutSec=Math.ceil(Math.min(PLACE_CAPTURE_MAX_TIMEOUT_MS,PLACE_CAPTURE_TIMEOUT_MS+Math.max(0,Number(pending.recordCount||1)-1)*1200)/1000);
-
-    pendingPlaceText=null;
-    clearPlaceCaptureTimeout();
-    resetPlaceCaptureSink();
-    setPlaceCaptureBusy(false);
-    setCaptureStatus('서버 응답이 지연되어 입력 잠금을 해제했습니다. DB 반영 여부를 확인 중입니다…');
-    showToast('서버 응답이 늦어 입력 잠금을 해제했습니다.');
-
+    const waitSec=Math.ceil(placeCaptureWaitMs(pending.recordCount)/1000);
+    // Do not navigate/reset the POST iframe here: doing so can abort a slow,
+    // still-running Apps Script write. The genuine ACK may still be arriving.
+    setCaptureStatus('서버 완료 응답을 기다리는 중입니다. '+waitSec+
+      '초 경과 · DB 반영 여부를 확인합니다. 다시 반영하지 마세요.');
     loadLiveDb().then(ok=>{
-      if(placeCaptureBusy)return;
+      // ACK might have arrived during the DB check. Never override it.
+      if(!pendingPlaceText||pendingPlaceText.requestId!==requestId||!placeCaptureBusy)return;
       const changed=!!ok&&placeImportSnapshot(names)!==beforeSnapshot;
+      pendingPlaceText=null;
+      clearPlaceCaptureTimeout();
+      setPlaceCaptureBusy(false);
       if(changed){
-        if(placeInputSignature()===originalText)resetPlaceImportInputs();
-        setCaptureStatus('DB 반영은 완료되었습니다. 서버 완료 응답만 지연되었습니다.','success');
-        showToast('DB 반영 완료 · 응답 지연만 발생했습니다.');
-        closePlaceCaptureModal();
+        setCaptureStatus('DB에서 변경 사항이 확인됐으나 이 요청의 완료 응답은 받지 못했습니다. 변경 내용을 확인해 주세요.','error');
       }else{
-        setCaptureStatus(timeoutSec+'초 안에 완료 응답을 받지 못했습니다. DB 확인 후 다시 시도해 주세요.','error');
+        setCaptureStatus('서버 완료 응답을 확인하지 못했습니다. 저장 여부를 확정할 수 없으니 DB를 확인한 뒤 재시도해 주세요.','error');
       }
       updatePlaceTextHint();
+      // updatePlaceTextHint resets status; preserve the verification outcome.
+      setCaptureStatus(changed
+        ?'DB 변경 감지 · 이 요청의 저장 결과는 미확정입니다. 식당별 정보를 확인해 주세요.'
+        :'서버 완료 응답 미확인 · DB를 확인한 뒤 다시 시도해 주세요.','error');
     }).catch(()=>{
-      if(!placeCaptureBusy)setCaptureStatus(timeoutSec+'초 안에 완료 응답을 받지 못했습니다. DB 확인 후 다시 시도해 주세요.','error');
+      if(!pendingPlaceText||pendingPlaceText.requestId!==requestId)return;
+      pendingPlaceText=null;
+      clearPlaceCaptureTimeout();
+      setPlaceCaptureBusy(false);
+      setCaptureStatus('완료 응답 및 DB 확인에 실패했습니다. 입력 내용을 유지했으니 관리자에게 문의해 주세요.','error');
     });
-  },Math.min(PLACE_CAPTURE_MAX_TIMEOUT_MS,PLACE_CAPTURE_TIMEOUT_MS+Math.max(0,Number(pendingPlaceText&&pendingPlaceText.recordCount||1)-1)*1200));
+  },placeCaptureWaitMs(pendingPlaceText&&pendingPlaceText.recordCount));
 }
 function placeCardInputs(){
   return [...(placeSeparatedList?.querySelectorAll('.place-entry-input')||[])];
@@ -8216,7 +8233,8 @@ function submitPlaceText(){
   const names=[...new Set(selection.map(x=>x.name))];
   const compact=selection.map(x=>x.rawText).join('\n\n');
   const records=selection.map(({name,address,phone,infoLines,rawText})=>({name,address,phone,infoLines,rawText}));
-  const requestId=++placeCaptureRequestSeq;
+  const requestId='place-'+Date.now().toString(36)+'-'+(++placeCaptureRequestSeq).toString(36)+
+    '-'+Math.random().toString(36).slice(2);
   pendingPlaceText={
     requestId,names,
     beforeSnapshot:placeImportSnapshot(names),
@@ -8343,11 +8361,13 @@ placeSeparatedList?.addEventListener('click',e=>{
 ensurePlaceCards();
 
 window.addEventListener('message',e=>{
-  const allowedOrigins=new Set(['https://script.google.com','https://script.googleusercontent.com']);
-  if(!allowedOrigins.has(e.origin))return;
+  // Apps Script HtmlService can respond from an isolated
+  // <hash>-script.googleusercontent.com origin, not just script.google.com.
+  if(!isTrustedPlaceResponseOrigin(e.origin))return;
   const data=e.data||{};
   if(data.source!=='lunch-map-place-text')return;
   if(!pendingPlaceText||!placeCaptureBusy)return;
+  if(!data.requestId||String(data.requestId)!==String(pendingPlaceText.requestId))return;
 
   clearPlaceCaptureTimeout();
 
