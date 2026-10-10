@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-10-place-batch-preview-v99">
+<meta name="lunch-map-build" content="2026-10-10-place-batch-performance-v100">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -4291,7 +4291,7 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
 02-000-0000
 
 다른 식당 내용을 이어서 붙여넣어도 됩니다."></textarea>
-      <div class="text-import-help">매장명과 주소가 일치한 항목만 선택 가능합니다. 주소가 없거나 다른 매장은 보류하며, 기존에 입력한 값은 원문에 없는 한 유지합니다.</div>
+      <div class="text-import-help">10~20개씩 입력을 권장합니다. 동일 정보 재전송은 자동으로 걸러내며 주소 불일치 항목은 보류합니다.</div>
       <div id="placeBatchPreview" class="place-batch-preview" aria-live="polite" aria-label="식당별 판독 결과"></div>
       <div id="captureStatus" class="capture-status" role="status" aria-live="polite"></div>
       <div class="capture-actions">
@@ -4535,6 +4535,8 @@ let lastMapRows=[],lastClusterLevel=null,mapIdleRenderTimer=null,lastDetailRow=n
 let compareKeys=[],deepLinkHandled=false;
 let pendingPlaceText=null,placeCaptureBusy=false,placeCaptureTimeoutTimer=null,placeCaptureRequestSeq=0,menuRequestSeq=0;
 const PLACE_CAPTURE_TIMEOUT_MS=12000;
+const PLACE_CAPTURE_MAX_TIMEOUT_MS=60000;
+let placeBatchParseMs=0,placeBatchAnalyzedText="",placeBatchIndexCache=null;
 const menuCache=new Map();
 let placesService=null,geocoder=null,placeSearchTimer=null,selectedSuggestPlace=null,selectedEditRestaurant=null,suggestMode='new',suggestPending=false,pendingSuggestionTemp=null,pendingEditUpdate=null;
 let dbLoadDone=false,dbLoadTimer=null,enrichQueueRunning=false,enrichQueuePending=false,liveDbPromise=null;
@@ -7361,13 +7363,25 @@ function submitPlaceCaptureForm(fields){
   setTimeout(()=>form.remove(),100);
 }
 function placeImportCatalog(){
-  // Match against all regions, not just the selected map tab.
   return allData.length?allData:allDisplayRestaurants();
+}
+function placeBatchIndexedCatalog(){
+  const catalog=placeImportCatalog();
+  if(placeBatchIndexCache&&placeBatchIndexCache.catalog===catalog&&placeBatchIndexCache.length===catalog.length)return placeBatchIndexCache;
+  const byName=new Map(),names=new Set();
+  catalog.forEach(row=>{
+    const name=String(row&&row.name||'').trim();
+    if(!name)return;
+    names.add(name);
+    const key=name.toLowerCase();
+    if(!byName.has(key))byName.set(key,[]);
+    byName.get(key).push(row);
+  });
+  return placeBatchIndexCache={catalog,length:catalog.length,byName,names:[...names].sort((a,b)=>b.length-a.length)};
 }
 function detectedDbNamesInText(text){
   const source=String(text||'').toLowerCase();
-  const names=[...new Set(placeImportCatalog().map(x=>String(x.name||'').trim()).filter(Boolean))];
-  return names.filter(name=>source.includes(name.toLowerCase()));
+  return placeBatchIndexedCatalog().names.filter(name=>source.includes(name.toLowerCase()));
 }
 function placeImportCleanAddress(line){
   return String(line||'').trim().replace(/^(?:도로명주소|지번주소|주소)\s*[:：]?\s*/,'').trim();
@@ -7415,8 +7429,7 @@ function placeImportNameLine(line,names){
 function buildPlaceTextPayload(rawText){
   const source=String(rawText||'').trim();
   if(!source)return {names:[],compactText:'',records:[]};
-  const catalogNames=[...new Set(placeImportCatalog().map(x=>String(x.name||'').trim()).filter(Boolean))]
-    .sort((a,b)=>b.length-a.length);
+  const catalogNames=placeBatchIndexedCatalog().names;
   const sections=[];
   let section=null;
   source.split(/\r?\n/).map(x=>x.replace(/\s+/g,' ').trim()).forEach(line=>{
@@ -7447,7 +7460,7 @@ function assessPlaceBatchRecords(records){
   const seen=new Set();
   return (records||[]).map((record,index)=>{
     const id=index;
-    const matches=placeImportCatalog().filter(row=>String(row.name||'').trim()===record.name);
+    const matches=placeBatchIndexedCatalog().byName.get(String(record.name||'').toLowerCase())||[];
     const incomingKey=placeBatchAddressKey(record.address);
     const exact=matches.filter(row=>incomingKey&&placeBatchAddressKey(row.address)===incomingKey);
     const duplicateKey=record.name.toLowerCase()+'|'+incomingKey;
@@ -7510,6 +7523,7 @@ function armPlaceCaptureTimeout(requestId){
     const beforeSnapshot=pending.beforeSnapshot;
     const names=pending.names.slice();
     const originalText=pending.originalText;
+    const timeoutSec=Math.ceil(Math.min(PLACE_CAPTURE_MAX_TIMEOUT_MS,PLACE_CAPTURE_TIMEOUT_MS+Math.max(0,Number(pending.recordCount||1)-1)*1200)/1000);
 
     pendingPlaceText=null;
     clearPlaceCaptureTimeout();
@@ -7527,28 +7541,32 @@ function armPlaceCaptureTimeout(requestId){
         showToast('DB 반영 완료 · 응답 지연만 발생했습니다.');
         closePlaceCaptureModal();
       }else{
-        setCaptureStatus('12초 안에 완료 응답을 받지 못했습니다. 다시 시도할 수 있습니다.','error');
+        setCaptureStatus(timeoutSec+'초 안에 완료 응답을 받지 못했습니다. DB 확인 후 다시 시도해 주세요.','error');
       }
       updatePlaceTextHint();
     }).catch(()=>{
-      if(!placeCaptureBusy)setCaptureStatus('12초 안에 완료 응답을 받지 못했습니다. 다시 시도할 수 있습니다.','error');
+      if(!placeCaptureBusy)setCaptureStatus(timeoutSec+'초 안에 완료 응답을 받지 못했습니다. DB 확인 후 다시 시도해 주세요.','error');
     });
-  },PLACE_CAPTURE_TIMEOUT_MS);
+  },Math.min(PLACE_CAPTURE_MAX_TIMEOUT_MS,PLACE_CAPTURE_TIMEOUT_MS+Math.max(0,Number(pendingPlaceText&&pendingPlaceText.recordCount||1)-1)*1200));
 }
 function updatePlaceTextHint(){
   if(placeCaptureBusy)return;
+  const start=performance.now();
   const value=String(placeTextInput?.value||'').trim();
   const parsed=buildPlaceTextPayload(value);
   placeBatchItems=assessPlaceBatchRecords(parsed.records);
+  placeBatchAnalyzedText=value;
+  placeBatchParseMs=performance.now()-start;
   placeBatchSelected=new Set(placeBatchItems.filter(x=>x.valid).map(x=>x.id));
   renderPlaceBatchPreview();
   captureDone.disabled=!placeBatchSelected.size;
   captureDone.textContent=placeBatchSelected.size+'건 선택 반영';
   captureClear.disabled=!value;
+  const metric=' · 판독 '+(placeBatchParseMs/1000).toFixed(3)+'초';
   if(!value)setCaptureStatus('네이버 플레이스 텍스트를 붙여넣으면 식당명과 주소를 대조합니다.');
   else if(!placeBatchItems.length)setCaptureStatus('등록된 식당명으로 시작하는 줄을 찾지 못했습니다. 식당명부터 복사해 주세요.','error');
-  else if(!placeBatchSelected.size)setCaptureStatus('주소 일치 항목이 없습니다. 원문에 식당명과 도로명주소가 포함되어야 합니다.','error');
-  else setCaptureStatus('미리보기에서 반영할 항목을 선택한 뒤 DB 반영을 누르세요.');
+  else if(!placeBatchSelected.size)setCaptureStatus('주소 일치 항목이 없습니다.'+metric,'error');
+  else setCaptureStatus('선택 '+placeBatchSelected.size+'건'+metric+' · 서버 반영 전 확인하세요.');
 }
 placeBatchPreview?.addEventListener('change',event=>{
   const target=event.target;
@@ -7589,9 +7607,12 @@ function clearPlaceText(){
 function submitPlaceText(){
   const rawText=String(placeTextInput?.value||'').trim();
   if(placeCaptureBusy||!rawText)return;
-  const parsed=buildPlaceTextPayload(rawText);
-  const selection=assessPlaceBatchRecords(parsed.records)
-    .filter(item=>item.valid&&placeBatchSelected.has(item.id));
+  if(placeBatchAnalyzedText!==rawText)updatePlaceTextHint();
+  const selection=placeBatchItems.filter(item=>item.valid&&placeBatchSelected.has(item.id));
+  if(selection.length>20){
+    setCaptureStatus('서버 안정성을 위해 한 번에 최대 20개를 선택해 주세요.','error');
+    return;
+  }
   if(!selection.length){
     setCaptureStatus('주소가 일치하는 식당을 하나 이상 선택해야 합니다.','error');
     return;
@@ -7603,10 +7624,12 @@ function submitPlaceText(){
   pendingPlaceText={
     requestId,names,
     beforeSnapshot:placeImportSnapshot(names),
-    originalText:rawText
+    originalText:rawText,
+    recordCount:selection.length,
+    startedAt:performance.now()
   };
   setPlaceCaptureBusy(true);
-  setCaptureStatus('주소 확인 '+selection.length+'건 · DB 일괄 반영 중…');
+  setCaptureStatus('판독 '+(placeBatchParseMs/1000).toFixed(3)+'초 · 서버에 '+selection.length+'건 일괄 반영 중…');
   submitPlaceCaptureForm({
     mode:'placeText',
     rawText:compact,
@@ -7724,13 +7747,19 @@ window.addEventListener('message',e=>{
     return;
   }
 
-  const summary=placeTextResultSummary(data);
-  setCaptureStatus(summary,Array.isArray(data.skipped)&&data.skipped.length?'':'success');
-  showToast(data.message||summary);
-  if(placeTextInput)placeTextInput.value='';
+  const elapsed=performance.now()-Number(pendingPlaceText.startedAt||performance.now());
+  const summary=placeTextResultSummary(data)+' · 응답 '+(elapsed/1000).toFixed(2)+'초';
+  const skipped=Array.isArray(data.skipped)&&data.skipped.length>0;
+  setCaptureStatus(summary,skipped?'error':'success');
+  showToast(summary);
   pendingPlaceText=null;
   setPlaceCaptureBusy(false);
-  closePlaceCaptureModal();
+  if(!skipped){
+    if(placeTextInput)placeTextInput.value='';
+    closePlaceCaptureModal();
+  }
+  updatePlaceTextHint();
+  if(skipped)setCaptureStatus(summary,'error');
   liveDbPromise=loadLiveDb().catch(()=>false);
 });
 
