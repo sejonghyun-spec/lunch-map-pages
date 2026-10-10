@@ -500,7 +500,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    await page.click('#suggestOpen');assert.ok(await page.locator('#suggestModal').evaluate(el=>el.classList.contains('open')));await page.click('#suggestClose');
  });
  await check('company-account popup opens (mock endpoint; no account changes)',async()=>{
-   const wait=context.waitForEvent('page');await page.click('#accountButton');const popup=await wait;await popup.waitForLoadState('domcontentloaded');assert.ok(popup.url().startsWith('https://script.google.com/'));await popup.close();
+   const wait=context.waitForEvent('page');await page.click('#accountButton');const popup=await wait;await popup.waitForURL(/https:\/\/script\.google\.com\//,{timeout:8000});assert.ok(popup.url().startsWith('https://script.google.com/'),popup.url());await popup.close();
  });
  for(const width of [900,768,390,360,320])await check('mobile '+width+'px: dedicated full-width restaurant sheet and detail',async()=>{
    await page.setViewportSize({width,height:844});await page.waitForTimeout(280);
