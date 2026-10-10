@@ -52,6 +52,14 @@ async function main(){
   assert.equal(counts['합정'],53);
   assert.equal(counts['포항'],11);
   assert.equal(counts['충주'],7);
+  const regional=rows.filter(r=>r.region==='포항'||r.region==='충주');
+  assert.equal(regional.length,18);
+  assert.ok(regional.every(validCoords),'Every regional restaurant needs a stable map position');
+  assert.ok(regional.every(r=>r.geoSource==='카카오 주소 검색 (도로명·건물번호 일치)'&&
+    /^\d{4}-\d{2}-\d{2}$/.test(r.geoCheckedAt)),'Coordinate provenance must be retained');
+  assert.equal(new Set(rows.map(r=>String(r.name)+'|'+String(r.address))).size,70,
+    'Existing duplicate registration must not be silently deleted');
+
   assert.match(code,/allDisplayRestaurants\(\)\.filter\(row=>regionKeyForRow\(row\)===activeRegionKey\)/);
   assert.match(code,/if\(validRows\.length===1&&fit\)/);
   assert.match(code,/if\(!validRows\.length\)\{[\s\S]{0,300}if\(fit\)\{/);
