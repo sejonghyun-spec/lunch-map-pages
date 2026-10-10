@@ -8036,8 +8036,8 @@ function assessPlaceBatchRecords(records){
     let reason='',unchanged=false;
     if(!sourceName)reason='식당명을 판별할 수 없습니다';
     else if(!record.address||!incomingKey)reason='주소 누락 또는 주소 형식 확인 불가';
-    else if(seen.has(incomingKey))reason='중복 입력 (같은 주소는 첫 번째만 반영)';
     else if(addressRows.length&&!accepted)reason='동일 주소에 다른 식당이 등록되어 있습니다';
+    else if(seen.has(incomingKey))reason='중복 입력 (같은 주소는 첫 번째만 반영)';
     else if(unique.size>1)reason='동일 주소에 후보가 여러 개 있습니다';
     else if(!accepted&&!isNew)reason='등록 주소와 불일치 (기존 식당명 확인 필요)';
     else if(accepted&&!record.infoLines.length&&!record.phone)reason='반영할 영업정보 없음';
