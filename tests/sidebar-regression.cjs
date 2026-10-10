@@ -887,7 +887,9 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(checked.sent,'updater must submit the address inferred from the unique existing row');
    const payload=JSON.parse(checked.sent.structuredJson);
    assert.equal(payload.length,1);
-   assert.equal(payload[0].name,'뼈칼국수','server must receive canonical DB name');
+   assert.equal(payload[0].name,'평이담백 뼈칼국수 본점','server must receive the Naver Place heading');
+   assert.equal(payload[0].renameFrom,'뼈칼국수');
+   assert.equal(payload[0].renameTo,'평이담백 뼈칼국수 본점');
    assert.equal(payload[0].address,'서울 마포구 양화로7길 84');
    assert.ok(payload[0].rawText.includes('영업 종료11:00에 영업 시작'));
    assert.deepEqual(checked.pending,['뼈칼국수']);
