@@ -891,6 +891,88 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.ok(payload[0].rawText.includes('영업 종료11:00에 영업 시작'));
    assert.deepEqual(checked.pending,['뼈칼국수']);
  });
+ await check('canonical Naver Place names are preserved, previewed and sent for existing restaurants',async()=>{
+   const data=await state(async()=>{
+     const original={currentAccount,loadLiveDb,submitPlaceCaptureForm,armPlaceCaptureTimeout,
+       mode:placeImportMode,placeText:String(placeTextInput.value||'')};
+     let outbound=null;
+     try{
+       currentAccount={email:'sejong.hyun@seah.co.kr',name:'QA'};
+       loadLiveDb=async()=>true;
+       submitPlaceCaptureForm=fields=>{outbound=fields;};
+       armPlaceCaptureTimeout=()=>{};
+       setPlaceImportMode('combined');
+       placeTextInput.value='교다이야 합정점\n서울 마포구 성지길 39\n영업시간 11:00-20:30';
+       updatePlaceTextHint();
+       const preview=placeBatchItems.map(x=>({
+         valid:x.valid,renameFrom:x.renameFrom,renameTo:x.renameTo,
+         isNew:x.isNew
+       }));
+       await submitPlaceText();
+       return {preview,outbound,pendingRenamePlan:pendingPlaceText?.renamePlan};
+     }finally{
+       currentAccount=original.currentAccount;
+       loadLiveDb=original.loadLiveDb;
+       submitPlaceCaptureForm=original.submitPlaceCaptureForm;
+       armPlaceCaptureTimeout=original.armPlaceCaptureTimeout;
+       pendingPlaceText=null;
+       setPlaceCaptureBusy(false);
+       placeTextInput.value=original.placeText;
+       setPlaceImportMode(original.mode);
+       updatePlaceTextHint();
+     }
+   });
+   assert.equal(data.preview[0].valid,true);
+   assert.equal(data.preview[0].renameFrom,'교다이야');
+   assert.equal(data.preview[0].renameTo,'교다이야 합정점');
+   assert.equal(data.preview[0].isNew,false);
+   assert.ok(data.outbound);
+   const records=JSON.parse(data.outbound.structuredJson);
+   assert.equal(records[0].name,'교다이야 합정점','keep original Place name for existing server matching');
+   assert.equal(records[0].renameFrom,'교다이야');
+   assert.equal(records[0].renameTo,'교다이야 합정점');
+   assert.equal(data.pendingRenamePlan[0].to,'교다이야 합정점');
+ });
+ await check('Place rename ACK does not claim success when Apps Script has not changed DB name',async()=>{
+   const result=await state(async()=>{
+     const original={currentAccount,loadLiveDb,mode:placeImportMode};
+     try{
+       currentAccount={email:'sejong.hyun@seah.co.kr',name:'QA'};
+       setPlaceImportMode('combined');
+       placeTextInput.value='교다이야 합정점\n서울 마포구 성지길 39\n영업시간 11:00-20:30';
+       updatePlaceTextHint();
+       placeCaptureModal.classList.add('open');
+       loadLiveDb=async()=>true;
+       pendingPlaceText={requestId:'rename-not-persisted',names:['교다이야'],createdCount:0,
+         renamePlan:[{from:'교다이야',to:'교다이야 합정점',address:'서울 마포구 성지길 39'}],
+         startedAt:performance.now(),recordCount:1};
+       setPlaceCaptureBusy(true);
+       window.dispatchEvent(new MessageEvent('message',{
+         origin:'https://script.google.com',
+         data:{source:'lunch-map-place-text',requestId:'rename-not-persisted',
+           ok:true,results:[{name:'교다이야'}],skipped:[]}
+       }));
+       await new Promise(resolve=>setTimeout(resolve,60));
+       return {open:placeCaptureModal.classList.contains('open'),
+         status:captureStatus.textContent,
+         busy:placeCaptureBusy,
+         preserved:placeTextInput.value.includes('교다이야 합정점')};
+     }finally{
+       currentAccount=original.currentAccount;
+       loadLiveDb=original.loadLiveDb;
+       pendingPlaceText=null;
+       setPlaceCaptureBusy(false);
+       placeCaptureModal.classList.remove('open');
+       placeTextInput.value='';
+       setPlaceImportMode(original.mode);
+       updatePlaceTextHint();
+     }
+   });
+   assert.equal(result.open,true);
+   assert.equal(result.busy,false);
+   assert.equal(result.preserved,true);
+   assert.match(result.status,/이름 변경 미반영/);
+ });
  await check('new place import registers once then sends verified opening-hours update',async()=>{
    const result=await state(async()=>{
      const prior={loadLiveDb,findVerifiedKakaoRestaurant,registerNewPlaceFromText,
