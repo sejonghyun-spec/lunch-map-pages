@@ -704,6 +704,62 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.equal(await page.inputValue('#placeTextInput'),'');
    assert.ok(original.includes('자성당'));
  });
+ await check('Place branch suffix names: address-verified match and wrong-branch rejection in both input modes',async()=>{
+   const cases=await state(()=>{
+     const sample=(name,address)=>assessPlaceBatchRecords(
+       buildPlaceTextPayload([name,address,'영업시간 12:00-20:30'].join('\n')).records
+     );
+     const matched=sample('교다이야 합정점','서울 마포구 성지길 39');
+     const compact=sample('교다이야합정점','서울 마포구 성지길 39');
+     const main=sample('교다이야 본점','서울 마포구 성지길 39');
+     const numbered=sample('교다이야 2호점','서울 마포구 성지길 39');
+     const wrong=sample('교다이야 합정점','서울 마포구 성지길 40');
+     const missing=assessPlaceBatchRecords(
+       buildPlaceTextPayload('교다이야 합정점\n영업시간 12:00-20:30').records
+     );
+     const invalid=sample('교다이야 임의의 다른 식당','서울 마포구 성지길 39');
+     const natural=sample('해물점',allData.find(x=>x.name==='해물점').address);
+     const branchRow=allData.find(x=>x.name==='그린포유 합정점');
+     const wrongNamed=sample('그린포유 강남점',branchRow.address);
+     const exactNamed=sample('그린포유 합정점',branchRow.address);
+     return {matched,compact,main,numbered,wrong,missing,invalid,natural,wrongNamed,exactNamed};
+   });
+   for(const key of ['matched','compact','main','numbered']){
+     assert.equal(cases[key].length,1,key);
+     assert.equal(cases[key][0].valid,true,key+': '+cases[key][0].reason);
+     assert.equal(cases[key][0].name,'교다이야',key);
+     assert.ok(cases[key][0].sourceName!=='교다이야');
+     assert.equal(cases[key][0].address,'서울 마포구 성지길 39');
+   }
+   assert.equal(cases.wrong[0].valid,false,'other road number must reject');
+   assert.equal(cases.missing[0].valid,false,'no address must reject');
+   assert.equal(cases.invalid[0]?.valid||false,false,'arbitrary renamed store must reject');
+   assert.equal(cases.natural[0].valid,true,'natural name ending 점 remains an exact name');
+   assert.equal(cases.wrongNamed[0]?.valid||false,false,'explicit named DB branch cannot match a different branch');
+   assert.equal(cases.exactNamed[0].valid,true);
+   await state(()=>{currentAccount={email:'sejong.hyun@seah.co.kr',name:'qa'};syncPlaceCaptureUI();});
+   await page.click('#placeCaptureButton');
+   await page.click('#placeCardsMode');
+   await page.locator('#placeSeparatedList .place-entry-input').first().fill(
+     '교다이야 합정점\n서울 마포구 성지길 39\n영업시간 12:00-20:30');
+   assert.equal(await page.locator('#placeBatchPreview input:checked').count(),1);
+   assert.match(await page.locator('#placeBatchPreview').innerText(),/교다이야 합정점 → 교다이야/);
+   assert.match(await page.locator('#placeSeparatedList .place-entry-state').first().innerText(),/교다이야.*지점명\/주소 일치/);
+   const outbound=await state(()=>{
+     const savedSubmit=submitPlaceCaptureForm,savedTimeout=armPlaceCaptureTimeout;
+     let output=null;
+     submitPlaceCaptureForm=value=>{output=value;};
+     armPlaceCaptureTimeout=()=>{};
+     submitPlaceText();
+     submitPlaceCaptureForm=savedSubmit;armPlaceCaptureTimeout=savedTimeout;
+     pendingPlaceText=null;setPlaceCaptureBusy(false);
+     return output;
+   });
+   assert.ok(outbound);
+   assert.equal(JSON.parse(outbound.structuredJson)[0].name,'교다이야 합정점',
+     'server must verify the original Place name, not the canonical DB name');
+   await page.click('#placeCaptureClose');
+ });
  await check('batch Place text import validates addresses, skips duplicates and submits selected only',async()=>{
    await state(()=>{currentAccount={email:'sejong.hyun@seah.co.kr',name:'qa'};syncPlaceCaptureUI();});
    await page.click('#placeCaptureButton');
