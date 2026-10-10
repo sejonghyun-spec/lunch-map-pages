@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-10-phase1-map-trust-time-v103">
+<meta name="lunch-map-build" content="2026-10-10-compact-explorer-v104">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -4082,67 +4082,60 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
         <input id="search" class="search" type="search" aria-label="식당 이름, 특징, 주소 검색" placeholder="식당 이름 · 특징 · 주소 검색" autocomplete="off" aria-autocomplete="list" aria-controls="searchSuggestions">
         <div id="searchSuggestions" class="search-suggestions" role="listbox"></div>
       </label></div>
-      <div class="multi-filter-wrap">
-        <div class="multi-filter-scroll">
-          <label class="compact-filter"><span class="compact-filter-label" aria-hidden="true">평점</span>
-          <select id="ratingFilter" class="multi-filter-select" aria-label="평점 필터">
-            <option value="all">평점 전체</option>
-            <option value="5">★ 5점</option>
-            <option value="4">★ 4점 이상</option>
-            <option value="3">★ 3점 이상</option>
-          </select>
-          </label>
-          <label class="compact-filter"><span class="compact-filter-label" aria-hidden="true">인원</span>
-          <select id="capacityFilter" class="multi-filter-select" aria-label="인원 필터">
-            <option value="all">인원 전체</option>
-            <option value="4">4명+</option>
-            <option value="8">8명+</option>
-            <option value="group">단체 가능</option>
-          </select>
-          </label>
-          <label class="compact-filter"><span class="compact-filter-label" aria-hidden="true">특징</span>
-          <select id="featureFilter" class="multi-filter-select" aria-label="특징 필터">
-            <option value="all">특징 전체</option>
-            <option value="waiting">웨이팅</option>
-            <option value="reservation">예약</option>
-            <option value="room">룸</option>
-            <option value="group">단체</option>
-            <option value="fast">빠른 식사</option>
-          </select>
-          </label>
-          <label class="compact-filter"><span class="compact-filter-label" aria-hidden="true">거리</span>
-          <select id="distanceFilter" class="multi-filter-select" aria-label="거리 필터">
-            <option value="all">거리 전체</option>
-            <option value="300">300m 이내</option>
-            <option value="500">500m 이내</option>
-            <option value="700">700m 이내</option>
-            <option value="1000">1km 이내</option>
-                <option value="2000">2km 이내</option>
-                <option value="3000">3km 이내</option>
-                <option value="5000">5km 이내</option>
-            <option value="2000">2km 이내</option>
-            <option value="3000">3km 이내</option>
-            <option value="5000">5km 이내</option>
-          </select>
-          </label>
+      <div class="explore-controls" role="group" aria-label="방문시간 및 상세 필터">
+        <div class="visit-time-bar" role="group" aria-label="방문 예정시간 검색">
+          <label for="visitTimeFilter">방문 예정 <select id="visitTimeFilter" aria-label="오늘 방문 예정시간"><option value="all">방문시간 전체</option><option value="11:00">오늘 11:00</option><option value="11:30">오늘 11:30</option><option value="12:00">오늘 12:00</option><option value="12:30">오늘 12:30</option><option value="13:00">오늘 13:00</option><option value="13:30">오늘 13:30</option><option value="14:00">오늘 14:00</option><option value="18:00">오늘 18:00</option><option value="19:00">오늘 19:00</option></select></label>
+          <span id="visitTimeHint">저장된 영업시간 기준 · 실제 방문 전 확인</span>
         </div>
+        <button id="sidebarFilterToggle" class="sidebar-filter-toggle" type="button" aria-expanded="false" aria-controls="desktopDetailedFilters"><span>☷ 상세 필터</span><span class="filter-counter" id="desktopFilterCount" hidden></span><span class="filter-chevron" aria-hidden="true">⌄</span></button>
       </div>
-      <div id="filterChipRow" class="filter-chip-row" role="group" aria-label="빠른 필터">
-        <button class="filter-chip" type="button" data-chip="rating4">★ 4점↑</button>
-        <button class="filter-chip" type="button" data-chip="favorites">♡ 즐겨찾기</button>
-        <button class="filter-chip" type="button" data-chip="recent">최근 본</button>
-        <button class="filter-chip" type="button" data-chip="map">현재 지도</button>
-        <button id="mobileFilterToggle" class="filter-chip mobile-filter-toggle" type="button" aria-expanded="false">☰ 필터</button>
-      </div>
-      <div class="visit-time-bar" role="group" aria-label="방문 예정시간 검색">
-        <label for="visitTimeFilter">방문 예정 <select id="visitTimeFilter" aria-label="오늘 방문 예정시간"><option value="all">방문시간 전체</option><option value="11:00">오늘 11:00</option><option value="11:30">오늘 11:30</option><option value="12:00">오늘 12:00</option><option value="12:30">오늘 12:30</option><option value="13:00">오늘 13:00</option><option value="13:30">오늘 13:30</option><option value="14:00">오늘 14:00</option><option value="18:00">오늘 18:00</option><option value="19:00">오늘 19:00</option></select></label>
-        <span id="visitTimeHint">저장된 영업시간 기준 · 실제 방문 전 확인</span>
-      </div>
-      <div class="quick-row" role="group" aria-label="위치 및 지도 제어">
-        <span class="map-tools-label">지도</span>
-        <button id="myLocation" class="quick-btn">◎ 내 위치</button>
-        <button id="showAll" class="quick-btn">⌂ 전체 보기</button>
-        <button id="multiFilterReset" class="multi-filter-reset" type="button" aria-label="상세 필터와 빠른 필터 초기화">↻ 초기화</button>
+      <div class="desktop-filters-collapsible" id="desktopDetailedFilters">
+        <div class="multi-filter-wrap">
+          <div class="multi-filter-scroll">
+            <label class="compact-filter"><span class="compact-filter-label" aria-hidden="true">평점</span>
+            <select id="ratingFilter" class="multi-filter-select" aria-label="평점 필터">
+              <option value="all">평점 전체</option>
+              <option value="5">★ 5점</option>
+              <option value="4">★ 4점 이상</option>
+              <option value="3">★ 3점 이상</option>
+            </select>
+            </label>
+            <label class="compact-filter"><span class="compact-filter-label" aria-hidden="true">인원</span>
+            <select id="capacityFilter" class="multi-filter-select" aria-label="인원 필터">
+              <option value="all">인원 전체</option>
+              <option value="4">4명+</option>
+              <option value="8">8명+</option>
+              <option value="group">단체 가능</option>
+            </select>
+            </label>
+            <label class="compact-filter"><span class="compact-filter-label" aria-hidden="true">특징</span>
+            <select id="featureFilter" class="multi-filter-select" aria-label="특징 필터">
+              <option value="all">특징 전체</option>
+              <option value="waiting">웨이팅</option>
+              <option value="reservation">예약</option>
+              <option value="room">룸</option>
+              <option value="group">단체</option>
+              <option value="fast">빠른 식사</option>
+            </select>
+            </label>
+            <label class="compact-filter"><span class="compact-filter-label" aria-hidden="true">거리</span>
+            <select id="distanceFilter" class="multi-filter-select" aria-label="거리 필터">
+              <option value="all">거리 전체</option>
+              <option value="300">300m 이내</option>
+              <option value="500">500m 이내</option>
+              <option value="700">700m 이내</option>
+              <option value="1000">1km 이내</option>
+                  <option value="2000">2km 이내</option>
+                  <option value="3000">3km 이내</option>
+                  <option value="5000">5km 이내</option>
+              <option value="2000">2km 이내</option>
+              <option value="3000">3km 이내</option>
+              <option value="5000">5km 이내</option>
+            </select>
+            </label>
+          </div>
+        </div>
+        <div class="panel-filter-foot"><span>평점 · 인원 · 특징 · 거리</span><button id="multiFilterReset" class="multi-filter-reset" type="button" aria-label="필터 전체 초기화">↻ 조건 초기화</button></div>
       </div>
       <div class="list-head">
         <div class="list-heading"><div id="listTitle" class="list-title">주변 식당</div><div id="listSub" class="list-sub" role="status" aria-live="polite"></div></div>
@@ -4172,11 +4165,9 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
         </label>
       </div>
 
-      <div class="mobile-sheet-quick" role="group" aria-label="빠른 필터">
-        <button type="button" data-mobile-chip="rating4" aria-pressed="false">★ 4점+</button>
-        <button type="button" data-mobile-chip="favorites" aria-pressed="false">♡ 즐겨찾기</button>
-        <button type="button" data-mobile-chip="recent" aria-pressed="false">최근 본</button>
-        <button id="mobileDetailedFilterToggle" type="button" aria-expanded="false">☰ 필터</button>
+      <div class="mobile-sheet-quick" role="group" aria-label="방문 예정시간과 상세 필터">
+        <label class="mobile-visit-time" for="mobileVisitTimeFilter"><span>방문 예정</span><select id="mobileVisitTimeFilter" aria-label="오늘 방문 예정시간"><option value="all">방문시간 전체</option><option value="11:00">오늘 11:00</option><option value="11:30">오늘 11:30</option><option value="12:00">오늘 12:00</option><option value="12:30">오늘 12:30</option><option value="13:00">오늘 13:00</option><option value="13:30">오늘 13:30</option><option value="14:00">오늘 14:00</option><option value="18:00">오늘 18:00</option><option value="19:00">오늘 19:00</option></select></label>
+        <button id="mobileDetailedFilterToggle" type="button" aria-expanded="false" aria-controls="mobileDetailedFilters">☷ 상세 필터 <span id="mobileFilterCount" class="filter-counter" hidden></span></button>
       </div>
 
       <div id="mobileDetailedFilters" class="mobile-detailed-filters">
@@ -4192,9 +4183,7 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
         <label><span>거리</span><select id="mobileDistanceFilter">
           <option value="all">전체</option><option value="300">300m</option><option value="500">500m</option><option value="700">700m</option><option value="1000">1km</option>
         </select></label>
-        <label class="mobile-visit-time" for="mobileVisitTimeFilter"><span>방문 예정</span><select id="mobileVisitTimeFilter" aria-label="오늘 방문 예정시간"><option value="all">방문시간 전체</option><option value="11:00">오늘 11:00</option><option value="11:30">오늘 11:30</option><option value="12:00">오늘 12:00</option><option value="12:30">오늘 12:30</option><option value="13:00">오늘 13:00</option><option value="13:30">오늘 13:30</option><option value="14:00">오늘 14:00</option><option value="18:00">오늘 18:00</option><option value="19:00">오늘 19:00</option></select></label>
-        <div class="mobile-visit-time-note">영업 예상 시간 기준 · 미확인 식당은 제외됩니다.</div>
-        <button id="mobileFilterReset" class="mobile-filter-reset" type="button">초기화</button>
+                <button id="mobileFilterReset" class="mobile-filter-reset" type="button">초기화</button>
       </div>
 
       <div class="mobile-list-head">
@@ -4216,6 +4205,10 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
     <section class="map-wrap">
       <div id="map"></div>
       <div id="mapStatus" class="map-status">카카오 지도를 준비하는 중입니다.</div>
+      <div class="map-floating-tools" role="group" aria-label="지도 조작">
+        <button id="myLocation" type="button" title="내 위치로 이동" aria-label="내 위치로 이동">◎ 내 위치</button>
+        <button id="showAll" type="button" title="지역 중심으로 지도 복귀" aria-label="지도 지역 중심으로 이동">⌂ 지도 복귀</button>
+      </div>
       <button id="mapBoundsButton" class="map-area-filter" type="button">이 지역에서 보기</button>
       <button id="placeCaptureButton" class="map-capture-btn" type="button" hidden disabled>📋 플레이스 텍스트</button>
       <input id="placeCaptureInput" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
@@ -5788,32 +5781,20 @@ function buildFilters(){
   // Live/static DB refreshes can change available categories. Keep only valid selections.
   selectedCategories=new Set([...selectedCategories].filter(c=>validCats.has(c)));
 
-  const items=['전체',...cats].sort((a,b)=>(ORDER.indexOf(a)<0?99:ORDER.indexOf(a))-(ORDER.indexOf(b)<0?99:ORDER.indexOf(b)));
+  const items=cats.sort((a,b)=>(ORDER.indexOf(a)<0?99:ORDER.indexOf(a))-(ORDER.indexOf(b)<0?99:ORDER.indexOf(b)));
   const el=document.getElementById('filters');
-  const allActive=selectedCategories.size===0;
-
   el.innerHTML=items.map(c=>{
-    const active=c==='전체'?allActive:selectedCategories.has(c);
-    const filterColor=c==='전체'?'#5f676d':colorFor(c);
+    const active=selectedCategories.has(c);
+    const filterColor=colorFor(c);
     return '<button class="filter-btn '+(active?'active':'')+'" data-category="'+esc(c)+'" aria-pressed="'+(active?'true':'false')+'" style="--filter-color:'+filterColor+'">'+esc(c)+'</button>';
   }).join('');
 
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>{
     const category=b.dataset.category;
 
-    if(category==='전체'){
-      // "전체" means no category restriction.
-      selectedCategories.clear();
-    }else if(selectedCategories.size===0){
-      // First category click from "전체": narrow to that category.
-      selectedCategories.add(category);
-    }else if(selectedCategories.has(category)){
-      selectedCategories.delete(category);
-      // If the last category is turned off, naturally return to "전체".
-    }else{
-      // Add another category: 한식 + 중식 + ... can be selected together.
-      selectedCategories.add(category);
-    }
+    if(selectedCategories.has(category))selectedCategories.delete(category);
+    else selectedCategories.add(category);
+    // No category selected means all restaurants, with no redundant "전체" button.
 
     buildFilters();
     render(false);
