@@ -36,7 +36,7 @@ function mockContext(records,options={}){
     enrichQueueRunning:false,enrichQueuePending:false,
     regionKeyForRow:row=>row.region==='포항'?'pohang':row.region==='충주'?'chungju':'hapjeong',
     hasValidCoords:validCoords,
-    enrichOneRow:options.enrichOneRow||async row=>{row.lat=row.region==='포항'?35.98:37.01;row.lng=row.region==='포항'?129.37:127.94;return true;},
+    enrichOneRow:options.enrichOneRow||(async row=>{row.lat=row.region==='포항'?35.98:37.01;row.lng=row.region==='포항'?129.37:127.94;return true;}),
     buildFilters:()=>{state.filterCalls=(state.filterCalls||0)+1;},
     render:()=>{state.renderCalls=(state.renderCalls||0)+1;},
     setTimeout
