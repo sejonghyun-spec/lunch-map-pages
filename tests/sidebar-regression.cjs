@@ -349,7 +349,8 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
  await check('map-only filtering remains on map and all-conditions reset lives in detailed filters',async()=>{
    await page.click('#mapBoundsButton');
    assert.ok(await state(()=>mapOnlyMode&&getRows().every(isInCurrentMapBounds)));
-   await page.click('#sidebarFilterToggle');
+   if((await page.locator('#sidebarFilterToggle').getAttribute('aria-expanded'))!=='true')
+     await page.click('#sidebarFilterToggle');
    await page.click('#multiFilterReset');
    assert.ok(await state(()=>!mapOnlyMode&&ratingFilter==='all'&&selectedCategories.size===0));
    assert.equal(await page.locator('#sidebarFilterToggle').getAttribute('aria-expanded'),'false');
