@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-10-compact-explorer-v104">
+<meta name="lunch-map-build" content="2026-10-10-current-hours-v105">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -4020,6 +4020,9 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
 }
 
 /* Compact navigator — search and decisions first, actions only where relevant. */
+.explore-controls{justify-content:flex-end;padding-top:0;padding-bottom:7px}
+@media(max-width:900px){.mobile-sheet-quick{justify-content:flex-end;padding-bottom:7px}}
+
 .sidebar{
   grid-template-rows:auto auto auto auto minmax(0,1fr);
 }
@@ -4182,11 +4185,7 @@ html[data-theme="bistro"] .map-floating-tools button{color:#302a24;background:#f
         <input id="search" class="search" type="search" aria-label="식당 이름, 특징, 주소 검색" placeholder="식당 이름 · 특징 · 주소 검색" autocomplete="off" aria-autocomplete="list" aria-controls="searchSuggestions">
         <div id="searchSuggestions" class="search-suggestions" role="listbox"></div>
       </label></div>
-      <div class="explore-controls" role="group" aria-label="방문시간 및 상세 필터">
-        <div class="visit-time-bar" role="group" aria-label="방문 예정시간 검색">
-          <label for="visitTimeFilter">방문 예정 <select id="visitTimeFilter" aria-label="오늘 방문 예정시간"><option value="all">시간 무관</option><option value="11:00">오늘 11:00</option><option value="11:30">오늘 11:30</option><option value="12:00">오늘 12:00</option><option value="12:30">오늘 12:30</option><option value="13:00">오늘 13:00</option><option value="13:30">오늘 13:30</option><option value="14:00">오늘 14:00</option><option value="18:00">오늘 18:00</option><option value="19:00">오늘 19:00</option></select></label>
-          <span id="visitTimeHint">저장된 영업시간 기준 · 실제 방문 전 확인</span>
-        </div>
+      <div class="explore-controls" role="group" aria-label="상세 필터">
         <button id="sidebarFilterToggle" class="sidebar-filter-toggle" type="button" aria-expanded="false" aria-controls="desktopDetailedFilters"><span>☷ 상세 필터</span><span class="filter-counter" id="desktopFilterCount" hidden></span><span class="filter-chevron" aria-hidden="true">⌄</span></button>
       </div>
       <div class="desktop-filters-collapsible" id="desktopDetailedFilters">
@@ -4265,8 +4264,7 @@ html[data-theme="bistro"] .map-floating-tools button{color:#302a24;background:#f
         </label>
       </div>
 
-      <div class="mobile-sheet-quick" role="group" aria-label="방문 예정시간과 상세 필터">
-        <label class="mobile-visit-time" for="mobileVisitTimeFilter"><span>방문 예정</span><select id="mobileVisitTimeFilter" aria-label="오늘 방문 예정시간"><option value="all">시간 무관</option><option value="11:00">오늘 11:00</option><option value="11:30">오늘 11:30</option><option value="12:00">오늘 12:00</option><option value="12:30">오늘 12:30</option><option value="13:00">오늘 13:00</option><option value="13:30">오늘 13:30</option><option value="14:00">오늘 14:00</option><option value="18:00">오늘 18:00</option><option value="19:00">오늘 19:00</option></select></label>
+      <div class="mobile-sheet-quick" role="group" aria-label="상세 필터">
         <button id="mobileDetailedFilterToggle" type="button" aria-expanded="false" aria-controls="mobileDetailedFilters">☷ 상세 필터 <span id="mobileFilterCount" class="filter-counter" hidden></span></button>
       </div>
 
@@ -4691,7 +4689,7 @@ function getInitialMapLevel(){
 }
 const SUGGEST_URL='https://script.google.com/a/seah.co.kr/macros/s/AKfycbzpCuw9c6Y8K6_4tnqZzwMBoKGIiW3pv-DheDHYD6XpbT1tEqDlZUFFkPgn-7w_q1L7tA/exec';
 let allData=[],selectedCategories=new Set(),searchKeyword='',sortMode='default';
-let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all',distanceFilter='all',visitTimeFilter='all';
+let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all',distanceFilter='all';
 let favoritesOnly=false,recentOnly=false,mapOnlyMode=false,reviewSortMode='latest';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,regionAnchorOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',hoveredMarkerRow=null,searchTimer=null;
 let lastMapRows=[],lastClusterLevel=null,mapIdleRenderTimer=null,lastDetailRow=null,lastListSignature='';
@@ -4849,7 +4847,7 @@ function highlightMatch(value,query){
 
 function listUiSignature(){
   return [
-    activeRegionKey,searchKeyword,sortMode,ratingFilter,capacityFilter,featureFilter,distanceFilter,visitTimeFilter,
+    activeRegionKey,searchKeyword,sortMode,ratingFilter,capacityFilter,featureFilter,distanceFilter,
     favoritesOnly,recentOnly,mapOnlyMode,[...selectedCategories].sort().join('|')
   ].join('::');
 }
@@ -5138,14 +5136,6 @@ function updateMultiFilterUI(){
     const label=el.parentElement.querySelector('.compact-filter-label');
     if(label)label.textContent=labels[id][value]||labels[id].all;
   });
-  const visitSelect=document.getElementById('visitTimeFilter');
-  const mobileVisitSelect=document.getElementById('mobileVisitTimeFilter');
-  if(visitSelect)visitSelect.value=visitTimeFilter;
-  if(mobileVisitSelect)mobileVisitSelect.value=visitTimeFilter;
-  document.querySelector('.visit-time-bar')?.classList.toggle('active',visitTimeFilter!=='all');
-  const hint=document.getElementById('visitTimeHint');
-  if(hint)hint.textContent=visitTimeFilter==='all'?'저장된 영업시간 기준 · 실제 방문 전 확인':
-    visitTimeFilter+' 영업 예상만 · 미확인 제외';
   const mobilePairs=[
     ['mobileRatingFilter',ratingFilter],
     ['mobileCapacityFilter',capacityFilter],
@@ -5162,7 +5152,6 @@ function resetMultiFilters(){
   commentFilter='all';
   featureFilter='all';
   distanceFilter='all';
-  visitTimeFilter='all';
   favoritesOnly=false;
   recentOnly=false;
   mapOnlyMode=false;
@@ -5977,7 +5966,6 @@ function getRows(){
     const distance=distanceFromSeahTower(x);
     if(distanceFilter!=='all'&&(!Number.isFinite(distance)||distance>Number(distanceFilter)))return false;
     if(mapOnlyMode&&!isInCurrentMapBounds(x))return false;
-    if(visitTimeFilter!=='all'&&!visitTimeOpenAt(x,visitTimeFilter))return false;
 
     return true;
   });
@@ -6007,11 +5995,11 @@ function updateCardReviewCounts(){
 function updateListHeading(count){
   const searchMode=!!searchKeyword.trim();
   document.getElementById('listTitle').textContent=searchMode?'검색 결과':'주변 식당';
-  document.getElementById('listSub').textContent=count+'곳'+(visitTimeFilter!=='all'?' · '+visitTimeFilter+' 영업 예상':'');
+  document.getElementById('listSub').textContent=count+'곳';
   const mobileTitle=document.getElementById('mobileListTitle');
   const mobileSub=document.getElementById('mobileListSub');
   if(mobileTitle)mobileTitle.textContent=searchMode?'검색 결과':'주변 식당';
-  if(mobileSub)mobileSub.textContent=count+'곳'+(visitTimeFilter!=='all'?' · '+visitTimeFilter+' 영업 예상':'');
+  if(mobileSub)mobileSub.textContent=count+'곳';
 }
 function renderMobileList(rows){
   const el=document.getElementById('mobileList');
@@ -6672,25 +6660,6 @@ function scheduleDisplayLabel(row,info){
   if(info.status==='closed'&&info.label==='오늘 휴무')return '오늘 휴무 예정';
   if(info.status==='break')return '브레이크 예상';
   return info.label;
-}
-function visitTimeOpenAt(row,time){
-  const text=String(time||'');
-  if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(text))return false;
-  const minute=Number(text.slice(0,2))*60+Number(text.slice(3));
-  const today=seoulDateInfo();
-  const day=weeklyOperatingSchedule(row)[today.weekdayIndex];
-  if(!day||day.closed||isClosedToday(firstField(row,['closedDays','closedDay','휴무일'])))return false;
-  const range=timeRangeMinutes(day.hours);
-  if(!range||!minuteInRange(minute,range))return false;
-  const breakRange=timeRangeMinutes(day.breakTime);
-  if(breakRange&&minuteInRange(minute,breakRange))return false;
-  const orders=Array.isArray(day.lastOrders)?day.lastOrders:[];
-  if(orders.length&&orders.every(clock=>clockMinutes_(clock)<=minute))return false;
-  return true;
-}
-function clockMinutes_(clock){
-  const x=String(clock||'').match(/(\d{1,2}):(\d{2})/);
-  return x?Number(x[1])*60+Number(x[2]):Number.NaN;
 }
 function operatingInfo(row){
   const closedDays=firstField(row,['closedDays','closedDay','휴무일']);
@@ -9798,13 +9767,6 @@ document.addEventListener('click',e=>{
   });
 });
 
-['visitTimeFilter','mobileVisitTimeFilter'].forEach(id=>{
-  document.getElementById(id)?.addEventListener('change',event=>{
-    visitTimeFilter=event.target.value;
-    updateMultiFilterUI();
-    render(false);
-  });
-});
 document.getElementById('sidebarFilterToggle')?.addEventListener('click',()=>{
   const sidebar=document.getElementById('sidebar');
   setSidebarFiltersOpen(!sidebar?.classList.contains('filters-open'));
@@ -9841,6 +9803,28 @@ window.addEventListener('popstate',()=>{
     }
   }
 });
+
+// Refresh current business status every minute and on returning to this tab.
+// Never restrict the restaurant list based on operating status.
+let lastOperatingMinuteStamp='';
+function refreshCurrentHoursIfNeeded(){
+  if(document.visibilityState==='hidden'||!allData.length)return;
+  const stamp=new Intl.DateTimeFormat('sv-SE',{
+    timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',
+    hour:'2-digit',minute:'2-digit',hour12:false
+  }).format(new Date());
+  if(stamp===lastOperatingMinuteStamp)return;
+  lastOperatingMinuteStamp=stamp;
+  renderList(getRows());
+  if(commentRestaurant&&commentPanel?.classList.contains('open')){
+    renderDetailDecision(commentRestaurant);
+    const details=detailInfo?.querySelector('.detail-hours-info .detail-info-value');
+    if(details)details.innerHTML=renderWeeklyHours(commentRestaurant);
+  }
+}
+setInterval(refreshCurrentHoursIfNeeded,60000);
+document.addEventListener('visibilitychange',refreshCurrentHoursIfNeeded);
+window.addEventListener('focus',refreshCurrentHoursIfNeeded);
 
 syncRegionRuntime();
 syncRegionUI();
