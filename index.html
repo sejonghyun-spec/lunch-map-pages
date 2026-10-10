@@ -4877,8 +4877,64 @@ function resetMultiFilters(){
   mapOnlyMode=false;
   updateMultiFilterUI();
 }
+function setActiveRegion(key,{updateUrl=true,moveMap=true,notify=false}={}){
+  if(!REGION_CONFIG[key])return false;
+  const changed=activeRegionKey!==key;
+  activeRegionKey=key;
+  syncRegionRuntime();
+  try{localStorage.setItem(REGION_STORAGE_KEY,key);}catch(e){}
+  syncRegionUI();
+
+  if(changed){
+    selectedCategories.clear();
+    searchKeyword='';
+    sortMode='default';
+    compareKeys=[];
+    resetMultiFilters();
+    document.getElementById('search').value='';
+    const mobileSearchEl=document.getElementById('mobileSearch');
+    if(mobileSearchEl)mobileSearchEl.value='';
+    closeSearchSuggestions();
+    closeCompareModal();
+    if(commentPanel?.classList.contains('open')||selectedRow!=null)clearSelectedRows();
+    syncSortUI();
+    syncCompareUI();
+    lastListSignature='';
+  }
+  if(updateUrl)updateRegionUrl_(true);
+
+  buildFilters();
+  if(mapReady&&map&&moveMap){
+    map.setCenter(new kakao.maps.LatLng(HOME_LAT,HOME_LNG));
+    map.setLevel(getInitialMapLevel());
+    syncRegionAnchorMarker();
+  }
+  render(false);
+  setTimeout(hydrateMissingRows,80);
+  if(notify)showToast(currentRegionConfig().label+' 지역으로 전환했습니다.');
+  return true;
+}
 
 function loadKakao(){return new Promise((resolve,reject)=>{if(window.kakao&&kakao.maps)return resolve();const s=document.createElement('script');s.src='https://dapi.kakao.com/v2/maps/sdk.js?appkey='+KAKAO_KEY+'&autoload=false&libraries=services';s.async=true;s.onload=()=>window.kakao&&kakao.maps?resolve():reject(new Error('SDK init failed'));s.onerror=()=>reject(new Error('SDK load failed'));document.head.appendChild(s);});}
+function syncRegionAnchorMarker(){
+  if(regionAnchorOverlay){
+    try{regionAnchorOverlay.setMap(null);}catch(e){}
+    regionAnchorOverlay=null;
+  }
+  if(!mapReady||!map||!window.kakao?.maps)return;
+  const cfg=currentRegionConfig();
+  const wrap=document.createElement('div');
+  wrap.className='region-anchor-marker';
+  wrap.innerHTML='<span class="region-anchor-pin">S</span><span class="region-anchor-label">'+esc(cfg.anchorFullLabel)+'</span>';
+  regionAnchorOverlay=new kakao.maps.CustomOverlay({
+    map,
+    position:new kakao.maps.LatLng(cfg.anchorLat,cfg.anchorLng),
+    content:wrap,
+    xAnchor:.5,
+    yAnchor:1.12,
+    zIndex:3
+  });
+}
 function syncMarkerLabelVisibility(){
   const wrap=document.querySelector('.map-wrap');
   if(wrap)wrap.classList.remove('show-marker-labels');
@@ -4926,6 +4982,7 @@ function initMap(){
     placesService=new kakao.maps.services.Places();
     geocoder=new kakao.maps.services.Geocoder();
     mapReady=true;
+    syncRegionAnchorMarker();
     document.getElementById('mapStatus').classList.add('hidden');
     syncMarkerLabelVisibility();
     kakao.maps.event.addListener(map,'idle',()=>{
@@ -5587,6 +5644,7 @@ function distanceFromSeahTower(x){
     {lat:Number(x.lat),lng:Number(x.lng)}
   );
 }
+function currentAnchorLabel(){return currentRegionConfig().anchorLabel;}
 function formatDistanceFromSeahTower(x){
   const meters=distanceFromSeahTower(x);
   if(!Number.isFinite(meters))return '';
@@ -5750,7 +5808,7 @@ function renderList(rows){
         (score?'<span class="rating">★ '+score.toFixed(1)+'</span><span class="card-evaluations">평가 '+(Number(x._ratingCount)||1)+'</span>':'')+
         '<span class="card-review" data-review-key="'+esc(restaurantCommentKey(x))+'" hidden></span>'+
         (hours.status!=='unknown'?'<span class="card-hours '+esc(hours.status)+'">'+esc(hours.label)+'</span>':'')+
-        (distance?'<span class="card-distance" title="세아타워 기준 직선거리" aria-label="세아타워에서 직선거리 '+esc(distance)+'">↔ '+esc(distance)+'</span>':'')+
+        (distance?'<span class="card-distance" title="'+esc(currentAnchorLabel())+' 기준 직선거리" aria-label="'+esc(currentAnchorLabel())+'에서 직선거리 '+esc(distance)+'">↔ '+esc(distance)+'</span>':'')+
       '</div>'+
       (tags.length?'<div class="card-tags">'+tags.map(t=>'<span class="card-tag" title="'+esc(t)+'">'+highlightMatch(t,q)+'</span>').join('')+'</div>':'')+
       (!tags.length&&summary?'<div class="card-feature">'+highlightMatch(summary,q)+'</div>':'')+
@@ -5888,8 +5946,9 @@ function persistEnrichment(row,place){
 function searchPlaceForRow(row){
   return new Promise(resolve=>{
     if(!placesService||!row||!row.name)return resolve(null);
+    const center=regionCenterForRow(row);
     const opts={
-      location:new kakao.maps.LatLng(HOME_LAT,HOME_LNG),
+      location:new kakao.maps.LatLng(center.lat,center.lng),
       radius:20000,
       size:15,
       sort:kakao.maps.services.SortBy.DISTANCE
@@ -6316,7 +6375,7 @@ function renderRestaurantDetailInfo(row,place){
   const weeklyHoursHtml=renderWeeklyHours(row);
 
   const infoRows=[
-    ['특징',row.feature],['수용인원',row.capacity],['비고',row.note],['거리',distance?('세아타워 기준 '+distance):''],
+    ['특징',row.feature],['수용인원',row.capacity],['비고',row.note],['거리',distance?(currentAnchorLabel()+' 기준 '+distance):''],
     ['전화',phone],['카카오 업종',kakaoCategory],['주소',address]
   ].filter(x=>String(x[1]||'').trim());
 
@@ -6436,7 +6495,7 @@ async function hydrateMissingRows(){
   if(enrichQueueRunning||!placesService||!allData.length)return;
   enrichQueueRunning=true;
   try{
-    const targets=allData.filter(x=>
+    const targets=displayRestaurants().filter(x=>
       x&&x.name&&(
         !String(x.address||'').trim()||
         !hasValidCoords(x)||
