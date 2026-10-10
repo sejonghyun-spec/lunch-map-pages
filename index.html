@@ -7891,6 +7891,26 @@ function placeBranchNameCompatible(sourceName,registeredName){
   if(/(?:본점|직영점|\d{1,3}호점|[가-힣]{2,12}점)$/.test(registered))return false;
   return /^(?:[가-힣a-z0-9·]{1,15}점|본점|직영점|\d{1,3}호점)$/.test(incoming.slice(registered.length));
 }
+// Missing-address imports are permitted only for one uniquely identified
+// existing store whose opening hours have not yet been registered.
+// Require a standalone name token (not an arbitrary substring) for aliases:
+// "평이담백 뼈칼국수 본점" may match "뼈칼국수", but "해물점" must not
+// silently match an unrelated similarly spelled restaurant.
+function placeImportStrongNameMatch(sourceName,registeredName){
+  if(placeBranchNameCompatible(sourceName,registeredName))return true;
+  const registered=String(registeredName||'').toLowerCase().replace(/[^가-힣a-z0-9]/g,'');
+  if(registered.length<4)return false;
+  const source=String(sourceName||'').toLowerCase()
+    .replace(/[|•·,，]/g,' ').split(/\s+/).filter(Boolean)
+    .map(token=>token.replace(/[^가-힣a-z0-9]/g,''));
+  return source.some(token=>token===registered||
+    (token.startsWith(registered)&&/^(?:본점|직영점|\d{1,3}호점|[가-힣]{2,12}점)$/.test(token.slice(registered.length))));
+}
+function placeImportMissingHours(row){
+  return !String(row&&(
+    row.hours||row.openingHours||row.businessHours||row['영업시간']||''
+  )).trim();
+}
 function placeImportNameLine(line,names){
   const clean=String(line||'').trim().replace(/^(?:식당명|업체명|매장명)\s*[:：]\s*/,'')
     .replace(/^\d{1,3}[.)]\s*/,'').replace(/^[•●\-]\s*/,'').trim();
@@ -7947,8 +7967,15 @@ function buildPlaceTextPayload(rawText){
     const addressAhead=generic&&lines.slice(i+1,i+5).some(placeImportAddressLine);
     // Unknown names must be immediately followed by an address. This avoids
     // mistaking navigation labels, menu names, or review text for a restaurant.
+    const knownAlias=generic&&placeImportCatalog().some(row=>
+      placeImportMissingHours(row)&&placeImportStrongNameMatch(generic,row.name));
+    const hasOperationalInfo=lines.slice(i+1,i+8).some(line=>
+      isPlaceOperationalLine(line)&&!placeImportAddressLine(line));
+    const canStartExistingWithoutAddress=!!knownAlias&&hasOperationalInfo&&
+      (!section||section.lines.some(isPlaceOperationalLine));
     const canStartUnknown=!!addressAhead&&(!section||section.lines.some(placeImportAddressLine));
-    const heading=found||(canStartUnknown?{name:generic,sourceName:generic,after:''}:null);
+    const heading=found||((canStartExistingWithoutAddress||canStartUnknown)
+      ?{name:generic,sourceName:generic,after:''}:null);
     if(heading){
       if(section)sections.push(section);
       section={name:heading.name,sourceName:heading.sourceName,lines:[]};
@@ -8024,30 +8051,45 @@ function assessPlaceBatchRecords(records){
   const seen=new Set(),index=placeBatchIndexedCatalog(),catalog=placeImportCatalog();
   return (records||[]).map((record,id)=>{
     const sourceName=String(record.sourceName||record.name||'').trim();
-    const incomingKey=placeBatchAddressKey(record.address);
+    const providedAddress=String(record.address||'').trim();
+    const suppliedKey=placeBatchAddressKey(providedAddress);
     const exactName=index.byName.get(sourceName.toLowerCase())||[];
     const candidates=exactName.length?exactName:
-      catalog.filter(row=>placeBranchNameCompatible(sourceName,row.name));
+      catalog.filter(row=>placeImportStrongNameMatch(sourceName,row.name));
+    // If the pasted Place information does not contain an address, the
+    // registered address can be used only for a unique existing restaurant
+    // missing opening hours. Never use this fallback for creating a new row.
+    const uniqueCandidates=new Map(candidates.map(row=>[
+      String(row.name||'').toLowerCase()+'|'+placeBatchAddressKey(row.address),row
+    ]));
+    const missingHoursCandidates=[...uniqueCandidates.values()].filter(placeImportMissingHours);
+    const addresslessMatch=!providedAddress&&uniqueCandidates.size===1&&
+      missingHoursCandidates.length===1?missingHoursCandidates[0]:null;
+    const matchedWithoutAddress=!!addresslessMatch;
+    const address=addresslessMatch?String(addresslessMatch.address||'').trim():providedAddress;
+    const incomingKey=placeBatchAddressKey(address);
     const addressRows=incomingKey?catalog.filter(row=>placeBatchAddressKey(row.address)===incomingKey):[];
-    const compatible=addressRows.filter(row=>placeBranchNameCompatible(sourceName,row.name));
+    const compatible=addressRows.filter(row=>placeImportStrongNameMatch(sourceName,row.name));
     const unique=new Map(compatible.map(row=>[String(row.name).toLowerCase()+'|'+incomingKey,row]));
     const accepted=unique.size===1?[...unique.values()][0]:null;
-    const isNew=!!incomingKey&&!addressRows.length&&!candidates.length;
+    const isNew=!!suppliedKey&&!addressRows.length&&!candidates.length;
     let reason='',unchanged=false;
     if(!sourceName)reason='식당명을 판별할 수 없습니다';
-    else if(!record.address||!incomingKey)reason='주소 누락 또는 주소 형식 확인 불가';
-    else if(addressRows.length&&!accepted)reason='동일 주소에 다른 식당이 등록되어 있습니다';
+    else if(!address||!incomingKey)reason=!providedAddress&&candidates.length
+      ?'주소 없는 입력: 영업시간이 비어 있는 기존 식당을 하나로 특정할 수 없습니다'
+      :'주소 누락 또는 주소 형식 확인 불가';
+    else if(!accepted&&addressRows.length)reason='동일 주소에 다른 식당이 등록되어 있습니다';
     else if(seen.has(incomingKey))reason='중복 입력 (같은 주소는 첫 번째만 반영)';
     else if(unique.size>1)reason='동일 주소에 후보가 여러 개 있습니다';
     else if(!accepted&&!isNew)reason='등록 주소와 불일치 (기존 식당명 확인 필요)';
     else if(accepted&&!record.infoLines.length&&!record.phone)reason='반영할 영업정보 없음';
     else if(accepted&&placeBatchExistingValuesMatch(record,compatible)){reason='당일 확인한 정보와 동일';unchanged=true;}
     if(!reason)seen.add(incomingKey);
-    return {...record,name:accepted?.name||record.name,sourceName,id,valid:!reason,
-      isNew:!reason&&isNew,unchanged,reason,matchedRows:compatible.length};
+    return {...record,address,name:accepted?.name||record.name,sourceName,id,
+      valid:!reason,isNew:!reason&&isNew,matchedWithoutAddress,
+      unchanged,reason,matchedRows:compatible.length};
   });
 }
-
 function renderPlaceBatchPreview(){
   if(!placeBatchPreview)return;
   if(!placeBatchItems.length){
@@ -8066,7 +8108,7 @@ function renderPlaceBatchPreview(){
       return '<label class="place-batch-row" data-status="'+(item.valid?'ready':'hold')+'">'+
         '<input type="checkbox" data-batch-index="'+item.id+'" '+(item.valid?'':'disabled ')+(selected?'checked':'')+'>'+
         '<span><strong>'+esc(item.sourceName!==item.name?item.sourceName+' → '+item.name:item.name)+
-        '</strong><small>'+esc(item.address||'주소 정보 없음')+
+        '</strong><small>'+esc((item.matchedWithoutAddress?'등록된 DB 주소 사용 · ':'')+(item.address||'주소 정보 없음'))+
         '</small><small>'+esc(item.infoLines.slice(0,2).join(' · ')|| (item.phone?'전화번호만 확인':'영업정보 없음'))+'</small></span>'+
         '<span class="place-batch-state">'+(item.valid?(item.isNew?'신규 등록':'업데이트'):'보류')+
         (item.reason?'<small>'+esc(item.reason)+'</small>':'')+'</span></label>';
@@ -8228,7 +8270,7 @@ function updatePlaceCardStatuses(){
     const status=card.querySelector('.place-entry-state');
     const source=placeBatchItems.find(item=>item.sourceCardId===input?.dataset.placeCard);
     status.className='place-entry-state'+(source?(source.valid?' ready':' hold'):'');
-    status.textContent=source?(source.valid?'✓ '+source.name+' · '+(source.isNew?'신규 등록 예정 (주소 중복 없음)':'지점명/주소 일치'):'확인 필요 · '+source.reason):
+    status.textContent=source?(source.valid?'✓ '+source.name+' · '+(source.isNew?'신규 등록 예정 (주소 중복 없음)':source.matchedWithoutAddress?'DB 등록 주소로 영업정보 보완':'지점명/주소 일치'):'확인 필요 · '+source.reason):
       '입력 대기';
   });
 }
@@ -8451,8 +8493,8 @@ async function submitPlaceText(){
       return;
     }
     const names=[...new Set(updates.map(x=>x.name))];
-    const records=updates.map(({name,sourceName,isNew,address,phone,infoLines})=>{
-      const textName=isNew?name:(sourceName||name);
+    const records=updates.map(({name,sourceName,isNew,matchedWithoutAddress,address,phone,infoLines})=>{
+      const textName=isNew||matchedWithoutAddress?name:(sourceName||name);
       return {name:textName,address,phone,infoLines,
         rawText:[textName,address,phone,...infoLines].filter(Boolean).join('\n')};
     });
