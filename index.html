@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-10-place-separated-cards-v101">
+<meta name="lunch-map-build" content="2026-10-10-awards-badges-v102">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -682,6 +682,19 @@ button,input,select,textarea{font:inherit}
 .card-evaluations + .card-review:not([hidden])::before{content:'·';margin-right:7px;color:#b2a79d}
 .card-stats:not(:has(.rating,.card-distance,.card-review:not([hidden]))){display:none}
 .card-distance{margin-left:auto;font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:650;color:#655c55;white-space:nowrap}
+
+.award-badges{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:7px;min-width:0}
+.award-chip{display:inline-flex;align-items:center;max-width:100%;min-height:24px;padding:3px 8px;border:1px solid #dfb9a5;border-radius:7px;background:#fff1ea;color:#944021;font-size:11.5px;font-weight:800;line-height:1.35;white-space:normal;overflow-wrap:anywhere}
+.award-chip[data-award-type="blue-ribbon"]{border-color:#a5c9ee;background:#edf6ff;color:#195991}
+.award-chip[data-award-type="michelin-star"]{border-color:#e3b1a6;background:#fff0ed;color:#a52219}
+.award-chip[data-award-type="other"]{border-color:#d2d4d6;background:#f5f6f7;color:#43505b}
+.detail-tags .award-chip{min-height:30px;padding:5px 9px;font-size:12.5px}
+.award-detail-list{display:flex;flex-direction:column;align-items:flex-start;gap:9px}
+.award-detail-item{display:flex;align-items:center;flex-wrap:wrap;gap:5px 8px;min-width:0}
+.award-detail-source{font-size:12px;line-height:1.5;color:#6b747a}
+html[data-theme="night"] .award-chip{border-color:#996b53;background:#37271f;color:#ffd5b5}
+html[data-theme="night"] .award-chip[data-award-type="blue-ribbon"]{border-color:#4a81a8;background:#1e3344;color:#bfe6ff}
+html[data-theme="night"] .award-detail-source{color:#bdc4c9}
 .card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
 .card-tag{
   max-width:100%;border:1px solid #e4e5e6;border-radius:6px;padding:3px 7px;
@@ -4797,6 +4810,77 @@ function restaurantIdentityKey(x){
   const placeId=String(x._placeId||x.placeId||'').trim();
   return placeId?'place:'+placeId:'';
 }
+
+const awardRegistry=new Map();
+const ALLOWED_AWARD_TYPES=new Set(['blue-ribbon','michelin-bib','michelin-star','other']);
+function awardSafeUrl(raw){
+  try{const value=new URL(String(raw||''));return value.protocol==='https:'?value.href:'';}catch(e){return '';}
+}
+function awardLabel(award){
+  if(award.type==='blue-ribbon'){
+    const n=Number(award.ribbons);
+    return n>=1&&n<=3?'블루리본 '+n+'개':'블루리본';
+  }
+  if(award.type==='michelin-bib')return '미쉐린 빕 구르망';
+  if(award.type==='michelin-star'){
+    const n=Number(award.stars);
+    return n>=1&&n<=3?'미쉐린 '+n+'스타':'미쉐린 스타';
+  }
+  return String(award.label||'선정 식당').slice(0,32);
+}
+function awardsFor(row){return awardRegistry.get(restaurantIdentityKey(row))||[];}
+function awardBadgesHtml(row){
+  const awards=awardsFor(row);
+  return awards.length?'<div class="award-badges" aria-label="선정 내역">'+awards.map(a=>
+    '<span class="award-chip" data-award-type="'+esc(a.type)+'" title="'+esc(a.sourceName)+'">'+esc(awardLabel(a))+'</span>').join('')+'</div>':'';
+}
+function renderDetailAwardHeader(row){
+  if(!detailTags)return;
+  detailTags.querySelector('.award-badges')?.remove();
+  if(row)detailTags.insertAdjacentHTML('beforeend',awardBadgesHtml(row));
+}
+function awardDetailHtml(row){
+  const awards=awardsFor(row);
+  if(!awards.length)return '';
+  return '<div class="detail-info-row detail-awards-info"><div class="detail-info-label">선정 이력</div>'+
+    '<div class="detail-info-value award-detail-list">'+awards.map(a=>{
+      const url=awardSafeUrl(a.sourceUrl);
+      return '<div class="award-detail-item"><span class="award-chip" data-award-type="'+esc(a.type)+'">'+esc(awardLabel(a))+'</span>'+
+        (url?'<a class="detail-info-link award-detail-source" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(a.sourceName)+' ↗</a>':
+          '<span class="award-detail-source">'+esc(a.sourceName)+'</span>')+
+        '<small class="award-detail-source">확인 '+esc(a.checkedAt)+'</small></div>';
+    }).join('')+'</div></div>';
+}
+function applyAwardRegistry(data){
+  const next=new Map();
+  (Array.isArray(data?.rows)?data.rows:[]).forEach(entry=>{
+    const name=String(entry?.name||'').trim(),address=String(entry?.address||'').trim();
+    if(!name||!address||!Array.isArray(entry.awards))return;
+    const awards=entry.awards.filter(a=>a&&ALLOWED_AWARD_TYPES.has(a.type)&&
+      awardSafeUrl(a.sourceUrl)&&String(a.sourceName||'').trim()&&
+      /^\d{4}-\d{2}-\d{2}$/.test(String(a.checkedAt||'')));
+    if(awards.length)next.set(restaurantIdentityKey({name,address}),awards);
+  });
+  awardRegistry.clear();
+  next.forEach((value,key)=>awardRegistry.set(key,value));
+  return awardRegistry.size;
+}
+function loadAwardsData(){
+  return fetch('./awards.json',{cache:'default'})
+    .then(r=>{if(!r.ok)throw Error('awards.json '+r.status);return r.json();})
+    .then(data=>{
+      applyAwardRegistry(data);
+      if(allData.length){
+        renderList(getRows());
+        if(commentRestaurant&&commentPanel?.classList.contains('open')){
+          const row=dataForRow(commentRestaurant.row)||commentRestaurant;
+          renderDetailAwardHeader(row);
+          renderRestaurantDetailInfo(row,null);
+        }
+      }
+      return true;
+    }).catch(()=>false);
+}
 function aggregateRestaurantRows(rows){
   const groups=new Map();
   (Array.isArray(rows)?rows:[]).forEach((row,index)=>{
@@ -5827,6 +5911,7 @@ function renderMobileList(rows){
         (hours.status!=='unknown'?'<span class="mobile-card-hours '+esc(hours.status)+'">'+esc(hours.label)+'</span>':'')+
         (distance?'<span class="mobile-card-distance">↔ '+esc(distance)+'</span>':'')+
       '</div>'+
+      awardBadgesHtml(x)+
       (tags.length?'<div class="mobile-card-tags">'+tags.map(t=>'<span class="mobile-card-tag">'+esc(t)+'</span>').join('')+'</div>':'')+
       (matchedAddress?'<div class="mobile-card-address">'+highlightMatch(x.address,q)+'</div>':'')+
     '</div>';
@@ -5882,6 +5967,7 @@ function renderList(rows){
         (hours.status!=='unknown'?'<span class="card-hours '+esc(hours.status)+'">'+esc(hours.label)+'</span>':'')+
         (distance?'<span class="card-distance" title="'+esc(currentAnchorLabel())+' 기준 직선거리" aria-label="'+esc(currentAnchorLabel())+'에서 직선거리 '+esc(distance)+'">↔ '+esc(distance)+'</span>':'')+
       '</div>'+
+      awardBadgesHtml(x)+
       (tags.length?'<div class="card-tags">'+tags.map(t=>'<span class="card-tag" title="'+esc(t)+'">'+highlightMatch(t,q)+'</span>').join('')+'</div>':'')+
       (!tags.length&&summary?'<div class="card-feature">'+highlightMatch(summary,q)+'</div>':'')+
       ((matchedAddress||(!tags.length&&!summary&&x.address))?'<div class="card-address">'+highlightMatch(x.address,q)+'</div>':'')+
@@ -6460,7 +6546,7 @@ function renderRestaurantDetailInfo(row,place){
     ['전화',phone],['카카오 업종',kakaoCategory],['주소',address]
   ].filter(x=>String(x[1]||'').trim());
 
-  let html='';
+  let html=awardDetailHtml(row);
   if(weeklyHoursHtml){
     html+='<div class="detail-info-row detail-hours-info"><div class="detail-info-label">영업시간</div><div class="detail-info-value">'+weeklyHoursHtml+'</div></div>';
   }else if(placeUrl){
@@ -7240,6 +7326,7 @@ function loadLiveDb(){
 }
 
 async function loadDashboardData(){
+  loadAwardsData();
   // Start the live DB/comments request immediately, but never block the fast
   // static restaurant list on it.
   liveDbPromise=loadLiveDb().catch(()=>false);
@@ -8423,6 +8510,7 @@ function openComments(restaurant){
   if(isGroupFriendly(restaurant))tags.push('단체');
   if(/빠른|빨리|회전 빠|금방/.test(filterText(restaurant)))tags.push('빠른 식사');
   detailTags.innerHTML=tags.map(x=>'<span class="detail-tag">'+esc(x)+'</span>').join('');
+  renderDetailAwardHeader(restaurant);
 
   renderRestaurantDetailInfo(restaurant,null);
   renderRelatedPlaces(restaurant);
