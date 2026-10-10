@@ -8395,6 +8395,8 @@ function clearSuggestFields(){
   editRatingHelp.textContent='평점은 선택한 대표 등록건 1건에만 반영됩니다.';
   ['suggestNameHidden','suggestLat','suggestLng','suggestPlaceId','suggestPlaceUrl','suggestAddress','editKeyName','editKeyAddress','editRatingRow']
     .forEach(id=>{document.getElementById(id).value='';});
+  const suggestRegion=document.getElementById('suggestRegion');
+  if(suggestRegion)suggestRegion.value=currentRegionConfig().db;
 }
 function setSuggestMode(mode){
   suggestMode=mode==='edit'?'edit':'new';
@@ -8409,6 +8411,7 @@ function setSuggestMode(mode){
 function openSuggestModal(){
   suggestMode='new';
   clearSuggestFields();
+  syncRegionUI();
   applySuggestModeUI();
   suggestPending=false;
   suggestSubmit.disabled=false;
@@ -9169,6 +9172,12 @@ window.addEventListener('popstate',()=>{
   }
 });
 
+syncRegionRuntime();
+syncRegionUI();
+updateRegionUrl_(false);
+document.getElementById('regionSelect')?.addEventListener('change',e=>{
+  setActiveRegion(e.target.value,{updateUrl:true,moveMap:true,notify:true});
+});
 updateMultiFilterUI();
 syncSortUI();
 if(isMobile()){
