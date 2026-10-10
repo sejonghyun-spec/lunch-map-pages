@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-07-review-alerts-v95">
+<meta name="lunch-map-build" content="2026-10-10-regions-v96">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -77,10 +77,13 @@ button,input,select,textarea{font:inherit}
   height:100%;
   display:flex;
   align-items:center;
-  padding:0 20px;
+  justify-content:space-between;
+  gap:12px;
+  padding:0 16px 0 20px;
   border-right:1px solid var(--line);
   min-width:0;
 }
+.brand-copy{min-width:0}
 .brand-title{
   font-size:24px;
   font-weight:800;
@@ -93,6 +96,35 @@ button,input,select,textarea{font:inherit}
   color:var(--muted);
   font-size:13px;
   font-weight:600;
+}
+.region-select{
+  flex:0 0 auto;
+  height:36px;
+  min-width:88px;
+  border:1px solid #d9d1cb;
+  border-radius:10px;
+  padding:0 28px 0 10px;
+  background:var(--theme-control-bg);
+  color:#4f575c;
+  font-size:13px;
+  font-weight:800;
+  cursor:pointer;
+  outline:none;
+}
+.region-select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(154,79,49,.10)}
+.region-anchor-marker{
+  display:flex;align-items:center;gap:7px;white-space:nowrap;
+  transform:translateY(-6px);pointer-events:none
+}
+.region-anchor-pin{
+  display:grid;place-items:center;width:30px;height:30px;border:3px solid #fff;border-radius:50%;
+  background:#2f3b43;color:#fff;font-size:14px;font-weight:900;
+  box-shadow:0 4px 12px rgba(21,32,38,.28)
+}
+.region-anchor-label{
+  padding:5px 8px;border:1px solid rgba(56,68,75,.16);border-radius:8px;
+  background:rgba(255,255,255,.96);color:#293238;font-size:12px;font-weight:850;
+  box-shadow:0 4px 12px rgba(36,48,56,.14)
 }
 .top-filters{
   display:flex;
@@ -2076,8 +2108,18 @@ html[data-theme="bistro"] .capture-paste-zone{border-color:#a89886;border-radius
     grid-column:1;
     grid-row:1;
     border-right:0;
-    padding:0 6px 0 14px;
+    padding:0 4px 0 12px;
     overflow:hidden;
+    gap:6px;
+  }
+  .brand-copy{overflow:hidden}
+  .region-select{
+    min-width:69px;
+    width:69px;
+    height:34px;
+    padding:0 20px 0 7px;
+    border-radius:9px;
+    font-size:12px;
   }
   .brand-title{
     overflow:hidden;
@@ -2770,6 +2812,9 @@ html[data-theme="night"] .suggest-btn{background:#f0a93d;color:#16110a;box-shado
 html[data-theme="night"] .roulette-btn{color:#ffd28b}
 html[data-theme="night"] .account-btn.connected{border-color:#315b43;background:#17271e;color:#8dd7a7}
 html[data-theme="night"] .account-btn.needs-auth{border-color:#70463d;background:#2b1d1a;color:#ffad97}
+html[data-theme="night"] .region-select{border-color:#3a424b;background:#171b21;color:#e8edf0}
+html[data-theme="night"] .region-anchor-label{border-color:#3a424b;background:rgba(23,27,33,.96);color:#f0f3f5}
+html[data-theme="night"] .region-anchor-pin{border-color:#171b21;background:#e6e9eb;color:#1c2227}
 html[data-theme="night"] .review-alert-btn.has-unread{border-color:#8c7428;background:#302914;color:#ffd978}
 html[data-theme="night"] .review-alert-panel{border-color:#343b43;background:#1b2026;box-shadow:0 18px 48px rgba(0,0,0,.48)}
 html[data-theme="night"] .review-alert-head{border-color:#30363d}
@@ -3913,7 +3958,12 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
 <div class="app">
   <header class="topbar">
     <div class="brand">
-      <div><div class="brand-title">막냉이 합정 점심 뭐먹지 🍴</div><div class="brand-sub">합정·망원 점심 식당 지도</div></div>
+      <div class="brand-copy"><div id="brandTitle" class="brand-title">막냉이 합정 점심 뭐먹지 🍴</div><div id="brandSub" class="brand-sub">합정·망원 점심 식당 지도</div></div>
+      <select id="regionSelect" class="region-select" aria-label="지역 선택">
+        <option value="hapjeong">합정</option>
+        <option value="pohang">포항</option>
+        <option value="chungju">충주</option>
+      </select>
     </div>
     <div id="filters" class="top-filters"></div>
     <div id="themeControl" class="theme-control">
@@ -4001,6 +4051,12 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
             <option value="500">500m 이내</option>
             <option value="700">700m 이내</option>
             <option value="1000">1km 이내</option>
+                <option value="2000">2km 이내</option>
+                <option value="3000">3km 이내</option>
+                <option value="5000">5km 이내</option>
+            <option value="2000">2km 이내</option>
+            <option value="3000">3km 이내</option>
+            <option value="5000">5km 이내</option>
           </select>
           </label>
         </div>
@@ -4383,6 +4439,7 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
       <input id="suggestLng" type="hidden" name="lng">
       <input id="suggestPlaceId" type="hidden" name="placeId">
       <input id="suggestPlaceUrl" type="hidden" name="placeUrl">
+      <input id="suggestRegion" type="hidden" name="region" value="합정">
       <input class="honeypot" type="text" name="website" tabindex="-1" autocomplete="off">
 
       <div id="suggestStatus" class="form-status"></div>
@@ -4409,10 +4466,45 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
 const KAKAO_KEY='c6656c45b7640edcf233a408bf0afa9a';
 const COLORS={'한식':'#d97706','일식':'#2563eb','중식':'#dc2626','양식':'#7c3aed','아시아':'#059669','분식':'#db2777','카페':'#92400e','회식':'#475569'};
 const ORDER=['전체','한식','일식','중식','양식','아시아','분식','카페','회식'];
-const HOME_LAT=37.5501151,HOME_LNG=126.9146385;
-const SEAH_TOWER_LAT=37.55076110,SEAH_TOWER_LNG=126.91420060;
-const DESKTOP_INITIAL_MAP_LEVEL=2;
-const MOBILE_INITIAL_MAP_LEVEL=4;
+const REGION_CONFIG={
+  hapjeong:{
+    key:'hapjeong',db:'합정',label:'합정',title:'막냉이 합정 점심 뭐먹지 🍴',
+    documentTitle:'막냉이 합정 점심 뭐먹지',sub:'합정·망원 점심 식당 지도',
+    anchorLabel:'세아타워',anchorFullLabel:'세아타워',
+    centerLat:37.5501151,centerLng:126.9146385,anchorLat:37.55076110,anchorLng:126.91420060,
+    desktopLevel:2,mobileLevel:4
+  },
+  pohang:{
+    key:'pohang',db:'포항',label:'포항',title:'막냉이 포항 점심 뭐먹지 🍴',
+    documentTitle:'막냉이 포항 점심 뭐먹지',sub:'세아특수강 포항공장 주변 점심 식당 지도',
+    anchorLabel:'포항공장',anchorFullLabel:'세아특수강 포항공장',
+    centerLat:35.985646806619,centerLng:129.37393419854,anchorLat:35.985646806619,anchorLng:129.37393419854,
+    desktopLevel:5,mobileLevel:6
+  },
+  chungju:{
+    key:'chungju',db:'충주',label:'충주',title:'막냉이 충주 점심 뭐먹지 🍴',
+    documentTitle:'막냉이 충주 점심 뭐먹지',sub:'세아특수강 충주1공장 주변 점심 식당 지도',
+    anchorLabel:'충주1공장',anchorFullLabel:'세아특수강 충주1공장',
+    centerLat:37.012150943227,centerLng:127.94439170246,anchorLat:37.012150943227,anchorLng:127.94439170246,
+    desktopLevel:5,mobileLevel:6
+  }
+};
+const REGION_STORAGE_KEY='lunchMapRegionV1';
+function initialRegionKey(){
+  const query=new URL(location.href).searchParams.get('region');
+  if(REGION_CONFIG[query])return query;
+  try{
+    const saved=localStorage.getItem(REGION_STORAGE_KEY);
+    if(REGION_CONFIG[saved])return saved;
+  }catch(e){}
+  return 'hapjeong';
+}
+let activeRegionKey=initialRegionKey();
+let HOME_LAT=REGION_CONFIG[activeRegionKey].centerLat,HOME_LNG=REGION_CONFIG[activeRegionKey].centerLng;
+let SEAH_TOWER_LAT=REGION_CONFIG[activeRegionKey].anchorLat,SEAH_TOWER_LNG=REGION_CONFIG[activeRegionKey].anchorLng;
+let DESKTOP_INITIAL_MAP_LEVEL=REGION_CONFIG[activeRegionKey].desktopLevel;
+let MOBILE_INITIAL_MAP_LEVEL=REGION_CONFIG[activeRegionKey].mobileLevel;
+function currentRegionConfig(){return REGION_CONFIG[activeRegionKey]||REGION_CONFIG.hapjeong;}
 function useMobileInitialView(){
   const ua=String(navigator.userAgent||'');
   return window.matchMedia('(max-width:900px)').matches ||
@@ -4425,7 +4517,7 @@ const SUGGEST_URL='https://script.google.com/a/seah.co.kr/macros/s/AKfycbzpCuw9c
 let allData=[],selectedCategories=new Set(),searchKeyword='',sortMode='default';
 let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all',distanceFilter='all';
 let favoritesOnly=false,recentOnly=false,mapOnlyMode=false,reviewSortMode='latest';
-let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',hoveredMarkerRow=null,searchTimer=null;
+let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,regionAnchorOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',hoveredMarkerRow=null,searchTimer=null;
 let lastMapRows=[],lastClusterLevel=null,mapIdleRenderTimer=null,lastDetailRow=null,lastListSignature='';
 let compareKeys=[],deepLinkHandled=false;
 let pendingPlaceText=null,placeCaptureBusy=false,placeCaptureTimeoutTimer=null,placeCaptureRequestSeq=0,menuRequestSeq=0;
@@ -4468,6 +4560,53 @@ function readLocalJson(key,fallback){
 }
 function writeLocalJson(key,value){
   try{localStorage.setItem(key,JSON.stringify(value));}catch(e){}
+}
+function regionKeyForValue(value){
+  const raw=String(value||'').trim().toLowerCase();
+  if(raw==='포항'||raw==='pohang')return 'pohang';
+  if(raw==='충주'||raw==='chungju'||raw==='충주1')return 'chungju';
+  if(raw==='합정'||raw==='hapjeong'||raw==='서울')return 'hapjeong';
+  return '';
+}
+function regionKeyForRow(row){
+  const explicit=regionKeyForValue(row&&row.region);
+  if(explicit)return explicit;
+  const address=String(row&&row.address||'');
+  if(/포항/.test(address))return 'pohang';
+  if(/충주/.test(address))return 'chungju';
+  return 'hapjeong';
+}
+function regionCenterForRow(row){
+  const key=regionKeyForRow(row);
+  const cfg=REGION_CONFIG[key]||currentRegionConfig();
+  return {lat:cfg.centerLat,lng:cfg.centerLng};
+}
+function syncRegionRuntime(){
+  const cfg=currentRegionConfig();
+  HOME_LAT=cfg.centerLat;HOME_LNG=cfg.centerLng;
+  SEAH_TOWER_LAT=cfg.anchorLat;SEAH_TOWER_LNG=cfg.anchorLng;
+  DESKTOP_INITIAL_MAP_LEVEL=cfg.desktopLevel;
+  MOBILE_INITIAL_MAP_LEVEL=cfg.mobileLevel;
+}
+function syncRegionUI(){
+  const cfg=currentRegionConfig();
+  const title=document.getElementById('brandTitle');
+  const sub=document.getElementById('brandSub');
+  const select=document.getElementById('regionSelect');
+  const suggestRegion=document.getElementById('suggestRegion');
+  if(title)title.textContent=cfg.title;
+  if(sub)sub.textContent=cfg.sub;
+  if(select)select.value=cfg.key;
+  if(suggestRegion)suggestRegion.value=cfg.db;
+  document.title=cfg.documentTitle;
+}
+function updateRegionUrl_(removePlace=true){
+  try{
+    const url=new URL(location.href);
+    url.searchParams.set('region',activeRegionKey);
+    if(removePlace)url.searchParams.delete('place');
+    history.replaceState(history.state||{},'',url);
+  }catch(e){}
 }
 function favoriteSet(){
   return new Set((readLocalJson(FAVORITES_KEY,[])||[]).map(String));
@@ -4514,7 +4653,7 @@ function highlightMatch(value,query){
 
 function listUiSignature(){
   return [
-    searchKeyword,sortMode,ratingFilter,capacityFilter,featureFilter,distanceFilter,
+    activeRegionKey,searchKeyword,sortMode,ratingFilter,capacityFilter,featureFilter,distanceFilter,
     favoritesOnly,recentOnly,mapOnlyMode,[...selectedCategories].sort().join('|')
   ].join('::');
 }
@@ -4623,7 +4762,7 @@ function aggregateRestaurantRows(rows){
 
     // Prefer the most complete values while keeping the first row id stable.
     [...group].reverse().forEach(x=>{
-      ['category','feature','capacity','address','lat','lng','note','locationHint','_placeId'].forEach(k=>{
+      ['category','feature','capacity','address','lat','lng','note','locationHint','region','_placeId'].forEach(k=>{
         if((base[k]==null||base[k]==='')&&x[k]!=null&&x[k]!=='')base[k]=x[k];
       });
     });
@@ -4635,8 +4774,11 @@ function aggregateRestaurantRows(rows){
     return base;
   });
 }
-function displayRestaurants(){
+function allDisplayRestaurants(){
   return aggregateRestaurantRows(allData);
+}
+function displayRestaurants(){
+  return allDisplayRestaurants().filter(row=>regionKeyForRow(row)===activeRegionKey);
 }
 const ratingScore=x=>{
   const avg=Number(x&&x._ratingAvg);
@@ -4716,7 +4858,7 @@ function updateMultiFilterUI(){
       ratingFilter:{all:'평점',5:'5점',4:'4점↑',3:'3점↑'},
       capacityFilter:{all:'인원',4:'4명+',8:'8명+',group:'단체'},
       featureFilter:{all:'특징',waiting:'웨이팅',reservation:'예약',room:'룸',group:'단체',fast:'빠른 식사'},
-      distanceFilter:{all:'거리',300:'300m',500:'500m',700:'700m',1000:'1km'}
+      distanceFilter:{all:'거리',300:'300m',500:'500m',700:'700m',1000:'1km',2000:'2km',3000:'3km',5000:'5km'}
     };
     const label=el.parentElement.querySelector('.compact-filter-label');
     if(label)label.textContent=labels[id][value]||labels[id].all;
@@ -4741,8 +4883,64 @@ function resetMultiFilters(){
   mapOnlyMode=false;
   updateMultiFilterUI();
 }
+function setActiveRegion(key,{updateUrl=true,moveMap=true,notify=false}={}){
+  if(!REGION_CONFIG[key])return false;
+  const changed=activeRegionKey!==key;
+  activeRegionKey=key;
+  syncRegionRuntime();
+  try{localStorage.setItem(REGION_STORAGE_KEY,key);}catch(e){}
+  syncRegionUI();
+
+  if(changed){
+    selectedCategories.clear();
+    searchKeyword='';
+    sortMode='default';
+    compareKeys=[];
+    resetMultiFilters();
+    document.getElementById('search').value='';
+    const mobileSearchEl=document.getElementById('mobileSearch');
+    if(mobileSearchEl)mobileSearchEl.value='';
+    closeSearchSuggestions();
+    closeCompareModal();
+    if(commentPanel?.classList.contains('open')||selectedRow!=null)clearSelectedRows();
+    syncSortUI();
+    syncCompareUI();
+    lastListSignature='';
+  }
+  if(updateUrl)updateRegionUrl_(true);
+
+  buildFilters();
+  if(mapReady&&map&&moveMap){
+    map.setCenter(new kakao.maps.LatLng(HOME_LAT,HOME_LNG));
+    map.setLevel(getInitialMapLevel());
+    syncRegionAnchorMarker();
+  }
+  render(false);
+  setTimeout(hydrateMissingRows,80);
+  if(notify)showToast(currentRegionConfig().label+' 지역으로 전환했습니다.');
+  return true;
+}
 
 function loadKakao(){return new Promise((resolve,reject)=>{if(window.kakao&&kakao.maps)return resolve();const s=document.createElement('script');s.src='https://dapi.kakao.com/v2/maps/sdk.js?appkey='+KAKAO_KEY+'&autoload=false&libraries=services';s.async=true;s.onload=()=>window.kakao&&kakao.maps?resolve():reject(new Error('SDK init failed'));s.onerror=()=>reject(new Error('SDK load failed'));document.head.appendChild(s);});}
+function syncRegionAnchorMarker(){
+  if(regionAnchorOverlay){
+    try{regionAnchorOverlay.setMap(null);}catch(e){}
+    regionAnchorOverlay=null;
+  }
+  if(!mapReady||!map||!window.kakao?.maps)return;
+  const cfg=currentRegionConfig();
+  const wrap=document.createElement('div');
+  wrap.className='region-anchor-marker';
+  wrap.innerHTML='<span class="region-anchor-pin">S</span><span class="region-anchor-label">'+esc(cfg.anchorFullLabel)+'</span>';
+  regionAnchorOverlay=new kakao.maps.CustomOverlay({
+    map,
+    position:new kakao.maps.LatLng(cfg.anchorLat,cfg.anchorLng),
+    content:wrap,
+    xAnchor:.5,
+    yAnchor:1.12,
+    zIndex:3
+  });
+}
 function syncMarkerLabelVisibility(){
   const wrap=document.querySelector('.map-wrap');
   if(wrap)wrap.classList.remove('show-marker-labels');
@@ -4790,6 +4988,7 @@ function initMap(){
     placesService=new kakao.maps.services.Places();
     geocoder=new kakao.maps.services.Geocoder();
     mapReady=true;
+    syncRegionAnchorMarker();
     document.getElementById('mapStatus').classList.add('hidden');
     syncMarkerLabelVisibility();
     kakao.maps.event.addListener(map,'idle',()=>{
@@ -4950,6 +5149,8 @@ function kakaoDirectionUrl(row,place){
 }
 function shareUrlFor(row){
   const url=new URL(location.href);
+  const rowRegion=regionKeyForRow(row);
+  url.searchParams.set('region',rowRegion);
   url.searchParams.set('place',restaurantKey(row));
   return url.toString();
 }
@@ -4958,7 +5159,8 @@ async function shareRestaurant(row){
   const url=shareUrlFor(row);
   try{
     if(navigator.share){
-      await navigator.share({title:row.name+' · 막냉이 합정 점심',text:row.name+' 여기 어때요?',url});
+      const cfg=REGION_CONFIG[regionKeyForRow(row)]||currentRegionConfig();
+      await navigator.share({title:row.name+' · 막냉이 '+cfg.label+' 점심',text:row.name+' 여기 어때요?',url});
       return;
     }
     await navigator.clipboard.writeText(url);
@@ -4975,9 +5177,11 @@ function openDeepLinkedPlace(){
   if(deepLinkHandled||!allData.length)return;
   const token=new URL(location.href).searchParams.get('place');
   if(!token)return;
-  const row=displayRestaurants().find(x=>restaurantKey(x)===token||String(x.name||'')===token);
+  const row=allDisplayRestaurants().find(x=>restaurantKey(x)===token||String(x.name||'')===token);
   if(!row)return;
   deepLinkHandled=true;
+  const targetRegion=regionKeyForRow(row);
+  if(targetRegion!==activeRegionKey)setActiveRegion(targetRegion,{updateUrl:false,moveMap:true,notify:false});
   setTimeout(()=>selectRow(row.row,true,false),0);
 }
 function compareRows(){
@@ -5407,7 +5611,7 @@ function renderMap(rows,fit=true){
   setTimeout(syncMarkerLabelVisibility,0);
 }
 function buildFilters(){
-  const cats=[...new Set(allData.map(x=>x.category).filter(Boolean))];
+  const cats=[...new Set(displayRestaurants().map(x=>x.category).filter(Boolean))];
   const validCats=new Set(cats);
 
   // Live/static DB refreshes can change available categories. Keep only valid selections.
@@ -5451,6 +5655,7 @@ function distanceFromSeahTower(x){
     {lat:Number(x.lat),lng:Number(x.lng)}
   );
 }
+function currentAnchorLabel(){return currentRegionConfig().anchorLabel;}
 function formatDistanceFromSeahTower(x){
   const meters=distanceFromSeahTower(x);
   if(!Number.isFinite(meters))return '';
@@ -5614,7 +5819,7 @@ function renderList(rows){
         (score?'<span class="rating">★ '+score.toFixed(1)+'</span><span class="card-evaluations">평가 '+(Number(x._ratingCount)||1)+'</span>':'')+
         '<span class="card-review" data-review-key="'+esc(restaurantCommentKey(x))+'" hidden></span>'+
         (hours.status!=='unknown'?'<span class="card-hours '+esc(hours.status)+'">'+esc(hours.label)+'</span>':'')+
-        (distance?'<span class="card-distance" title="세아타워 기준 직선거리" aria-label="세아타워에서 직선거리 '+esc(distance)+'">↔ '+esc(distance)+'</span>':'')+
+        (distance?'<span class="card-distance" title="'+esc(currentAnchorLabel())+' 기준 직선거리" aria-label="'+esc(currentAnchorLabel())+'에서 직선거리 '+esc(distance)+'">↔ '+esc(distance)+'</span>':'')+
       '</div>'+
       (tags.length?'<div class="card-tags">'+tags.map(t=>'<span class="card-tag" title="'+esc(t)+'">'+highlightMatch(t,q)+'</span>').join('')+'</div>':'')+
       (!tags.length&&summary?'<div class="card-feature">'+highlightMatch(summary,q)+'</div>':'')+
@@ -5752,15 +5957,16 @@ function persistEnrichment(row,place){
 function searchPlaceForRow(row){
   return new Promise(resolve=>{
     if(!placesService||!row||!row.name)return resolve(null);
+    const center=regionCenterForRow(row);
     const opts={
-      location:new kakao.maps.LatLng(HOME_LAT,HOME_LNG),
+      location:new kakao.maps.LatLng(center.lat,center.lng),
       radius:20000,
       size:15,
       sort:kakao.maps.services.SortBy.DISTANCE
     };
     placesService.keywordSearch(row.name,(data,status)=>{
       if(status!==kakao.maps.services.Status.OK)return resolve(null);
-      resolve(chooseBestKakaoPlace(row,data));
+      resolve(bestExactKakaoPlace(row,data)||chooseBestKakaoPlace(row,data));
     },opts);
   });
 }
@@ -5827,8 +6033,8 @@ function kakaoKeywordSearchPromise(keyword,row){
     if(!placesService||!String(keyword||'').trim())return resolve(null);
     const opts={
       location:new kakao.maps.LatLng(
-        hasValidCoords(row)?Number(row.lat):HOME_LAT,
-        hasValidCoords(row)?Number(row.lng):HOME_LNG
+        hasValidCoords(row)?Number(row.lat):regionCenterForRow(row).lat,
+        hasValidCoords(row)?Number(row.lng):regionCenterForRow(row).lng
       ),
       radius:20000,
       size:15,
@@ -6180,7 +6386,7 @@ function renderRestaurantDetailInfo(row,place){
   const weeklyHoursHtml=renderWeeklyHours(row);
 
   const infoRows=[
-    ['특징',row.feature],['수용인원',row.capacity],['비고',row.note],['거리',distance?('세아타워 기준 '+distance):''],
+    ['특징',row.feature],['수용인원',row.capacity],['비고',row.note],['거리',distance?(currentAnchorLabel()+' 기준 '+distance):''],
     ['전화',phone],['카카오 업종',kakaoCategory],['주소',address]
   ].filter(x=>String(x[1]||'').trim());
 
@@ -6300,7 +6506,7 @@ async function hydrateMissingRows(){
   if(enrichQueueRunning||!placesService||!allData.length)return;
   enrichQueueRunning=true;
   try{
-    const targets=allData.filter(x=>
+    const targets=displayRestaurants().filter(x=>
       x&&x.name&&(
         !String(x.address||'').trim()||
         !hasValidCoords(x)||
@@ -6551,7 +6757,7 @@ function flattenReviewBundle_(bundle){
   return items;
 }
 function reviewRestaurantForKey_(key){
-  return displayRestaurants().find(row=>restaurantCommentKey(row)===key)||null;
+  return allDisplayRestaurants().find(row=>restaurantCommentKey(row)===key)||null;
 }
 function reviewRestaurantName_(item){
   const restaurant=reviewRestaurantForKey_(item&&item.key);
@@ -6672,6 +6878,8 @@ function openUnreadReview_(id){
     showToast('해당 식당을 찾지 못했습니다.');
     return;
   }
+  const targetRegion=regionKeyForRow(restaurant);
+  if(targetRegion!==activeRegionKey)setActiveRegion(targetRegion,{updateUrl:true,moveMap:true,notify:false});
   selectRow(restaurant.row,true,false);
   setTimeout(()=>{
     setDetailTab('reviews',false);
@@ -8187,6 +8395,8 @@ function clearSuggestFields(){
   editRatingHelp.textContent='평점은 선택한 대표 등록건 1건에만 반영됩니다.';
   ['suggestNameHidden','suggestLat','suggestLng','suggestPlaceId','suggestPlaceUrl','suggestAddress','editKeyName','editKeyAddress','editRatingRow']
     .forEach(id=>{document.getElementById(id).value='';});
+  const suggestRegion=document.getElementById('suggestRegion');
+  if(suggestRegion)suggestRegion.value=currentRegionConfig().db;
 }
 function setSuggestMode(mode){
   suggestMode=mode==='edit'?'edit':'new';
@@ -8201,6 +8411,7 @@ function setSuggestMode(mode){
 function openSuggestModal(){
   suggestMode='new';
   clearSuggestFields();
+  syncRegionUI();
   applySuggestModeUI();
   suggestPending=false;
   suggestSubmit.disabled=false;
@@ -8513,6 +8724,7 @@ suggestForm.addEventListener('submit',e=>{
   const item={
     row:tempRow,
     category,
+    region:currentRegionConfig().db,
     name,
     note,
     rating,
@@ -8960,6 +9172,12 @@ window.addEventListener('popstate',()=>{
   }
 });
 
+syncRegionRuntime();
+syncRegionUI();
+updateRegionUrl_(false);
+document.getElementById('regionSelect')?.addEventListener('change',e=>{
+  setActiveRegion(e.target.value,{updateUrl:true,moveMap:true,notify:true});
+});
 updateMultiFilterUI();
 syncSortUI();
 if(isMobile()){
