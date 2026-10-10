@@ -116,6 +116,32 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    await page.waitForTimeout(100);
    assert.equal(await state(()=>activeRegionKey),'hapjeong');
  });
+ await check('passive regional redraw preserves manual map zoom',async()=>{
+   const result=await state(()=>{
+     const originalLevel=map.getLevel();
+     map.setLevel(2);
+     const chosen=map.getLevel();
+
+     renderMap([],false);
+     const afterEmpty=map.getLevel();
+
+     renderMap([{
+       row:999999,
+       category:'기타',
+       name:'QA 임시',
+       lat:REGION_CONFIG.pohang.anchorLat,
+       lng:REGION_CONFIG.pohang.anchorLng
+     }],false);
+     const afterSingle=map.getLevel();
+
+     renderMap(getRows().filter(hasValidCoords),false);
+     if(map.getLevel()!==originalLevel)map.setLevel(originalLevel);
+     return {chosen,afterEmpty,afterSingle};
+   });
+   assert.equal(result.chosen,2);
+   assert.equal(result.afterEmpty,2);
+   assert.equal(result.afterSingle,2);
+ });
  await check('all static DOM ids unique; event targets present',async()=>{
    const s=await state(()=>{const ids=[...document.querySelectorAll('[id]')].map(x=>x.id);return ids.filter((id,i)=>ids.indexOf(id)!==i)});assert.deepEqual(s,[]);
    const ids=[...html.matchAll(/getElementById\(['"]([^'"]+)['"]\)/g)].map(m=>m[1]);
