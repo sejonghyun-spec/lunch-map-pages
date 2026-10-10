@@ -820,6 +820,77 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.equal(checked.judged[3].valid,false,'a second newly pasted name at the same address must be blocked');
    assert.match(checked.judged[3].reason,/중복 입력/);
  });
+ await check('existing Place restaurant without hours accepts addressless branded name and persists update',async()=>{
+   const checked=await state(async()=>{
+     const row=allData.find(x=>x.name==='뼈칼국수');
+     const prior={hours:row.hours,loadLiveDb,submitPlaceCaptureForm,armPlaceCaptureTimeout,
+       currentAccount,importMode:placeImportMode,placeText:String(placeTextInput.value||'')};
+     const raw=[
+       '평이담백 뼈칼국수 본점',
+       '칼국수,만두 리뷰 7,208',
+       '영업 종료11:00에 영업 시작'
+     ].join('\n');
+     let sent=null,preview=null,withoutHours=null,ambiguous=null;
+     try{
+       row.hours='';
+       placeBatchIndexCache=null;
+       const parsed=buildPlaceTextPayload(raw);
+       const judged=assessPlaceBatchRecords(parsed.records);
+       preview=judged.map(x=>({name:x.name,address:x.address,valid:x.valid,
+         isNew:x.isNew,matchedWithoutAddress:x.matchedWithoutAddress,
+         infoLines:x.infoLines,reason:x.reason}));
+       // A second matching branch at a different address must be blocked.
+       const extra={...row,row:99998,address:'서울 마포구 테스트로 201'};
+       allData.push(extra);
+       placeBatchIndexCache=null;
+       ambiguous=assessPlaceBatchRecords(buildPlaceTextPayload(raw).records)[0]?.valid;
+       allData.pop();placeBatchIndexCache=null;
+       currentAccount={email:'sejong.hyun@seah.co.kr',name:'QA'};
+       loadLiveDb=async()=>true;
+       submitPlaceCaptureForm=fields=>{sent=fields;};
+       armPlaceCaptureTimeout=()=>{};
+       setPlaceImportMode('combined');
+       placeTextInput.value=raw;
+       updatePlaceTextHint();
+       await submitPlaceText();
+       row.hours='11:00-20:00'; // hours already stored: no address-only auto-update
+       placeBatchIndexCache=null;
+       withoutHours=assessPlaceBatchRecords(
+         buildPlaceTextPayload(['뼈칼국수','영업시간 12:00-21:00'].join('\n')).records
+       )[0]?.valid;
+       return {preview,ambiguous,sent,withoutHours,pending:pendingPlaceText?.names,
+         beforeCount:placeBatchItems.length};
+     }finally{
+       row.hours=prior.hours;
+       placeBatchIndexCache=null;
+       loadLiveDb=prior.loadLiveDb;
+       submitPlaceCaptureForm=prior.submitPlaceCaptureForm;
+       armPlaceCaptureTimeout=prior.armPlaceCaptureTimeout;
+       currentAccount=prior.currentAccount;
+       pendingPlaceText=null;
+       setPlaceCaptureBusy(false);
+       placeTextInput.value=prior.placeText;
+       setPlaceImportMode(prior.importMode);
+       updatePlaceTextHint();
+     }
+   });
+   assert.equal(checked.preview.length,1);
+   assert.equal(checked.preview[0].name,'뼈칼국수');
+   assert.equal(checked.preview[0].address,'서울 마포구 양화로7길 84');
+   assert.equal(checked.preview[0].valid,true);
+   assert.equal(checked.preview[0].isNew,false);
+   assert.equal(checked.preview[0].matchedWithoutAddress,true);
+   assert.ok(checked.preview[0].infoLines.some(x=>x.includes('11:00')));
+   assert.equal(checked.ambiguous,false,'cannot auto-update when similarly named DB rows point to different addresses');
+   assert.equal(checked.withoutHours,false,'existing hours require address to change');
+   assert.ok(checked.sent,'updater must submit the address inferred from the unique existing row');
+   const payload=JSON.parse(checked.sent.structuredJson);
+   assert.equal(payload.length,1);
+   assert.equal(payload[0].name,'뼈칼국수','server must receive canonical DB name');
+   assert.equal(payload[0].address,'서울 마포구 양화로7길 84');
+   assert.ok(payload[0].rawText.includes('영업 종료11:00에 영업 시작'));
+   assert.deepEqual(checked.pending,['뼈칼국수']);
+ });
  await check('new place import registers once then sends verified opening-hours update',async()=>{
    const result=await state(async()=>{
      const prior={loadLiveDb,findVerifiedKakaoRestaurant,registerNewPlaceFromText,
