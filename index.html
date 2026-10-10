@@ -8055,6 +8055,15 @@ function placeBatchExistingValuesMatch(record,matchedRows){
     });
   });
 }
+function placeImportCanonicalStoreName(raw){
+  const name=placeImportGenericNameLine(raw);
+  return name&&name.length<=60&&!/[\r\n]/.test(name)?name:'';
+}
+function placeImportRenameVerified(plan){
+  return placeImportCatalog().some(row=>
+    String(row.name||'').trim()===plan.to&&
+    placeBatchAddressKey(row.address)===placeBatchAddressKey(plan.address));
+}
 function assessPlaceBatchRecords(records){
   const seen=new Set(),index=placeBatchIndexedCatalog(),catalog=placeImportCatalog();
   return (records||[]).map((record,id)=>{
@@ -8080,6 +8089,10 @@ function assessPlaceBatchRecords(records){
     const compatible=addressRows.filter(row=>placeImportStrongNameMatch(sourceName,row.name));
     const unique=new Map(compatible.map(row=>[String(row.name).toLowerCase()+'|'+incomingKey,row]));
     const accepted=unique.size===1?[...unique.values()][0]:null;
+    const canonicalName=placeImportCanonicalStoreName(sourceName);
+    const renameTo=accepted&&canonicalName&&canonicalName!==String(accepted.name||'').trim()
+      ?canonicalName:'';
+    const renameFrom=renameTo?String(accepted.name||'').trim():'';
     const isNew=!!suppliedKey&&!addressRows.length&&!candidates.length;
     let reason='',unchanged=false;
     if(!sourceName)reason='식당명을 판별할 수 없습니다';
@@ -8090,11 +8103,12 @@ function assessPlaceBatchRecords(records){
     else if(seen.has(incomingKey))reason='중복 입력 (같은 주소는 첫 번째만 반영)';
     else if(unique.size>1)reason='동일 주소에 후보가 여러 개 있습니다';
     else if(!accepted&&!isNew)reason='등록 주소와 불일치 (기존 식당명 확인 필요)';
-    else if(accepted&&!record.infoLines.length&&!record.phone)reason='반영할 영업정보 없음';
-    else if(accepted&&placeBatchExistingValuesMatch(record,compatible)){reason='당일 확인한 정보와 동일';unchanged=true;}
+    else if(accepted&&!record.infoLines.length&&!record.phone&&!renameTo)reason='반영할 영업정보 없음';
+    else if(accepted&&!renameTo&&placeBatchExistingValuesMatch(record,compatible)){reason='당일 확인한 정보와 동일';unchanged=true;}
     if(!reason)seen.add(incomingKey);
     return {...record,address,importAddress:providedAddress,name:accepted?.name||record.name,sourceName,id,
       valid:!reason,isNew:!reason&&isNew,matchedWithoutAddress,
+      renameFrom:!reason?renameFrom:'',renameTo:!reason?renameTo:'',
       unchanged,reason,matchedRows:compatible.length};
   });
 }
@@ -8109,7 +8123,7 @@ function renderPlaceBatchPreview(){
   const unchanged=placeBatchItems.filter(x=>x.unchanged).length;
   const newCount=valid.filter(x=>x.isNew).length;
   placeBatchPreview.innerHTML='<div class="place-batch-summary">식당 '+placeBatchItems.length+
-    '건 감지 · 신규 '+newCount+'건 · 업데이트 '+(valid.length-newCount)+
+    '건 감지 · 신규 '+newCount+'건 · 이름 변경 '+valid.filter(x=>x.renameTo).length+'건 · 업데이트 '+(valid.length-newCount)+
     '건 · 선택 '+chosen.length+'건 · 동일 '+unchanged+'건 · 보류 '+(placeBatchItems.length-valid.length-unchanged)+'건</div>'+
     placeBatchItems.map(item=>{
       const selected=placeBatchSelected.has(item.id);
@@ -8117,8 +8131,9 @@ function renderPlaceBatchPreview(){
         '<input type="checkbox" data-batch-index="'+item.id+'" '+(item.valid?'':'disabled ')+(selected?'checked':'')+'>'+
         '<span><strong>'+esc(item.sourceName!==item.name?item.sourceName+' → '+item.name:item.name)+
         '</strong><small>'+esc((item.matchedWithoutAddress?'등록된 DB 주소 사용 · ':'')+(item.address||'주소 정보 없음'))+
-        '</small><small>'+esc(item.infoLines.slice(0,2).join(' · ')|| (item.phone?'전화번호만 확인':'영업정보 없음'))+'</small></span>'+
-        '<span class="place-batch-state">'+(item.valid?(item.isNew?'신규 등록':'업데이트'):'보류')+
+        '</small><small>'+esc(item.infoLines.slice(0,2).join(' · ')|| (item.phone?'전화번호만 확인':'영업정보 없음'))+'</small>'+ 
+        (item.renameTo?'<small>식당명 변경: '+esc(item.renameFrom)+' → '+esc(item.renameTo)+'</small>':'')+'</span>'+
+        '<span class="place-batch-state">'+(item.valid?(item.isNew?'신규 등록':item.renameTo?'이름 변경/업데이트':'업데이트'):'보류')+
         (item.reason?'<small>'+esc(item.reason)+'</small>':'')+'</span></label>';
     }).join('');
 }
@@ -8456,7 +8471,7 @@ async function submitPlaceText(){
   let selection=originalSelection,createdCount=0;
   setPlaceCaptureBusy(true);
   try{
-    if(selection.some(item=>item.isNew||item.matchedWithoutAddress)){
+    if(selection.some(item=>item.isNew||item.matchedWithoutAddress||item.renameTo)){
       setCaptureStatus('최신 DB에서 식당 및 주소 일치 여부를 다시 확인 중…');
       if(!await loadLiveDb())throw new Error('최신 DB를 조회하지 못해 등록·업데이트를 중단했습니다.');
       selection=assessPlaceBatchRecords(originalSelection);
@@ -8492,7 +8507,7 @@ async function submitPlaceText(){
         if(missing)throw new Error(missing.item.sourceName+': 서버 DB에서 신규 등록을 확인하지 못했습니다. 다시 등록하지 마세요.');
       }
     }
-    const updates=selection.filter(item=>item.infoLines.length||item.phone);
+    const updates=selection.filter(item=>item.infoLines.length||item.phone||item.renameTo);
     if(!updates.length){
       resetPlaceImportInputs();
       setPlaceCaptureBusy(false);
@@ -8501,9 +8516,9 @@ async function submitPlaceText(){
       return;
     }
     const names=[...new Set(updates.map(x=>x.name))];
-    const records=updates.map(({name,sourceName,isNew,matchedWithoutAddress,address,phone,infoLines})=>{
+    const records=updates.map(({name,sourceName,isNew,matchedWithoutAddress,address,phone,infoLines,renameFrom,renameTo})=>{
       const textName=isNew||matchedWithoutAddress?name:(sourceName||name);
-      return {name:textName,address,phone,infoLines,
+      return {name:textName,address,phone,infoLines,renameFrom:renameFrom||'',renameTo:renameTo||'',
         rawText:[textName,address,phone,...infoLines].filter(Boolean).join('\n')};
     });
     const compact=records.map(x=>x.rawText).join('\n\n');
@@ -8511,6 +8526,7 @@ async function submitPlaceText(){
       '-'+Math.random().toString(36).slice(2);
     pendingPlaceText={
       requestId,names,createdCount,
+      renamePlan:updates.filter(x=>x.renameTo).map(x=>({from:x.renameFrom,to:x.renameTo,address:x.address})),
       beforeSnapshot:placeImportSnapshot(names),
       originalText:placeInputSignature(),
       recordCount:updates.length,
@@ -8523,6 +8539,7 @@ async function submitPlaceText(){
       structuredJson:JSON.stringify(records),
       detectedNames:names.join('\n'),
       clientParsed:'1',
+      renameRequested:'1',
       requestId:String(requestId)
     });
     armPlaceCaptureTimeout(requestId);
