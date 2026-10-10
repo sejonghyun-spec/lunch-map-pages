@@ -743,7 +743,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    await page.locator('#placeSeparatedList .place-entry-input').first().fill(
      '교다이야 합정점\n서울 마포구 성지길 39\n영업시간 12:00-20:30');
    assert.equal(await page.locator('#placeBatchPreview input:checked').count(),1);
-   assert.match(await page.locator('#placeBatchPreview').innerText(),/교다이야 합정점 → 교다이야/);
+   assert.match(await page.locator('#placeBatchPreview').innerText(),/기존 DB 이름: 교다이야 → 플레이스: 교다이야 합정점/);
    assert.match(await page.locator('#placeSeparatedList .place-entry-state').first().innerText(),/교다이야.*지점명\/주소 일치/);
    const outbound=await state(()=>{
      const savedSubmit=submitPlaceCaptureForm,savedTimeout=armPlaceCaptureTimeout;
