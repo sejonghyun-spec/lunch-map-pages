@@ -78,7 +78,7 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    })));
    assert.equal(links.length,2);
    assert.ok(links.every(x=>x.href.startsWith('https://')&&x.target==='_blank'&&x.rel.includes('noopener')));
-   await state(()=>clearSelectedRows());
+   await state(()=>{clearSelectedRows();writeLocalJson(RECENTS_KEY,[]);});
    const restored=await state(()=>{const rows=allData.map(x=>({...x}));
      applyDbRows(rows);
      return awardsFor(allDisplayRestaurants().find(x=>x.name==='오레노라멘')).length;
