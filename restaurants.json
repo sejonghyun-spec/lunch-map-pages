@@ -1221,8 +1221,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "경상북도 포항시 남구 대송면 제내길53번길 4",
-      "lat": null,
-      "lng": null,
+      "lat": 35.9814644150877,
+      "lng": 129.362821732678,
       "hours": "",
       "breakTime": "",
       "closedDays": "",
@@ -1231,7 +1231,9 @@
       "hoursCheckedAt": "",
       "hoursSource": "",
       "phone": "054-285-1698",
-      "region": "포항"
+      "region": "포항",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     },
     {
       "row": 56,
@@ -1243,8 +1245,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "경상북도 포항시 남구 대송면 제내길53번길 16",
-      "lat": null,
-      "lng": null,
+      "lat": 35.9811819892763,
+      "lng": 129.364081584928,
       "hours": "",
       "breakTime": "",
       "closedDays": "",
@@ -1253,7 +1255,9 @@
       "hoursCheckedAt": "",
       "hoursSource": "",
       "phone": "",
-      "region": "포항"
+      "region": "포항",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     },
     {
       "row": 57,
@@ -1265,8 +1269,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "경상북도 포항시 남구 대송면 제내길53번길 26",
-      "lat": null,
-      "lng": null,
+      "lat": 35.9809698249476,
+      "lng": 129.365021829589,
       "hours": "",
       "breakTime": "",
       "closedDays": "",
@@ -1275,7 +1279,9 @@
       "hoursCheckedAt": "",
       "hoursSource": "",
       "phone": "",
-      "region": "포항"
+      "region": "포항",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     },
     {
       "row": 58,
@@ -1287,8 +1293,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "경상북도 포항시 남구 대송면 제내길 58-1",
-      "lat": null,
-      "lng": null,
+      "lat": 35.981281013812,
+      "lng": 129.362188497498,
       "hours": "",
       "breakTime": "",
       "closedDays": "",
@@ -1297,7 +1303,9 @@
       "hoursCheckedAt": "",
       "hoursSource": "",
       "phone": "",
-      "region": "포항"
+      "region": "포항",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     },
     {
       "row": 59,
@@ -1309,8 +1317,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "경상북도 포항시 남구 대송면 제내길 32 1층",
-      "lat": null,
-      "lng": null,
+      "lat": 35.9834791333836,
+      "lng": 129.362958985085,
       "hours": "",
       "breakTime": "",
       "closedDays": "",
@@ -1319,7 +1327,9 @@
       "hoursCheckedAt": "",
       "hoursSource": "",
       "phone": "",
-      "region": "포항"
+      "region": "포항",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     },
     {
       "row": 60,
@@ -1331,8 +1341,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "경상북도 포항시 남구 대송면 제내길47번길 15 1층",
-      "lat": null,
-      "lng": null,
+      "lat": 35.9822324786869,
+      "lng": 129.363911622318,
       "hours": "",
       "breakTime": "",
       "closedDays": "",
@@ -1341,7 +1351,9 @@
       "hoursCheckedAt": "",
       "hoursSource": "",
       "phone": "",
-      "region": "포항"
+      "region": "포항",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     },
     {
       "row": 61,
@@ -1353,8 +1365,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "경상북도 포항시 남구 대송면 제내길47번길 29-1",
-      "lat": null,
-      "lng": null,
+      "lat": 35.9819941976062,
+      "lng": 129.365536514748,
       "hours": "11:30-14:25",
       "breakTime": "",
       "closedDays": "일요일",
@@ -1364,7 +1376,9 @@
       "hoursSource": "다이닝코드",
       "phone": "054-286-6105",
       "region": "포항",
-      "hoursSourceUrl": "https://www.diningcode.com/profile.php?rid=50NVK6FLXZbf"
+      "hoursSourceUrl": "https://www.diningcode.com/profile.php?rid=50NVK6FLXZbf",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     },
     {
       "row": 62,
@@ -1376,8 +1390,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "경상북도 포항시 남구 대송면 제내길53번길 19",
-      "lat": null,
-      "lng": null,
+      "lat": 35.9812991697754,
+      "lng": 129.364503998232,
       "hours": "",
       "breakTime": "",
       "closedDays": "",
@@ -1386,7 +1400,9 @@
       "hoursCheckedAt": "",
       "hoursSource": "",
       "phone": "054-285-3939",
-      "region": "포항"
+      "region": "포항",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     },
     {
       "row": 63,
@@ -1398,8 +1414,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "경상북도 포항시 남구 대송면 제내길 53",
-      "lat": null,
-      "lng": null,
+      "lat": 35.9815286542701,
+      "lng": 129.362556601191,
       "hours": "",
       "breakTime": "",
       "closedDays": "",
@@ -1408,7 +1424,9 @@
       "hoursCheckedAt": "",
       "hoursSource": "",
       "phone": "",
-      "region": "포항"
+      "region": "포항",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     },
     {
       "row": 64,
@@ -1420,8 +1438,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "경상북도 포항시 남구 철강로 214",
-      "lat": null,
-      "lng": null,
+      "lat": 35.9852578888834,
+      "lng": 129.364919272947,
       "hours": "",
       "breakTime": "",
       "closedDays": "",
@@ -1430,7 +1448,9 @@
       "hoursCheckedAt": "",
       "hoursSource": "",
       "phone": "",
-      "region": "포항"
+      "region": "포항",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     },
     {
       "row": 65,
@@ -1442,8 +1462,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "경상북도 포항시 남구 대송면 제내길 44",
-      "lat": null,
-      "lng": null,
+      "lat": 35.9825744832088,
+      "lng": 129.362723701473,
       "hours": "",
       "breakTime": "",
       "closedDays": "",
@@ -1452,7 +1472,9 @@
       "hoursCheckedAt": "",
       "hoursSource": "",
       "phone": "",
-      "region": "포항"
+      "region": "포항",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     },
     {
       "row": 66,
@@ -1464,8 +1486,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "충청북도 충주시 충주호수로 376 (용탄동)",
-      "lat": null,
-      "lng": null,
+      "lat": 37.018299712828,
+      "lng": 127.957781278226,
       "hours": "",
       "breakTime": "",
       "closedDays": "",
@@ -1474,7 +1496,9 @@
       "hoursCheckedAt": "",
       "hoursSource": "",
       "phone": "043-853-5295",
-      "region": "충주"
+      "region": "충주",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     },
     {
       "row": 67,
@@ -1486,8 +1510,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "충청북도 충주시 충주호수로 209 (용탄동)",
-      "lat": null,
-      "lng": null,
+      "lat": 37.0186877368703,
+      "lng": 127.942438023917,
       "hours": "10:00-21:00",
       "breakTime": "",
       "closedDays": "",
@@ -1497,7 +1521,9 @@
       "hoursSource": "다이닝코드",
       "phone": "043-856-9265",
       "region": "충주",
-      "hoursSourceUrl": "https://www.diningcode.com/profile.php?rid=zTLYHKpdXXsG"
+      "hoursSourceUrl": "https://www.diningcode.com/profile.php?rid=zTLYHKpdXXsG",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     },
     {
       "row": 68,
@@ -1509,8 +1535,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "충청북도 충주시 5산단1길 11 1층 103호 (용탄동)",
-      "lat": null,
-      "lng": null,
+      "lat": 37.0082011703369,
+      "lng": 127.948895768335,
       "hours": "",
       "breakTime": "",
       "closedDays": "",
@@ -1519,7 +1545,9 @@
       "hoursCheckedAt": "",
       "hoursSource": "",
       "phone": "",
-      "region": "충주"
+      "region": "충주",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     },
     {
       "row": 69,
@@ -1531,8 +1559,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "충청북도 충주시 충주산단1로 146-2 1층 (용탄동)",
-      "lat": null,
-      "lng": null,
+      "lat": 37.0088114696672,
+      "lng": 127.948938297213,
       "hours": "",
       "breakTime": "",
       "closedDays": "",
@@ -1541,7 +1569,9 @@
       "hoursCheckedAt": "",
       "hoursSource": "",
       "phone": "043-848-8150",
-      "region": "충주"
+      "region": "충주",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     },
     {
       "row": 70,
@@ -1553,8 +1583,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "충청북도 충주시 충주호수로 212 2층 (용탄동)",
-      "lat": null,
-      "lng": null,
+      "lat": 37.0185016379975,
+      "lng": 127.940363662413,
       "hours": "",
       "breakTime": "",
       "closedDays": "",
@@ -1563,7 +1593,9 @@
       "hoursCheckedAt": "",
       "hoursSource": "",
       "phone": "",
-      "region": "충주"
+      "region": "충주",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     },
     {
       "row": 71,
@@ -1575,8 +1607,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "충청북도 충주시 5산단3길 3 1층 (용탄동)",
-      "lat": null,
-      "lng": null,
+      "lat": 37.0083572058341,
+      "lng": 127.949698783729,
       "hours": "",
       "breakTime": "",
       "closedDays": "",
@@ -1585,7 +1617,9 @@
       "hoursCheckedAt": "",
       "hoursSource": "",
       "phone": "",
-      "region": "충주"
+      "region": "충주",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     },
     {
       "row": 72,
@@ -1597,8 +1631,8 @@
       "locationHint": "",
       "capacity": "",
       "address": "충청북도 충주시 충주산단1로 150 1층 (용탄동)",
-      "lat": null,
-      "lng": null,
+      "lat": 37.0089951801129,
+      "lng": 127.948973725502,
       "hours": "",
       "breakTime": "",
       "closedDays": "",
@@ -1607,7 +1641,9 @@
       "hoursCheckedAt": "",
       "hoursSource": "",
       "phone": "",
-      "region": "충주"
+      "region": "충주",
+      "geoSource": "카카오 주소 검색 (도로명·건물번호 일치)",
+      "geoCheckedAt": "2026-10-10"
     }
   ]
 }
