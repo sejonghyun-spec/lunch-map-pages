@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-10-awards-badges-v102">
+<meta name="lunch-map-build" content="2026-10-10-phase1-map-trust-time-v103">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -676,6 +676,21 @@ button,input,select,textarea{font:inherit}
 .card-favorite[aria-pressed="true"]{color:var(--brand)}
 .card .badge{min-height:23px;margin-left:0;padding:4px 8px;font-size:11.5px;gap:5px}
 .card .badge-dot{width:5px;height:5px}
+
+.visit-time-bar{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;padding:6px 10px;margin:3px 0 5px;border-radius:10px;border:1px solid var(--line);background:var(--soft)}
+.visit-time-bar label{display:flex;align-items:center;gap:8px;font-weight:800;font-size:12px;white-space:nowrap;color:var(--text)}
+.visit-time-bar select{font:inherit;font-weight:700;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:5px 8px;max-width:175px;min-height:29px}
+.visit-time-bar.active{border-color:#b98b70}
+.visit-time-bar #visitTimeHint{font-size:10.5px;color:var(--muted);line-height:1.3;overflow-wrap:anywhere}
+.mobile-visit-time-note{grid-column:1/-1;font-size:10.5px;line-height:1.35;color:var(--muted)}
+.hours-source-chip{display:inline-flex;align-items:center;gap:3px;border:1px solid #e1e2e6;border-radius:5px;padding:1px 5px;color:#616d75;background:#f4f5f6;font-size:10.5px;font-weight:750;line-height:1.55}
+.hours-source-chip[data-source-tier="naver"]{color:#176f4a;border-color:#b7d9ca;background:#eaf7f1}
+.hours-source-chip[data-source-tier="stale"]{color:#a05d1c;border-color:#e2cdaf;background:#fbf3e7}
+.hours-source-chip[data-source-tier="unknown"]{color:#856c5d;border-style:dashed;background:transparent}
+html[data-theme="night"] .hours-source-chip{background:#26343b;border-color:#50616e;color:#d3e0e4}
+html[data-theme="night"] .hours-source-chip[data-source-tier="naver"]{background:#1c392d;border-color:#4a8671;color:#a5e0c7}
+html[data-theme="night"] .visit-time-bar{background:#252b31;border-color:#414a51}
+html[data-theme="night"] .visit-time-bar select{background:#1b2026;color:#f3f3f3;border-color:#4b555d}
 .card-stats{display:flex;align-items:center;flex-wrap:wrap;gap:4px 7px;margin-top:5px;font-size:12.5px;line-height:1.5;color:#7c7168}
 .card-stats .rating{min-height:0;margin:0;font-size:14px;color:#a75a19;font-weight:800}
 .card-evaluations,.card-review{color:#81766e;font-variant-numeric:tabular-nums}
@@ -4119,6 +4134,10 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
         <button class="filter-chip" type="button" data-chip="map">현재 지도</button>
         <button id="mobileFilterToggle" class="filter-chip mobile-filter-toggle" type="button" aria-expanded="false">☰ 필터</button>
       </div>
+      <div class="visit-time-bar" role="group" aria-label="방문 예정시간 검색">
+        <label for="visitTimeFilter">방문 예정 <select id="visitTimeFilter" aria-label="오늘 방문 예정시간"><option value="all">방문시간 전체</option><option value="11:00">오늘 11:00</option><option value="11:30">오늘 11:30</option><option value="12:00">오늘 12:00</option><option value="12:30">오늘 12:30</option><option value="13:00">오늘 13:00</option><option value="13:30">오늘 13:30</option><option value="14:00">오늘 14:00</option><option value="18:00">오늘 18:00</option><option value="19:00">오늘 19:00</option></select></label>
+        <span id="visitTimeHint">저장된 영업시간 기준 · 실제 방문 전 확인</span>
+      </div>
       <div class="quick-row" role="group" aria-label="위치 및 지도 제어">
         <span class="map-tools-label">지도</span>
         <button id="myLocation" class="quick-btn">◎ 내 위치</button>
@@ -4173,6 +4192,8 @@ html[data-theme="bistro"] .compare-modal{border:1px solid #64584c;border-radius:
         <label><span>거리</span><select id="mobileDistanceFilter">
           <option value="all">전체</option><option value="300">300m</option><option value="500">500m</option><option value="700">700m</option><option value="1000">1km</option>
         </select></label>
+        <label class="mobile-visit-time" for="mobileVisitTimeFilter"><span>방문 예정</span><select id="mobileVisitTimeFilter" aria-label="오늘 방문 예정시간"><option value="all">방문시간 전체</option><option value="11:00">오늘 11:00</option><option value="11:30">오늘 11:30</option><option value="12:00">오늘 12:00</option><option value="12:30">오늘 12:30</option><option value="13:00">오늘 13:00</option><option value="13:30">오늘 13:30</option><option value="14:00">오늘 14:00</option><option value="18:00">오늘 18:00</option><option value="19:00">오늘 19:00</option></select></label>
+        <div class="mobile-visit-time-note">영업 예상 시간 기준 · 미확인 식당은 제외됩니다.</div>
         <button id="mobileFilterReset" class="mobile-filter-reset" type="button">초기화</button>
       </div>
 
@@ -4577,7 +4598,7 @@ function getInitialMapLevel(){
 }
 const SUGGEST_URL='https://script.google.com/a/seah.co.kr/macros/s/AKfycbzpCuw9c6Y8K6_4tnqZzwMBoKGIiW3pv-DheDHYD6XpbT1tEqDlZUFFkPgn-7w_q1L7tA/exec';
 let allData=[],selectedCategories=new Set(),searchKeyword='',sortMode='default';
-let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all',distanceFilter='all';
+let ratingFilter='all',capacityFilter='all',commentFilter='all',featureFilter='all',distanceFilter='all',visitTimeFilter='all';
 let favoritesOnly=false,recentOnly=false,mapOnlyMode=false,reviewSortMode='latest';
 let map=null,mapReady=false,overlays=[],markerByRow=new Map(),infoOverlay=null,regionAnchorOverlay=null,pendingRows=null,selectedRow=null,selectedRestaurantKey='',hoveredMarkerRow=null,searchTimer=null;
 let lastMapRows=[],lastClusterLevel=null,mapIdleRenderTimer=null,lastDetailRow=null,lastListSignature='';
@@ -4717,7 +4738,7 @@ function highlightMatch(value,query){
 
 function listUiSignature(){
   return [
-    activeRegionKey,searchKeyword,sortMode,ratingFilter,capacityFilter,featureFilter,distanceFilter,
+    activeRegionKey,searchKeyword,sortMode,ratingFilter,capacityFilter,featureFilter,distanceFilter,visitTimeFilter,
     favoritesOnly,recentOnly,mapOnlyMode,[...selectedCategories].sort().join('|')
   ].join('::');
 }
@@ -4998,6 +5019,14 @@ function updateMultiFilterUI(){
     const label=el.parentElement.querySelector('.compact-filter-label');
     if(label)label.textContent=labels[id][value]||labels[id].all;
   });
+  const visitSelect=document.getElementById('visitTimeFilter');
+  const mobileVisitSelect=document.getElementById('mobileVisitTimeFilter');
+  if(visitSelect)visitSelect.value=visitTimeFilter;
+  if(mobileVisitSelect)mobileVisitSelect.value=visitTimeFilter;
+  document.querySelector('.visit-time-bar')?.classList.toggle('active',visitTimeFilter!=='all');
+  const hint=document.getElementById('visitTimeHint');
+  if(hint)hint.textContent=visitTimeFilter==='all'?'저장된 영업시간 기준 · 실제 방문 전 확인':
+    visitTimeFilter+' 영업 예상만 · 미확인 제외';
   const mobilePairs=[
     ['mobileRatingFilter',ratingFilter],
     ['mobileCapacityFilter',capacityFilter],
@@ -5013,6 +5042,7 @@ function resetMultiFilters(){
   commentFilter='all';
   featureFilter='all';
   distanceFilter='all';
+  visitTimeFilter='all';
   favoritesOnly=false;
   recentOnly=false;
   mapOnlyMode=false;
@@ -5844,6 +5874,7 @@ function getRows(){
     if(favoritesOnly&&!favorites.has(restaurantKey(x)))return false;
     if(recentOnly&&!recent.has(restaurantKey(x)))return false;
     if(mapOnlyMode&&!isInCurrentMapBounds(x))return false;
+    if(visitTimeFilter!=='all'&&!visitTimeOpenAt(x,visitTimeFilter))return false;
 
     return true;
   });
@@ -5873,11 +5904,11 @@ function updateCardReviewCounts(){
 function updateListHeading(count){
   const searchMode=!!searchKeyword.trim();
   document.getElementById('listTitle').textContent=searchMode?'검색 결과':'주변 식당';
-  document.getElementById('listSub').textContent=count+'곳';
+  document.getElementById('listSub').textContent=count+'곳'+(visitTimeFilter!=='all'?' · '+visitTimeFilter+' 영업 예상':'');
   const mobileTitle=document.getElementById('mobileListTitle');
   const mobileSub=document.getElementById('mobileListSub');
   if(mobileTitle)mobileTitle.textContent=searchMode?'검색 결과':'주변 식당';
-  if(mobileSub)mobileSub.textContent=count+'곳';
+  if(mobileSub)mobileSub.textContent=count+'곳'+(visitTimeFilter!=='all'?' · '+visitTimeFilter+' 영업 예상':'');
 }
 function renderMobileList(rows){
   const el=document.getElementById('mobileList');
@@ -9595,6 +9626,13 @@ document.addEventListener('click',e=>{
   });
 });
 
+['visitTimeFilter','mobileVisitTimeFilter'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('change',event=>{
+    visitTimeFilter=event.target.value;
+    updateMultiFilterUI();
+    render(false);
+  });
+});
 document.getElementById('multiFilterReset').addEventListener('click',()=>{
   resetMultiFilters();
   render(true);
