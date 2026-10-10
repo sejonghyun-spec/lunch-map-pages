@@ -188,7 +188,10 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    await page.locator('.card-favorite').click();assert.equal(await page.locator('#list .card').count(),0);assert.equal(await state(()=>markerByRow.size),0);await reset();
  });
  await check('list hover highlights corresponding marker and clears',async()=>{
-   await page.locator('#list .card').first().hover();assert.ok(await state(()=>markerByRow.get(Number(document.querySelector('#list .card').dataset.row)).content.classList.contains('list-hover')));
+   const hoverRow=await state(()=>[...markerByRow.keys()][0]);
+   assert.ok(Number.isFinite(hoverRow),'Expected at least one unclustered restaurant marker');
+   await page.locator('#list .card[data-row="'+hoverRow+'"]').hover();
+   assert.ok(await state(row=>markerByRow.get(row)?.content?.classList.contains('list-hover'),hoverRow));
    await page.hover('#search');assert.ok(await state(()=>![...markerByRow.values()].some(x=>x.content.classList.contains('list-hover'))));
  });
  await check('marker hover highlights list and opens/closes preview',async()=>{
