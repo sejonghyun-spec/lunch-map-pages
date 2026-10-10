@@ -774,6 +774,58 @@ async function shot(name){if(process.env.QA_OUTPUT_DIR)await page.screenshot({pa
    assert.equal(await page.locator('#placeBatchPreview input:checked').count(),0);
    await page.click('#placeCaptureClose');
  });
+ await check('Place batch modal: save actions remain visible with 8 and 20 cards at desktop and mobile sizes',async()=>{
+   await state(()=>{currentAccount={email:'sejong.hyun@seah.co.kr',name:'qa'};syncPlaceCaptureUI();});
+   const oldViewport=page.viewportSize();
+   for(const viewport of [{width:1440,height:900},{width:1024,height:600},{width:390,height:740},{width:390,height:560}]){
+     await page.setViewportSize(viewport);
+     await state(()=>{setPlaceCaptureBusy(false);resetPlaceImportInputs();setPlaceImportMode('separate');openPlaceCaptureModal();});
+     await page.locator('#placeSeparatedList .place-entry-input').first().fill(
+       '자성당\n서울 마포구 잔다리로7안길 3\n영업시간 11:00-20:00'
+     );
+     for(const wanted of [3,8,20]){
+       await state(count=>{while(placeCardInputs().length<count)placeAppendCard();updatePlaceTextHint();},wanted);
+       assert.equal(await page.locator('#placeSeparatedList .place-entry-card').count(),wanted);
+       const metrics=await state(()=>{
+         const dialog=document.querySelector('#placeCaptureModal .text-import-modal');
+         const footer=dialog.querySelector('.place-import-footer');
+         const done=document.getElementById('captureDone');
+         const clear=document.getElementById('captureClear');
+         const list=document.getElementById('placeSeparatedList');
+         const preview=document.getElementById('placeBatchPreview');
+         const rect=x=>{const r=x.getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:r.height};};
+         list.scrollTop=list.scrollHeight;
+         return {dialog:rect(dialog),footer:rect(footer),done:rect(done),clear:rect(clear),
+           list:rect(list),preview:rect(preview),viewH:innerHeight,
+           listCanScroll:list.scrollHeight>list.clientHeight,
+           footerParent:footer.parentElement===dialog,
+           bodyGrid:getComputedStyle(dialog.querySelector('.text-import-body')).gridTemplateRows
+         };
+       });
+       assert.equal(metrics.footerParent,true);
+       assert.ok(metrics.footer.bottom<=metrics.dialog.bottom+1,JSON.stringify({viewport,wanted,metrics}));
+       assert.ok(metrics.done.bottom<=metrics.viewH+1&&metrics.clear.bottom<=metrics.viewH+1,
+         JSON.stringify({viewport,wanted,metrics}));
+       assert.ok(metrics.done.top>=metrics.list.bottom-1,
+         JSON.stringify({viewport,wanted,metrics}));
+       assert.ok(metrics.done.height>=35&&metrics.clear.height>=35);
+       if(wanted===20)assert.ok(metrics.listCanScroll,
+         JSON.stringify({viewport,wanted,metrics}));
+       assert.ok(await page.locator('#captureDone').isVisible(),
+         'save button should remain on screen with '+wanted+' cards');
+     }
+     await page.locator('#placeCombinedMode').click();
+     const combined=await state(()=>{
+       const done=document.getElementById('captureDone').getBoundingClientRect();
+       const modal=document.querySelector('#placeCaptureModal .text-import-modal').getBoundingClientRect();
+       return {doneBottom:done.bottom,modalBottom:modal.bottom,bodyHeight:document.querySelector('.text-import-body').clientHeight};
+     });
+     assert.ok(combined.doneBottom<=combined.modalBottom+1&&combined.doneBottom<=viewport.height+1,
+       JSON.stringify({viewport,combined}));
+     await state(()=>closePlaceCaptureModal());
+   }
+   await page.setViewportSize(oldViewport);
+ });
  await check('menu tab remains as manual DB viewer without auto collection',async()=>{
    assert.equal(await page.locator('[data-detail-tab="menu"]').count(),1);
    assert.equal(await page.locator('[data-detail-panel="menu"]').count(),1);

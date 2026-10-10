@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>막냉이 합정 점심 뭐먹지</title>
-<meta name="lunch-map-build" content="2026-10-10-quick-filter-v106">
+<meta name="lunch-map-build" content="2026-10-10-place-sticky-actions-v107">
 <script>
 (()=>{try{
   const key='lunch-map-theme-v1';
@@ -4158,6 +4158,80 @@ html[data-theme="night"] .quick-filter-chip.active{border-color:#8ebfc7;backgrou
     flex:0 0 auto;min-height:34px;padding:0 8px;white-space:nowrap
   }
 }
+
+/* Place text import: keep save/reset controls visible with any number of restaurants.
+   The 20-card list and parsing preview scroll independently, never the action footer. */
+#placeCaptureModal .text-import-modal{
+  display:flex;flex-direction:column;
+  height:min(820px,calc(100dvh - 24px));
+  max-height:calc(100dvh - 24px);
+  overflow:hidden;min-height:0;
+}
+#placeCaptureModal .text-import-modal > .modal-head{
+  flex:0 0 auto;position:relative;top:auto;z-index:2;
+}
+#placeCaptureModal .capture-body.text-import-body{
+  flex:1 1 auto;min-height:0;max-height:none;
+  grid-template-rows:auto minmax(0,1fr) auto minmax(0,112px)!important;
+  gap:9px;overflow:hidden;
+  padding:12px 16px 9px;
+}
+#placeCaptureModal .place-separated-wrap{
+  flex:1 1 auto;min-height:0;max-height:none;overflow:hidden;
+}
+#placeCaptureModal .place-separated-list{
+  flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;
+  overscroll-behavior:contain;scrollbar-gutter:stable;
+}
+#placeCaptureModal .place-add-card{flex:0 0 auto}
+#placeCaptureModal .place-combined-wrap{
+  min-height:0;overflow:hidden;
+}
+#placeCaptureModal .place-combined-wrap .place-text-input{
+  min-height:0;height:100%;max-height:none;resize:none;
+}
+#placeCaptureModal .place-batch-preview{
+  min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;
+}
+#placeCaptureModal .place-import-footer{
+  flex:0 0 auto;z-index:3;position:relative;
+  display:grid;gap:7px;
+  padding:11px 16px 14px;
+  border-top:1px solid var(--line);
+  background:var(--panel,#fff);
+  box-shadow:0 -5px 14px rgba(0,0,0,.035);
+}
+#placeCaptureModal .place-import-footer .capture-status{
+  min-height:17px;max-height:54px;overflow-y:auto;
+}
+#placeCaptureModal .place-import-footer .capture-actions{
+  display:flex;flex-wrap:nowrap;gap:8px;justify-content:flex-end;
+}
+#placeCaptureModal .place-import-footer .modal-btn{min-width:0;min-height:42px}
+@media(max-width:900px){
+  #placeCaptureModal .text-import-modal{
+    height:calc(100dvh - var(--mobile-safe-top) - 12px);
+    max-height:calc(100dvh - var(--mobile-safe-top) - 12px);
+  }
+  #placeCaptureModal .capture-body.text-import-body{
+    padding:10px 12px 8px;gap:7px;
+    grid-template-rows:auto minmax(0,1fr) auto minmax(0,86px)!important;
+  }
+  #placeCaptureModal .place-import-footer{
+    padding:9px 12px calc(10px + var(--mobile-safe-bottom));
+  }
+  #placeCaptureModal .place-import-footer .modal-btn{
+    flex:1 1 0;font-size:13px;
+  }
+}
+@media(max-height:580px){
+  #placeCaptureModal .text-import-modal .modal-sub{display:none}
+  #placeCaptureModal .capture-body.text-import-body{
+    grid-template-rows:auto minmax(0,1fr) 0 minmax(0,64px)!important;
+  }
+  #placeCaptureModal .text-import-help{display:none}
+  #placeCaptureModal .place-import-footer{gap:5px;padding-top:6px;padding-bottom:8px}
+}
 </style>
 </head>
 <body>
@@ -4503,6 +4577,8 @@ html[data-theme="night"] .quick-filter-chip.active{border-color:#8ebfc7;backgrou
       </div>
       <div class="text-import-help">식당별 입력에서는 칸마다 한 식당씩 붙여넣으세요. 20개까지 추가할 수 있으며 기존 한 칸 입력 방식도 선택할 수 있습니다.</div>
       <div id="placeBatchPreview" class="place-batch-preview" aria-live="polite" aria-label="식당별 판독 결과"></div>
+    </div>
+    <div class="place-import-footer" aria-label="DB 반영 작업">
       <div id="captureStatus" class="capture-status" role="status" aria-live="polite"></div>
       <div class="capture-actions">
         <button id="captureClear" class="modal-btn secondary" type="button">전체 비우기</button>
