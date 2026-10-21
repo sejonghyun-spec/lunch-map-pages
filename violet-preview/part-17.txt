@@ -1,0 +1,404 @@
+ldH2gGbcR3O6KA054Hfl+Ty4O0UdzjPGB0QZmYUKZaxedaAVYaaC3/51NmMyenRXbLKUidlyyN2Ld5dDkAhT+uVJqcy4KihonOs/SMUAQ1MmV9B046auflclriNXUEntfmb0wgcP4VLMkqUxzuowk6dU6MRPoLy8vxCkrzemctVrgRwPZNK+zhZJHAVdNpnLSXc8UJTN41m/S/eEIozOaT9l0i1TvYKhjnOYL47ejAY7iU6KTBWHIsZFcwmXH9EofZ3fXlQwpcrK/fzulFZlylfyH+FLqSr5vKdlPrn8w73d/k2yvl/ksp7aYfDdrQyVjrpoJ50sNs5qwwJEdmIo/vPtbnmmkZZqxM1a1MxrpMchZvqRfQBRRAuvGJFEWK2AYYAzVx37tFpl6KNrqn9+LNe8k24/cGlUms/8YiIp7naPDJ+VQODZ5v6t4EvGF0DeQCnoPRC49mR9W2i/5meZ0TjiwM9Ler6BOyZlY4xRR0gkA7tWgdOmzLDo2IPD58SsO/1IzgxIxQCWBkIPwZclKs0i0QwBRdgJZVbnGFW2NffDKPLUKoYJcfb7ESkJpXmdCWuLTeT4IfWNGY2wen77pfACQVflGOBp/sCDG/JEflqKqe/cKQLbFyirMzEkxQQ94ncsyox8iMwoCpk18aPGbvAXf3hOTl4Hzxd+qBYpjdcoQljvyWiexyEZPCtZ69OBuslUjI/L36bJQSDGuD0wKxEuz4/0WhyIiDg5T66dK1k1jsEEvsF5ksaYf3WXQBfNqf3nklAJPidq1hcmnswxcyj7MHaXeqj8h6A2yH4SuJgKp0YjzkisJXhe9fLJNiugeqdteTUj1khUNLZSBCyYvEbmCZOT+caBfnNyc1T5Q1nsXCuTs8qSrIvQII31eQtQtOyv2dfLMXOS2RS6JKshwl5h1EpVWzkQ320Xr6xxaTK36R3/32Hvdz/Xn/uxPqH8692CFxHqrm0CVZlA+qgHNxlxet+t0QdItxFlcOboss7V96ZKEIR573tHdVJ4YXlyc8xs2qgs5GHZcxJYBk8EJD83v/9Xg+lQ9NJp+C8e4rvjn/RmRSdmXzy3YxxVxCaXO7zoKSaytwFEWG58WRnYCZzDd77wenUPDD0ZgTeF4JhEvudFLXIEHfkjIhvZllKTs4jDZWGhA0TBPTVM306uK35pCg53FkExSV+Q8u0euOoK80yZ5r6zcJyYRVXwMz0Y799ewTYtMiyyAMzRRH/TiekT7W0GwUKikymEmdLGSfmOI2Oj/FPBT7sauvwvmjeDbyaSGR22SYqSYH1/e2p5WqqPF9MlLCO6/EtPIWiK4uc1i+rBxX+aV4qHdcyc0ozVcn4VJD/ClcEu32TtTw4uunbFJpS2TGzsiC7/laNBO63aCNbVGTCeXp+8e7/K65Io2oWZ/jlfEcscqEnSQ/ItRSVc2icxLNLM4zritxcW3HpOYryrT8qxXniizOlwui9YRRdEQFKHCvud21sZLqrbZ5B1QlA0L8mdVtmhcUNmS39LrxXVa4J+5oRJYQVmnRw7xVOdTkPLGT3d7jWvsTH7dPc5iQuDBca25XnVa+50s3PVvSg/UhiBjvpDpw29QFZSTrUiELu34kgvj0A5WXeKNMt/PDm1kAyzi6W69+6aVRAjCe51dT30Wf2Ih68VRHfC7zW9DLTJxeVSRYewTnUT8TMNUYNguPi0mjLivoGumaNJIOnCuIR2VWtWUp0iFxQPzwBakbEFdj8yUN0hWcbJl4Mpx5IAdfIjECpA4JcHhkQWrR3RiqFwLuzpsAFexIsNIUvrTAs5CfqA1cEfSyklEl63BW4nJ4LWb6zn9Fwm3CO6bYeICFrMhgG7VY+ZHSzBF7P/utyZu/n6KaTAq26Q2XceRwqPwsS14iULDkx1o+s+WoYK0akLbPhcg38xBUUdNxJOahPFeMEqotm9qOSJ/6oXE8ra87Hamc+L3YW+0o0KxzQJLihdrBqmnMYo85JPnbLqtWYFMoIjgFy9rdtvSEVHGBlQOn/nGL+aS50kTQnrEJCEFujtUXtIOo3qYpJmPQUaOhqsakui7H8WsZxxEOLGOXO+dSOPj+GWv/qE9Rp4rvUz3t+R99XI6LK2EVcMWeNscFIF0Y2eR/zaER1lSZLzH7807nsN2qOTkLVVfV/Iuvn6HaK50pR0UaG9Yd1cLXk5ek6Cgo5R5zpagCItOImWOee+0Ka85GZNRWZAv1TyG4eX5Sa+RcnEMDwACGXo3Ho9Iqo3IGKPGMytJ5hLLiF/UFfOaX5zcoW3WmIYG2zQ4u5a35SfJpJ1ViPrhCAboPxXO2M4wha44mRR39Y+zTmQemSJNTUOADEhDrdNASHgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","segments":[],"headCount":6}]}],"totalTabs":36,"sourceArchive":"Violet_화면구조_202609_최종통합_검증완료.zip","captureWarning":"구조 JSON에는 표 본문 수치와 설명문 원문이 없으며, 원본 이미지는 사용자가 제공한 캡처입니다."};
+
+</script>
+<script>
+/* PDF 26.4월 기반 비교용 행 레이블 · 9월 실적/수치가 아님. */
+window.VIOLET_HIERARCHY={"basis":"①26.4월 경영실적_선재.pdf","scope":"PDF 양식 기반 행 레이블 예시. 2026년 9월 실제 행과 차이가 있을 수 있음.","coverage":{"tables":85,"templated":85,"rows":1080,"definedRows":983,"filledUnknown":97,"truncated":{"m02t03#1":2,"m02t06#0":1,"m08t01#0":1,"m09t02#0":1,"m09t02#1":1,"m09t03#0":1,"m09t03#1":1,"m10t03#0":1,"m10t04#3":1,"m10t04#5":4}},"labels":{"m01t01#0":[{"level":1,"kind":"subtotal","text":"매출액"},{"level":1,"kind":"subtotal","text":"판매량"},{"level":1,"kind":"subtotal","text":"영업이익"},{"level":2,"kind":"metric","text":"영업이익률(%)"},{"level":1,"kind":"subtotal","text":"순금융비용"},{"level":1,"kind":"subtotal","text":"경상이익"},{"level":2,"kind":"metric","text":"경상이익률(%)"}],"m01t01#1":[{"level":0,"kind":"subtotal","text":"영업활동현금흐름"},{"level":1,"kind":"detail","text":"당기순이익"},{"level":1,"kind":"subtotal","text":"조정"},{"level":2,"kind":"detail","text":"감가상각비"},{"level":2,"kind":"detail","text":"기타 조정"},{"level":1,"kind":"subtotal","text":"자산부채증감"},{"level":2,"kind":"detail","text":"매출채권 감소(증가)"},{"level":2,"kind":"detail","text":"재고자산 감소(증가)"},{"level":2,"kind":"detail","text":"기타자산 감소(증가)"},{"level":2,"kind":"detail","text":"매입채무 증가(감소)"},{"level":2,"kind":"detail","text":"기타채무 증가(감소)"},{"level":2,"kind":"detail","text":"기타 운전자본"},{"level":1,"kind":"detail","text":"법인세 납부"},{"level":1,"kind":"detail","text":"이자의 지급"},{"level":0,"kind":"subtotal","text":"투자활동현금흐름"},{"level":1,"kind":"detail","text":"투자활동 현금유출"},{"level":1,"kind":"detail","text":"투자활동 현금유입"},{"level":0,"kind":"subtotal","text":"재무활동현금흐름"},{"level":1,"kind":"detail","text":"차입금의 증감"},{"level":1,"kind":"detail","text":"기타 재무활동"},{"level":1,"kind":"detail","text":"배당금의 지급"},{"level":1,"kind":"detail","text":"리스부채의 증감"},{"level":0,"kind":"total","text":"현금성자산의 증감"},{"level":1,"kind":"detail","text":"기초현금"},{"level":1,"kind":"detail","text":"기말현금"}],"m01t01#2":[{"level":1,"kind":"detail","text":"현금및현금성자산"},{"level":1,"kind":"detail","text":"매출채권"},{"level":1,"kind":"detail","text":"재고자산"},{"level":1,"kind":"detail","text":"유형자산"},{"level":1,"kind":"detail","text":"기타 자산"},{"level":0,"kind":"subtotal","text":"자산총계"},{"level":1,"kind":"detail","text":"매입채무"},{"level":1,"kind":"detail","text":"차입금"},{"level":1,"kind":"detail","text":"기타 부채"},{"level":0,"kind":"subtotal","text":"부채총계"},{"level":1,"kind":"detail","text":"자본금"},{"level":1,"kind":"detail","text":"이익잉여금"},{"level":1,"kind":"detail","text":"기타 자본"},{"level":0,"kind":"subtotal","text":"자본총계"},{"level":0,"kind":"total","text":"부채 및 자본 총계"}],"m01t01#3":[{"level":1,"kind":"detail","text":"매출채권"},{"level":1,"kind":"detail","text":"재고자산"},{"level":1,"kind":"detail","text":"매입채무"},{"level":0,"kind":"subtotal","text":"현금전환주기"},{"level":1,"kind":"detail","text":"매출채권 회전일"},{"level":1,"kind":"detail","text":"재고자산 회전일"},{"level":1,"kind":"detail","text":"매입채무 회전일"},{"level":0,"kind":"subtotal","text":"현금전환주기"},{"level":1,"kind":"detail","text":"매출채권"},{"level":1,"kind":"detail","text":"재고자산"},{"level":1,"kind":"detail","text":"매입채무"},{"level":0,"kind":"subtotal","text":"현금전환주기"},{"level":2,"kind":"unknown","text":"항목 13"},{"level":2,"kind":"unknown","text":"항목 14"},{"level":2,"kind":"unknown","text":"항목 15"},{"level":2,"kind":"unknown","text":"항목 16"}],"m01t01#4":[{"level":0,"kind":"group","text":"안정성"},{"level":1,"kind":"detail","text":"부채비율"},{"level":1,"kind":"detail","text":"차입금의존도"},{"level":0,"kind":"group","text":"수익성"},{"level":1,"kind":"detail","text":"ROA"},{"level":1,"kind":"detail","text":"ROE"},{"level":0,"kind":"subtotal","text":"평균 자산"},{"level":1,"kind":"detail","text":"평균 자본"}],"m01t01#5":[{"level":1,"kind":"detail","text":"ROA"}],"m01t02#0":[{"level":1,"kind":"subtotal","text":"매출액"},{"level":1,"kind":"subtotal","text":"판매량"},{"level":1,"kind":"subtotal","text":"영업이익"},{"level":2,"kind":"metric","text":"영업이익률(%)"},{"level":1,"kind":"subtotal","text":"순금융비용"},{"level":1,"kind":"subtotal","text":"경상이익"},{"level":2,"kind":"metric","text":"경상이익률(%)"}],"m01t02#1":[{"level":1,"kind":"detail","text":"매출액"},{"level":1,"kind":"detail","text":"판매량"},{"level":1,"kind":"detail","text":"영업이익"},{"level":1,"kind":"metric","text":"영업이익률"},{"level":1,"kind":"detail","text":"경상이익"},{"level":1,"kind":"metric","text":"경상이익률"}],"m01t02#2":[{"level":1,"kind":"detail","text":"매출액"},{"level":1,"kind":"detail","text":"판매량"},{"level":1,"kind":"detail","text":"영업이익"},{"level":1,"kind":"metric","text":"영업이익률"},{"level":1,"kind":"detail","text":"한계이익"},{"level":1,"kind":"metric","text":"한계이익률"},{"level":1,"kind":"detail","text":"경상이익"}],"m01t02#3":[{"level":1,"kind":"detail","text":"포스코"},{"level":1,"kind":"detail","text":"JFE STEEL(S)"},{"level":1,"kind":"detail","text":"세아창원특수강"},{"level":1,"kind":"detail","text":"현대제철"},{"level":1,"kind":"detail","text":"세아베스틸"},{"level":0,"kind":"total","text":"합계"}],"m01t02#4":[{"level":1,"kind":"detail","text":"포스코"},{"level":1,"kind":"detail","text":"JFE STEEL(S)"},{"level":1,"kind":"detail","text":"세아창원특수강"},{"level":1,"kind":"detail","text":"현대제철"},{"level":1,"kind":"detail","text":"세아베스틸"},{"level":0,"kind":"total","text":"합계"},{"level":1,"kind":"detail","text":"기타"}],"m01t02#5":[{"level":1,"kind":"detail","text":"입고-기초 단가차이"},{"level":1,"kind":"detail","text":"매출원가-기초 단가차이"}],"m01t02#6":[{"level":0,"kind":"subtotal","text":"영업활동현금흐름"},{"level":1,"kind":"detail","text":"당기순이익"},{"level":1,"kind":"subtotal","text":"조정"},{"level":2,"kind":"detail","text":"감가상각비"},{"level":2,"kind":"detail","text":"기타 조정"},{"level":1,"kind":"subtotal","text":"자산부채증감"},{"level":2,"kind":"detail","text":"매출채권 감소(증가)"},{"level":2,"kind":"detail","text":"재고자산 감소(증가)"},{"level":2,"kind":"detail","text":"기타자산 감소(증가)"},{"level":2,"kind":"detail","text":"매입채무 증가(감소)"},{"level":2,"kind":"detail","text":"기타채무 증가(감소)"},{"level":2,"kind":"detail","text":"기타 운전자본"},{"level":1,"kind":"detail","text":"법인세 납부"},{"level":1,"kind":"detail","text":"이자의 지급"},{"level":0,"kind":"subtotal","text":"투자활동현금흐름"},{"level":1,"kind":"detail","text":"투자활동 현금유출"},{"level":1,"kind":"detail","text":"투자활동 현금유입"},{"level":0,"kind":"subtotal","text":"재무활동현금흐름"},{"level":1,"kind":"detail","text":"차입금의 증감"},{"level":1,"kind":"detail","text":"기타 재무활동"},{"level":1,"kind":"detail","text":"배당금의 지급"},{"level":1,"kind":"detail","text":"리스부채의 증감"},{"level":0,"kind":"total","text":"현금성자산의 증감"},{"level":1,"kind":"detail","text":"기초현금"},{"level":1,"kind":"detail","text":"기말현금"}],"m01t02#7":[{"level":1,"kind":"detail","text":"현금및현금성자산"},{"level":1,"kind":"detail","text":"매출채권"},{"level":1,"kind":"detail","text":"재고자산"},{"level":1,"kind":"detail","text":"유형자산"},{"level":1,"kind":"detail","text":"기타 자산"},{"level":0,"kind":"subtotal","text":"자산총계"},{"level":1,"kind":"detail","text":"매입채무"},{"level":1,"kind":"detail","text":"차입금"},{"level":1,"kind":"detail","text":"기타 부채"},{"level":0,"kind":"subtotal","text":"부채총계"},{"level":1,"kind":"detail","text":"자본금"},{"level":1,"kind":"detail","text":"이익잉여금"},{"level":1,"kind":"detail","text":"기타 자본"},{"level":0,"kind":"subtotal","text":"자본총계"},{"level":0,"kind":"total","text":"부채 및 자본 총계"}],"m01t02#8":[{"level":1,"kind":"detail","text":"부채비율"},{"level":1,"kind":"detail","text":"차입금의존도"}],"m01t02#9":[{"level":1,"kind":"detail","text":"매출채권 회전일"},{"level":1,"kind":"detail","text":"재고자산 회전일"},{"level":1,"kind":"detail","text":"매입채무 회전일"},{"level":0,"kind":"total","text":"현금전환주기"}],"m01t02#10":[{"level":1,"kind":"detail","text":"ROA"},{"level":1,"kind":"detail","text":"ROE"}],"m01t03#0":[{"level":2,"kind":"detail","text":"선재영업팀"},{"level":2,"kind":"detail","text":"봉강영업팀"},{"level":2,"kind":"detail","text":"부산영업소"},{"level":2,"kind":"detail","text":"대구영업소"},{"level":1,"kind":"subtotal","text":"내수"},{"level":2,"kind":"detail","text":"글로벌영업팀"},{"level":1,"kind":"subtotal","text":"수출"},{"level":0,"kind":"subtotal","text":"국내(선재)"},{"level":0,"kind":"subtotal","text":"국내(AT)"},{"level":0,"kind":"subtotal","text":"국내 계"},{"level":1,"kind":"detail","text":"포스세아 남통"},{"level":1,"kind":"detail","text":"기차배건"},{"level":0,"kind":"subtotal","text":"중국 계"},{"level":0,"kind":"subtotal","text":"태국 계"},{"level":0,"kind":"total","text":"Total"},{"level":1,"kind":"subtotal","text":"선재 계"},{"level":1,"kind":"subtotal","text":"AT 계"}],"m01t03#1":[{"level":1,"kind":"subtotal","text":"국내(선재)"},{"level":2,"kind":"detail","text":"영업이익"},{"level":2,"kind":"metric","text":"영업이익률"},{"level":2,"kind":"detail","text":"경상이익"},{"level":2,"kind":"metric","text":"경상이익률"},{"level":1,"kind":"subtotal","text":"국내(AT)"},{"level":2,"kind":"detail","text":"영업이익"},{"level":2,"kind":"metric","text":"영업이익률"},{"level":2,"kind":"detail","text":"경상이익"},{"level":2,"kind":"metric","text":"경상이익률"},{"level":0,"kind":"subtotal","text":"국내 계"},{"level":2,"kind":"detail","text":"영업이익"},{"level":2,"kind":"metric","text":"영업이익률"},{"level":2,"kind":"detail","text":"경상이익"},{"level":2,"kind":"metric","text":"경상이익률"},{"level":0,"kind":"subtotal","text":"해외 계"},{"level":2,"kind":"detail","text":"영업이익"},{"level":2,"kind":"metric","text":"영업이익률"},{"level":2,"kind":"detail","text":"경상이익"},{"level":2,"kind":"metric","text":"경상이익률"},{"level":0,"kind":"total","text":"총 계"},{"level":1,"kind":"detail","text":"영업이익"},{"level":1,"kind":"metric","text":"영업이익률"},{"level":1,"kind":"detail","text":"경상이익"},{"level":1,"kind":"metric","text":"경상이익률"},{"level":0,"kind":"subtotal","text":"선재 계"},{"level":0,"kind":"subtotal","text":"AT 계"},{"level":2,"kind":"unknown","text":"항목 28"}],"m02t01#0":[{"level":0,"kind":"subtotal","text":"매출액"},{"level":1,"kind":"detail","text":"제품 등"},{"level":1,"kind":"detail","text":"부산물"},{"level":0,"kind":"subtotal","text":"판매량"},{"level":0,"kind":"subtotal","text":"매출원가"},{"level":1,"kind":"detail","text":"제품원가"},{"level":1,"kind":"detail","text":"C조건 선임"},{"level":1,"kind":"detail","text":"클레임"},{"level":1,"kind":"detail","text":"재고평가분"},{"level":1,"kind":"detail","text":"단가소급 등"},{"level":0,"kind":"subtotal","text":"매출이익"},{"level":1,"kind":"metric","text":"매출이익률(%)"},{"level":0,"kind":"subtotal","text":"판관비"},{"level":1,"kind":"detail","text":"인건비"},{"level":1,"kind":"detail","text":"관리비"},{"level":1,"kind":"detail","text":"판매비"},{"level":0,"kind":"total","text":"영업이익"},{"level":1,"kind":"metric","text":"영업이익률(%)"},{"level":0,"kind":"subtotal","text":"판매비"},{"level":1,"kind":"detail","text":"내수운반비"},{"level":1,"kind":"detail","text":"수출개별비"},{"level":0,"kind":"subtotal","text":"판매량"},{"level":1,"kind":"detail","text":"내수"},{"level":1,"kind":"detail","text":"수출"},{"level":0,"kind":"subtotal","text":"경상이익"},{"level":1,"kind":"metric","text":"경상이익률(%)"}],"m02t02#0":[{"level":0,"kind":"subtotal","text":"매출이익 차이"},{"level":1,"kind":"subtotal","text":"제품수불 차이"},{"level":2,"kind":"detail","text":"수량차이"},{"level":2,"kind":"detail","text":"판가차이"},{"level":2,"kind":"detail","text":"원가차이"},{"level":1,"kind":"subtotal","text":"기타차이"},{"level":1,"kind":"subtotal","text":"판매비와관리비 차이"},{"level":0,"kind":"total","text":"영업이익 차이"}],"m02t02#1":[{"level":1,"kind":"detail","text":"USD"},{"level":1,"kind":"detail","text":"JPY"},{"level":1,"kind":"detail","text":"CNY"},{"level":0,"kind":"total","text":"총합계"}],"m02t02#2":[{"level":1,"kind":"detail","text":"태양금속공업㈜ 외"},{"level":1,"kind":"detail","text":"(주)진합 외"},{"level":1,"kind":"detail","text":"(주)청우"},{"level":1,"kind":"detail","text":"(주)풍강"},{"level":1,"kind":"detail","text":"기타"},{"level":0,"kind":"total","text":"합계"}],"m02t03#0":[{"level":0,"kind":"group","text":"탄소강"},{"level":2,"kind":"detail","text":"포스코 · SWRCH45FS"},{"level":2,"kind":"detail","text":"변동폭(천원/톤)"},{"level":2,"kind":"detail","text":"JFE · SWRCH45K-M"},{"level":2,"kind":"detail","text":"JFE · USD"},{"level":2,"kind":"detail","text":"변동폭(USD/톤)"},{"level":1,"kind":"subtotal","text":"포스코·JFE 차이"},{"level":0,"kind":"group","text":"합금강"},{"level":2,"kind":"detail","text":"포스코 · SCM435H Y73"},{"level":2,"kind":"detail","text":"변동폭(천원/톤)"},{"level":2,"kind":"detail","text":"JFE · SCM435H"},{"level":2,"kind":"detail","text":"JFE · USD"},{"level":2,"kind":"detail","text":"변동폭(USD/톤)"},{"level":1,"kind":"subtotal","text":"포스코·JFE 차이"},{"level":1,"kind":"detail","text":"환율"},{"level":0,"kind":"total","text":"합계"}],"m02t03#1":[{"level":0,"kind":"group","text":"탄소강"},{"level":1,"kind":"subtotal","text":"포스코"},{"level":2,"kind":"detail","text":"중량"},{"level":2,"kind":"detail","text":"비중"},{"level":1,"kind":"subtotal","text":"JFE"},{"level":2,"kind":"detail","text":"중량"},{"level":2,"kind":"detail","text":"비중"}],"m02t03#2":[{"level":0,"kind":"group","text":"탄소강"},{"level":1,"kind":"subtotal","text":"포스코"},{"level":2,"kind":"detail","text":"중량"},{"level":2,"kind":"detail","text":"비중"},{"level":1,"kind":"subtotal","text":"JFE"},{"level":2,"kind":"detail","text":"중량"},{"level":2,"kind":"detail","text":"비중"},{"level":0,"kind":"subtotal","text":"평균단가"},{"level":0,"kind":"group","text":"합금강"},{"level":1,"kind":"subtotal","text":"포스코"},{"level":2,"kind":"detail","text":"중량"},{"level":2,"kind":"detail","text":"비중"}],"m02t03#3":[{"level":1,"kind":"subtotal","text":"포스코"},{"level":2,"kind":"detail","text":"중량"},{"level":2,"kind":"detail","text":"단가"},{"level":2,"kind":"detail","text":"증감"},{"level":1,"kind":"subtotal","text":"JFE"},{"level":2,"kind":"detail","text":"중량"},{"level":2,"kind":"detail","text":"단가"},{"level":2,"kind":"detail","text":"증감"},{"level":1,"kind":"subtotal","text":"세아창원특수강"},{"level":2,"kind":"detail","text":"중량"},{"level":2,"kind":"detail","text":"단가"},{"level":2,"kind":"detail","text":"증감"},{"level":1,"kind":"subtotal","text":"현대제철"},{"level":2,"kind":"detail","text":"중량"},{"level":2,"kind":"detail","text":"단가"},{"level":2,"kind":"detail","text":"증감"},{"level":0,"kind":"total","text":"총계"},{"level":2,"kind":"unknown","text":"항목 18"}],"m02t04#0":[{"level":1,"kind":"detail","text":"부재료비"},{"level":2,"kind":"detail","text":"급료와임금"},{"level":2,"kind":"detail","text":"상여금"},{"level":2,"kind":"detail","text":"잡급"},{"level":2,"kind":"detail","text":"퇴직급여충당금"},{"level":1,"kind":"subtotal","text":"제조노무비"},{"level":2,"kind":"detail","text":"전력비"},{"level":2,"kind":"detail","text":"수도료"},{"level":2,"kind":"detail","text":"감가상각비"},{"level":2,"kind":"detail","text":"수선비"},{"level":2,"kind":"detail","text":"소모품비"},{"level":2,"kind":"detail","text":"복리후생비"},{"level":2,"kind":"detail","text":"지급임차료"},{"level":2,"kind":"detail","text":"지급수수료"},{"level":2,"kind":"detail","text":"외주용역비"},{"level":2,"kind":"detail","text":"외주가공비"},{"level":2,"kind":"detail","text":"기타 제조경비"},{"level":1,"kind":"subtotal","text":"제조경비"},{"level":0,"kind":"total","text":"총합"},{"level":1,"kind":"detail","text":"원재투입중량"},{"level":1,"kind":"metric","text":"투입중량 원단위"}],"m02t05#0":[{"level":2,"kind":"detail","text":"급여"},{"level":2,"kind":"detail","text":"상여금"},{"level":2,"kind":"detail","text":"퇴직급여충당금"},{"level":1,"kind":"subtotal","text":"인건비"},{"level":2,"kind":"detail","text":"복리후생비"},{"level":2,"kind":"detail","text":"지급임차료"},{"level":2,"kind":"detail","text":"사용권자산 감가상각비"},{"level":2,"kind":"detail","text":"접대비"},{"level":2,"kind":"detail","text":"세금과공과"},{"level":2,"kind":"detail","text":"대손상각비"},{"level":2,"kind":"detail","text":"지급수수료"},{"level":2,"kind":"detail","text":"A/S비"},{"level":2,"kind":"detail","text":"경상연구비"},{"level":2,"kind":"detail","text":"기타 관리비"},{"level":1,"kind":"subtotal","text":"관리비"},{"level":2,"kind":"detail","text":"판관 운반비"},{"level":2,"kind":"detail","text":"수출개별비"},{"level":1,"kind":"subtotal","text":"판매비"},{"level":0,"kind":"total","text":"합계"},{"level":1,"kind":"detail","text":"판매량(제품)"},{"level":1,"kind":"metric","text":"인건비·관리비 원단위"},{"level":1,"kind":"metric","text":"운반비 원단위"},{"level":2,"kind":"unknown","text":"항목 23"}],"m02t06#0":[{"level":0,"kind":"subtotal","text":"제조"},{"level":1,"kind":"subtotal","text":"격려"},{"level":1,"kind":"subtotal","text":"성과"},{"level":0,"kind":"subtotal","text":"판관"},{"level":1,"kind":"detail","text":"임원"},{"level":1,"kind":"subtotal","text":"직원"},{"level":2,"kind":"detail","text":"격려"},{"level":2,"kind":"detail","text":"성과"},{"level":0,"kind":"subtotal","text":"외주"},{"level":0,"kind":"total","text":"총계"},{"level":1,"kind":"detail","text":"제조 격려"},{"level":1,"kind":"detail","text":"제조 성과"},{"level":1,"kind":"detail","text":"판관 격려"},{"level":1,"kind":"detail","text":"판관 성과"},{"level":1,"kind":"detail","text":"외주 격려"}],"m03t01#0":[{"level":1,"kind":"subtotal","text":"CHQ"},{"level":2,"kind":"detail","text":"금액"},{"level":2,"kind":"detail","text":"단가"},{"level":2,"kind":"detail","text":"중량"},{"level":1,"kind":"subtotal","text":"CD"},{"level":2,"kind":"detail","text":"금액"},{"level":2,"kind":"detail","text":"단가"},{"level":2,"kind":"detail","text":"중량"},{"level":1,"kind":"subtotal","text":"STS"},{"level":2,"kind":"detail","text":"금액"},{"level":2,"kind":"detail","text":"단가"},{"level":2,"kind":"detail","text":"중량"},{"level":1,"kind":"subtotal","text":"BTB"},{"level":2,"kind":"detail","text":"금액"},{"level":2,"kind":"detail","text":"단가"},{"level":2,"kind":"detail","text":"중량"},{"level":1,"kind":"subtotal","text":"PB"},{"level":2,"kind":"detail","text":"금액"},{"level":2,"kind":"detail","text":"단가"},{"level":2,"kind":"detail","text":"중량"},{"level":1,"kind":"subtotal","text":"기타"},{"level":2,"kind":"detail","text":"금액"},{"level":0,"kind":"total","text":"합계"},{"level":2,"kind":"detail","text":"금액"},{"level":2,"kind":"detail","text":"단가"},{"level":2,"kind":"detail","text":"중량"}],"m03t02#0":[{"level":2,"kind":"detail","text":"정상"},{"level":2,"kind":"detail","text":"산업/중국재"},{"level":1,"kind":"subtotal","text":"정품"},{"level":1,"kind":"subtotal","text":"B급"},{"level":0,"kind":"total","text":"합계"}],"m03t02#1":[{"level":1,"kind":"item","text":"2025.10"},{"level":1,"kind":"item","text":"2025.11"},{"level":1,"kind":"item","text":"2025.12"},{"level":1,"kind":"item","text":"2026.01"},{"level":1,"kind":"item","text":"2026.02"},{"level":1,"kind":"item","text":"2026.03"},{"level":1,"kind":"item","text":"2026.04"},{"level":1,"kind":"item","text":"2026.05"},{"level":1,"kind":"item","text":"2026.06"},{"level":1,"kind":"item","text":"2026.07"},{"level":1,"kind":"item","text":"2026.08"},{"level":1,"kind":"item","text":"2026.09"}],"m03t02#2":[{"level":1,"kind":"item","text":"2025.10"},{"level":1,"kind":"item","text":"2025.11"},{"level":1,"kind":"item","text":"2025.12"},{"level":1,"kind":"item","text":"2026.01"},{"level":1,"kind":"item","text":"2026.02"},{"level":1,"kind":"item","text":"2026.03"},{"level":1,"kind":"item","text":"2026.04"},{"level":1,"kind":"item","text":"2026.05"},{"level":1,"kind":"item","text":"2026.06"},{"level":1,"kind":"item","text":"2026.07"},{"level":1,"kind":"item","text":"2026.08"},{"level":1,"kind":"item","text":"2026.09"}],"m04t01#0":[{"level":2,"kind":"detail","text":"CHQ · 포항"},{"level":2,"kind":"detail","text":"CHQ · 충주"},{"level":1,"kind":"subtotal","text":"CHQ"},{"level":2,"kind":"detail","text":"CD · 포항"},{"level":2,"kind":"detail","text":"CD · 충주2"},{"level":1,"kind":"subtotal","text":"CD"},{"level":2,"kind":"detail","text":"STS · 포항"},{"level":2,"kind":"detail","text":"STS · 충주2"},{"level":1,"kind":"subtotal","text":"STS"},{"level":2,"kind":"detail","text":"BTB · 포항"},{"level":2,"kind":"detail","text":"BTB · 충주2"},{"level":1,"kind":"subtotal","text":"BTB"},{"level":2,"kind":"detail","text":"PB · 충주2"},{"level":1,"kind":"subtotal","text":"PB"},{"level":0,"kind":"total","text":"생산 합계"},{"level":1,"kind":"subtotal","text":"포항"},{"level":1,"kind":"subtotal","text":"충주"},{"level":1,"kind":"subtotal","text":"충주2"}],"m04t02#0":[{"level":2,"kind":"detail","text":"CHQ · 공정성"},{"level":2,"kind":"detail","text":"CHQ · 소재성"},{"level":1,"kind":"subtotal","text":"CHQ 소계"},{"level":2,"kind":"detail","text":"CD · 공정성"},{"level":2,"kind":"detail","text":"CD · 소재성"},{"level":1,"kind":"subtotal","text":"CD 소계"},{"level":1,"kind":"subtotal","text":"공정성 합계"},{"level":1,"kind":"subtotal","text":"소재성 합계"},{"level":0,"kind":"total","text":"포항 합계"}],"m04t03#0":[{"level":2,"kind":"detail","text":"충주1 · 공정성"},{"level":2,"kind":"detail","text":"충주1 · 소재성"},{"level":1,"kind":"subtotal","text":"충주1 소계(CHQ)"},{"level":2,"kind":"detail","text":"충주2 · 공정성"},{"level":2,"kind":"detail","text":"충주2 · 소재성"},{"level":1,"kind":"subtotal","text":"충주2 소계"},{"level":1,"kind":"subtotal","text":"공정성 합계"},{"level":1,"kind":"subtotal","text":"소재성 합계"},{"level":0,"kind":"total","text":"충주 합계"}],"m05t01#0":[{"level":1,"kind":"item","text":"열처리용 LNG"},{"level":1,"kind":"item","text":"질소"},{"level":1,"kind":"item","text":"염산"},{"level":1,"kind":"item","text":"수소"},{"level":1,"kind":"item","text":"산세용 LNG"},{"level":1,"kind":"item","text":"피막보급제"}],"m05t01#1":[{"level":1,"kind":"item","text":"열처리용 LNG"},{"level":1,"kind":"item","text":"질소"},{"level":1,"kind":"item","text":"염산"},{"level":1,"kind":"item","text":"수소"},{"level":1,"kind":"item","text":"산세용 LNG"},{"level":1,"kind":"item","text":"피막보급제"}],"m05t01#2":[{"level":1,"kind":"item","text":"CD용 SHOTBALL"},{"level":1,"kind":"item","text":"CD/BTB 방청유"}],"m05t01#3":[{"level":1,"kind":"item","text":"LNG"},{"level":1,"kind":"item","text":"난방등유"},{"level":1,"kind":"item","text":"수소"},{"level":1,"kind":"item","text":"질소"},{"level":1,"kind":"item","text":"전력"},{"level":1,"kind":"item","text":"기타 에너지"}],"m05t02#0":[{"level":1,"kind":"detail","text":"선재"},{"level":1,"kind":"detail","text":"봉강"},{"level":1,"kind":"detail","text":"부산"},{"level":1,"kind":"detail","text":"대구"},{"level":1,"kind":"detail","text":"글로벌"},{"level":0,"kind":"total","text":"합계"}],"m05t02#1":[{"level":1,"kind":"subtotal","text":"선재"},{"level":2,"kind":"detail","text":"선별비"},{"level":2,"kind":"detail","text":"불량 보상"},{"level":1,"kind":"subtotal","text":"봉강"},{"level":2,"kind":"detail","text":"선별비"},{"level":2,"kind":"detail","text":"불량 보상"},{"level":1,"kind":"subtotal","text":"부산"},{"level":2,"kind":"detail","text":"선별비"},{"level":2,"kind":"detail","text":"불량 보상"},{"level":1,"kind":"subtotal","text":"대구"},{"level":2,"kind":"detail","text":"선별비"},{"level":2,"kind":"detail","text":"불량 보상"},{"level":1,"kind":"subtotal","text":"글로벌"},{"level":2,"kind":"detail","text":"선별비"},{"level":2,"kind":"detail","text":"불량 보상"},{"level":0,"kind":"total","text":"합계"},{"level":2,"kind":"detail","text":"선별비"},{"level":2,"kind":"detail","text":"불량 보상"}],"m05t03#0":[{"level":2,"kind":"detail","text":"기부금"},{"level":2,"kind":"detail","text":"유형자산처분손실"},{"level":2,"kind":"detail","text":"지급수수료(영업외)"},{"level":1,"kind":"subtotal","text":"잡손실"},{"level":2,"kind":"detail","text":"고철매각작업비"},{"level":2,"kind":"detail","text":"기타 잡손실"},{"level":2,"kind":"detail","text":"기타비용"},{"level":2,"kind":"detail","text":"사용권자산처분손실"},{"level":1,"kind":"subtotal","text":"기타비용 소계"},{"level":2,"kind":"detail","text":"이자비용"},{"level":2,"kind":"detail","text":"외환차손"},{"level":2,"kind":"detail","text":"외화환산손실"},{"level":2,"kind":"detail","text":"파생상품평가손실"},{"level":2,"kind":"detail","text":"리스부채이자비용"},{"level":1,"kind":"subtotal","text":"금융비용 소계"},{"level":0,"kind":"total","text":"계"},{"level":2,"kind":"unknown","text":"항목 17"},{"level":2,"kind":"unknown","text":"항목 18"},{"level":2,"kind":"unknown","text":"항목 19"},{"level":2,"kind":"unknown","text":"항목 20"}],"m06t01#0":[{"level":1,"kind":"detail","text":"상품"},{"level":1,"kind":"subtotal","text":"제품"},{"level":2,"kind":"metric","text":"(중량)"},{"level":1,"kind":"subtotal","text":"재공품"},{"level":2,"kind":"metric","text":"(중량)"},{"level":1,"kind":"subtotal","text":"원재료"},{"level":2,"kind":"metric","text":"(중량)"},{"level":1,"kind":"detail","text":"부재료"},{"level":1,"kind":"detail","text":"미착재료"},{"level":0,"kind":"total","text":"재고자산 계"},{"level":1,"kind":"metric","text":"(중량 계)"},{"level":1,"kind":"detail","text":"당월 기준"},{"level":1,"kind":"detail","text":"재고금액"},{"level":1,"kind":"detail","text":"재고중량"},{"level":2,"kind":"unknown","text":"항목 15"},{"level":2,"kind":"unknown","text":"항목 16"},{"level":2,"kind":"unknown","text":"항목 17"},{"level":2,"kind":"unknown","text":"항목 18"}],"m06t02#0":[{"level":1,"kind":"detail","text":"3개월 이하"},{"level":1,"kind":"detail","text":"3개월 초과"},{"level":1,"kind":"detail","text":"6개월 초과"},{"level":1,"kind":"detail","text":"1년 초과"},{"level":0,"kind":"total","text":"원재료 합계"},{"level":2,"kind":"unknown","text":"항목 6"},{"level":2,"kind":"unknown","text":"항목 7"},{"level":2,"kind":"unknown","text":"항목 8"}],"m06t02#1":[{"level":1,"kind":"detail","text":"3개월 이하"},{"level":1,"kind":"detail","text":"3개월 초과"},{"level":1,"kind":"detail","text":"6개월 초과"},{"level":1,"kind":"detail","text":"1년 초과"},{"level":0,"kind":"total","text":"재공품 합계"},{"level":2,"kind":"unknown","text":"항목 6"},{"level":2,"kind":"unknown","text":"항목 7"},{"level":2,"kind":"unknown","text":"항목 8"}],"m06t02#2":[{"level":1,"kind":"detail","text":"3개월 이하"},{"level":1,"kind":"detail","text":"3개월 초과"},{"level":1,"kind":"detail","text":"6개월 초과"},{"level":1,"kind":"detail","text":"1년 초과"},{"level":0,"kind":"total","text":"제품 합계"},{"level":2,"kind":"unknown","text":"항목 6"},{"level":2,"kind":"unknown","text":"항목 7"},{"level":2,"kind":"unknown","text":"항목 8"}],"m06t02#3":[{"level":1,"kind":"detail","text":"원재료"},{"level":1,"kind":"detail","text":"재공품"},{"level":1,"kind":"detail","text":"제품"},{"level":0,"kind":"total","text":"총재고"},{"level":1,"kind":"metric","text":"장기재고"}],"m06t03#0":[{"level":2,"kind":"detail","text":"제품 · B급"},{"level":2,"kind":"detail","text":"제품 · C급"},{"level":2,"kind":"detail","text":"제품 · D급"},{"level":2,"kind":"detail","text":"제품 · X급"},{"level":1,"kind":"subtotal","text":"부적합 제품"},{"level":1,"kind":"subtotal","text":"부적합 재공품"},{"level":0,"kind":"total","text":"합계"}],"m07t01#0":[{"level":2,"kind":"detail","text":"원화 외상매출금"},{"level":2,"kind":"detail","text":"외화 외상매출금"},{"level":1,"kind":"subtotal","text":"외상매출금"},{"level":2,"kind":"detail","text":"자수어음"},{"level":2,"kind":"detail","text":"타수어음"},{"level":1,"kind":"subtotal","text":"받을어음"},{"level":0,"kind":"total","text":"채권 합계"}],"m07t02#0":[{"level":1,"kind":"group","text":"선재영업팀"},{"level":2,"kind":"detail","text":"매출"},{"level":2,"kind":"detail","text":"채권"},{"level":2,"kind":"metric","text":"채권일수"},{"level":1,"kind":"group","text":"봉강영업팀"},{"level":2,"kind":"detail","text":"매출"},{"level":2,"kind":"detail","text":"채권"},{"level":2,"kind":"metric","text":"채권일수"},{"level":1,"kind":"group","text":"부산영업소"},{"level":2,"kind":"detail","text":"매출"},{"level":2,"kind":"detail","text":"채권"},{"level":2,"kind":"metric","text":"채권일수"},{"level":1,"kind":"group","text":"대구영업소"},{"level":2,"kind":"detail","text":"매출"},{"level":2,"kind":"detail","text":"채권"},{"level":2,"kind":"metric","text":"채권일수"},{"level":1,"kind":"subtotal","text":"내수"},{"level":2,"kind":"detail","text":"매출"},{"level":2,"kind":"detail","text":"채권"},{"level":2,"kind":"metric","text":"채권일수"},{"level":1,"kind":"subtotal","text":"수출"},{"level":2,"kind":"detail","text":"매출"},{"level":2,"kind":"detail","text":"채권"},{"level":2,"kind":"metric","text":"채권일수"},{"level":0,"kind":"total","text":"전체"},{"level":2,"kind":"detail","text":"매출"},{"level":2,"kind":"detail","text":"채권"},{"level":2,"kind":"metric","text":"채권일수"}],"m07t03#0":[{"level":1,"kind":"detail","text":"외상매출금"},{"level":1,"kind":"detail","text":"조건초과채권"},{"level":1,"kind":"metric","text":"초과채권 비율(%)"},{"level":1,"kind":"detail","text":"이자비용"}],"m07t03#1":[{"level":1,"kind":"detail","text":"선재영업팀"},{"level":1,"kind":"detail","text":"봉강영업팀"},{"level":1,"kind":"detail","text":"부산영업소"},{"level":1,"kind":"detail","text":"대구영업소"},{"level":1,"kind":"detail","text":"STS 서울영업팀"},{"level":1,"kind":"detail","text":"STS 부산영업팀"},{"level":1,"kind":"detail","text":"글로벌구매팀"},{"level":0,"kind":"total","text":"합계"}],"m08t01#0":[{"level":0,"kind":"group","text":"서울"},{"level":1,"kind":"detail","text":"서울 사무직"},{"level":1,"kind":"detail","text":"서울 기능직"},{"level":0,"kind":"group","text":"포항"},{"level":2,"kind":"detail","text":"사무직"},{"level":2,"kind":"detail","text":"기능직"},{"level":1,"kind":"subtotal","text":"자사"},{"level":1,"kind":"detail","text":"외주"},{"level":0,"kind":"subtotal","text":"포항 소계"},{"level":0,"kind":"group","text":"충주"},{"level":2,"kind":"detail","text":"사무직"},{"level":2,"kind":"detail","text":"기능직"},{"level":1,"kind":"subtotal","text":"자사"},{"level":1,"kind":"detail","text":"외주"},{"level":0,"kind":"subtotal","text":"충주 소계"},{"level":0,"kind":"group","text":"충주2"},{"level":2,"kind":"detail","text":"사무직"},{"level":2,"kind":"detail","text":"기능직"},{"level":1,"kind":"subtotal","text":"자사"},{"level":1,"kind":"detail","text":"외주"},{"level":0,"kind":"subtotal","text":"충주2 소계"},{"level":0,"kind":"group","text":"원주"},{"level":1,"kind":"detail","text":"사무직"},{"level":1,"kind":"detail","text":"기능직"},{"level":1,"kind":"subtotal","text":"자사"},{"level":1,"kind":"detail","text":"외주"},{"level":0,"kind":"subtotal","text":"자사 계"},{"level":0,"kind":"subtotal","text":"외주 계"}],"m09t01#0":[{"level":1,"kind":"detail","text":"매출액"},{"level":1,"kind":"detail","text":"판매량"},{"level":1,"kind":"detail","text":"영업이익"},{"level":1,"kind":"metric","text":"영업이익률"}],"m09t01#1":[{"level":1,"kind":"detail","text":"매출액"},{"level":1,"kind":"detail","text":"판매량"},{"level":1,"kind":"detail","text":"영업이익"},{"level":1,"kind":"metric","text":"영업이익률"}],"m09t01#2":[{"level":1,"kind":"metric","text":"환율"},{"level":1,"kind":"metric","text":"매출액 환산"}],"m09t02#0":[{"level":0,"kind":"subtotal","text":"영업활동현금흐름"},{"level":1,"kind":"detail","text":"당기순이익"},{"level":1,"kind":"subtotal","text":"조정"},{"level":2,"kind":"detail","text":"감가상각비"},{"level":2,"kind":"detail","text":"기타 조정"},{"level":1,"kind":"subtotal","text":"자산부채증감"},{"level":2,"kind":"detail","text":"매출채권 감소(증가)"},{"level":2,"kind":"detail","text":"기타채권 감소(증가)"},{"level":2,"kind":"detail","text":"기타자산 감소(증가)"},{"level":2,"kind":"detail","text":"재고자산 감소(증가)"},{"level":2,"kind":"detail","text":"매입채무 증가(감소)"},{"level":2,"kind":"detail","text":"기타채무 증가(감소)"},{"level":2,"kind":"detail","text":"퇴직급여부채"},{"level":1,"kind":"detail","text":"법인세납부"},{"level":1,"kind":"detail","text":"이자의 수취"},{"level":1,"kind":"detail","text":"이자의 지급"},{"level":0,"kind":"subtotal","text":"투자활동현금흐름"},{"level":1,"kind":"detail","text":"유형자산 취득"},{"level":1,"kind":"detail","text":"무형자산 취득"},{"level":1,"kind":"detail","text":"기타 투자활동"},{"level":0,"kind":"subtotal","text":"재무활동현금흐름"},{"level":1,"kind":"detail","text":"차입금의 증감"},{"level":0,"kind":"total","text":"현금성자산의 증감"},{"level":1,"kind":"detail","text":"기초현금"},{"level":1,"kind":"detail","text":"환율변동효과"}],"m09t02#1":[{"level":0,"kind":"subtotal","text":"영업활동현금흐름"},{"level":1,"kind":"detail","text":"당기순이익"},{"level":1,"kind":"subtotal","text":"조정"},{"level":2,"kind":"detail","text":"감가상각비"},{"level":2,"kind":"detail","text":"기타 조정"},{"level":1,"kind":"subtotal","text":"자산부채증감"},{"level":2,"kind":"detail","text":"매출채권 감소(증가)"},{"level":2,"kind":"detail","text":"기타채권 감소(증가)"},{"level":2,"kind":"detail","text":"기타자산 감소(증가)"},{"level":2,"kind":"detail","text":"재고자산 감소(증가)"},{"level":2,"kind":"detail","text":"매입채무 증가(감소)"},{"level":2,"kind":"detail","text":"기타채무 증가(감소)"},{"level":2,"kind":"detail","text":"퇴직급여부채"},{"level":1,"kind":"detail","text":"법인세납부"},{"level":1,"kind":"detail","text":"이자의 수취"},{"level":1,"kind":"detail","text":"이자의 지급"},{"level":0,"kind":"subtotal","text":"투자활동현금흐름"},{"level":1,"kind":"detail","text":"유형자산 취득"},{"level":1,"kind":"detail","text":"무형자산 취득"},{"level":1,"kind":"detail","text":"기타 투자활동"},{"level":0,"kind":"subtotal","text":"재무활동현금흐름"},{"level":1,"kind":"detail","text":"차입금의 증감"},{"level":0,"kind":"total","text":"현금성자산의 증감"},{"level":1,"kind":"detail","text":"기초현금"},{"level":1,"kind":"detail","text":"환율변동효과"}],"m09t03#0":[{"level":1,"kind":"detail","text":"현금및현금성자산"},{"level":1,"kind":"detail","text":"매출채권"},{"level":1,"kind":"detail","text":"재고자산"},{"level":1,"kind":"detail","text":"유형자산"},{"level":1,"kind":"detail","text":"기타 자산"},{"level":0,"kind":"subtotal","text":"자산총계"},{"level":1,"kind":"detail","text":"매입채무"},{"level":1,"kind":"detail","text":"차입금"},{"level":1,"kind":"detail","text":"기타 부채"},{"level":0,"kind":"subtotal","text":"부채총계"},{"level":1,"kind":"detail","text":"자본금"},{"level":1,"kind":"detail","text":"이익잉여금"},{"level":1,"kind":"detail","text":"기타 자본"},{"level":0,"kind":"subtotal","text":"자본총계"}],"m09t03#1":[{"level":1,"kind":"detail","text":"현금및현금성자산"},{"level":1,"kind":"detail","text":"매출채권"},{"level":1,"kind":"detail","text":"재고자산"},{"level":1,"kind":"detail","text":"유형자산"},{"level":1,"kind":"detail","text":"기타 자산"},{"level":0,"kind":"subtotal","text":"자산총계"},{"level":1,"kind":"detail","text":"매입채무"},{"level":1,"kind":"detail","text":"차입금"},{"level":1,"kind":"detail","text":"기타 부채"},{"level":0,"kind":"subtotal","text":"부채총계"},{"level":1,"kind":"detail","text":"자본금"},{"level":1,"kind":"detail","text":"이익잉여금"},{"level":1,"kind":"detail","text":"기타 자본"},{"level":0,"kind":"subtotal","text":"자본총계"}],"m09t04#0":[{"level":1,"kind":"subtotal","text":"CHQ"},{"level":2,"kind":"detail","text":"열처리"},{"level":2,"kind":"detail","text":"비열처리"},{"level":1,"kind":"subtotal","text":"CD"},{"level":2,"kind":"detail","text":"합금/쾌삭"},{"level":2,"kind":"detail","text":"일반/탄소"},{"level":1,"kind":"subtotal","text":"STS"},{"level":1,"kind":"subtotal","text":"BTB"},{"level":1,"kind":"subtotal","text":"PB"},{"level":0,"kind":"total","text":"합계"},{"level":2,"kind":"unknown","text":"항목 11"},{"level":2,"kind":"unknown","text":"항목 12"},{"level":2,"kind":"unknown","text":"항목 13"},{"level":2,"kind":"unknown","text":"항목 14"},{"level":2,"kind":"unknown","text":"항목 15"},{"level":2,"kind":"unknown","text":"항목 16"}],"m09t04#1":[{"level":1,"kind":"subtotal","text":"CHQ"},{"level":2,"kind":"detail","text":"열처리"},{"level":2,"kind":"detail","text":"비열처리"},{"level":1,"kind":"subtotal","text":"CD"},{"level":2,"kind":"detail","text":"합금/쾌삭"},{"level":2,"kind":"detail","text":"일반/탄소"},{"level":0,"kind":"total","text":"합계"},{"level":2,"kind":"unknown","text":"항목 8"}],"m09t04#2":[{"level":1,"kind":"subtotal","text":"CHQ"},{"level":2,"kind":"detail","text":"열처리"},{"level":2,"kind":"detail","text":"비열처리"},{"level":1,"kind":"subtotal","text":"CD"},{"level":2,"kind":"detail","text":"합금/쾌삭"},{"level":2,"kind":"detail","text":"일반/탄소"},{"level":0,"kind":"total","text":"합계"},{"level":2,"kind":"unknown","text":"항목 8"}],"m09t04#3":[{"level":1,"kind":"subtotal","text":"CHQ"},{"level":2,"kind":"detail","text":"열처리"},{"level":2,"kind":"detail","text":"비열처리"},{"level":1,"kind":"subtotal","text":"CD"},{"level":2,"kind":"detail","text":"합금/쾌삭"},{"level":2,"kind":"detail","text":"일반/탄소"},{"level":0,"kind":"total","text":"합계"},{"level":2,"kind":"unknown","text":"항목 8"}],"m09t05#0":[{"level":0,"kind":"subtotal","text":"매출이익 차이"},{"level":1,"kind":"detail","text":"수량차이"},{"level":1,"kind":"detail","text":"판가차이"},{"level":1,"kind":"detail","text":"원가차이"},{"level":0,"kind":"total","text":"영업이익 차이"}],"m09t05#1":[{"level":0,"kind":"subtotal","text":"매출이익 차이"},{"level":1,"kind":"detail","text":"수량차이"},{"level":1,"kind":"detail","text":"판가차이"},{"level":1,"kind":"detail","text":"원가차이"},{"level":0,"kind":"total","text":"영업이익 차이"}],"m09t06#0":[{"level":1,"kind":"subtotal","text":"원재료"},{"level":2,"kind":"metric","text":"중량"},{"level":1,"kind":"subtotal","text":"재공품"},{"level":2,"kind":"metric","text":"중량"},{"level":1,"kind":"subtotal","text":"제품"},{"level":2,"kind":"metric","text":"중량"},{"level":1,"kind":"detail","text":"부재료"},{"level":1,"kind":"detail","text":"미착재료"},{"level":0,"kind":"total","text":"재고자산 계"},{"level":1,"kind":"metric","text":"총중량"},{"level":1,"kind":"detail","text":"전월대비"},{"level":1,"kind":"detail","text":"장기재고"},{"level":1,"kind":"detail","text":"기타"}],"m09t06#1":[{"level":1,"kind":"subtotal","text":"원재료"},{"level":2,"kind":"metric","text":"중량"},{"level":1,"kind":"subtotal","text":"재공품"},{"level":2,"kind":"metric","text":"중량"},{"level":1,"kind":"subtotal","text":"제품"},{"level":2,"kind":"metric","text":"중량"},{"level":1,"kind":"detail","text":"부재료"},{"level":1,"kind":"detail","text":"미착재료"},{"level":0,"kind":"total","text":"재고자산 계"},{"level":1,"kind":"metric","text":"총중량"},{"level":1,"kind":"detail","text":"전월대비"},{"level":1,"kind":"detail","text":"장기재고"},{"level":1,"kind":"detail","text":"기타"}],"m09t06#2":[{"level":1,"kind":"subtotal","text":"원재료"},{"level":2,"kind":"detail","text":"3개월 이하"},{"level":2,"kind":"detail","text":"3개월 초과"},{"level":2,"kind":"detail","text":"6개월 초과"},{"level":2,"kind":"detail","text":"1년 초과"},{"level":1,"kind":"subtotal","text":"재공품"},{"level":2,"kind":"detail","text":"3개월 이하"},{"level":2,"kind":"detail","text":"3개월 초과"},{"level":2,"kind":"detail","text":"6개월 초과"},{"level":2,"kind":"detail","text":"1년 초과"},{"level":0,"kind":"total","text":"총합계"},{"level":2,"kind":"unknown","text":"항목 12"},{"level":2,"kind":"unknown","text":"항목 13"}],"m09t06#3":[{"level":1,"kind":"subtotal","text":"원재료"},{"level":2,"kind":"detail","text":"3개월 이하"},{"level":2,"kind":"detail","text":"3개월 초과"},{"level":2,"kind":"detail","text":"6개월 초과"},{"level":2,"kind":"detail","text":"1년 초과"},{"level":1,"kind":"subtotal","text":"재공품"},{"level":2,"kind":"detail","text":"3개월 이하"},{"level":2,"kind":"detail","text":"3개월 초과"},{"level":2,"kind":"detail","text":"6개월 초과"},{"level":2,"kind":"detail","text":"1년 초과"},{"level":0,"kind":"total","text":"총합계"},{"level":2,"kind":"unknown","text":"항목 12"},{"level":2,"kind":"unknown","text":"항목 13"}],"m09t06#4":[{"level":0,"kind":"group","text":"원재료"},{"level":2,"kind":"detail","text":"3개월 이하"},{"level":2,"kind":"detail","text":"3개월 초과"},{"level":2,"kind":"detail","text":"6개월 초과"},{"level":2,"kind":"detail","text":"1년 초과"},{"level":1,"kind":"subtotal","text":"원재료 계"},{"level":0,"kind":"group","text":"재공품"},{"level":2,"kind":"detail","text":"3개월 이하"},{"level":2,"kind":"detail","text":"3개월 초과"},{"level":2,"kind":"detail","text":"6개월 초과"},{"level":2,"kind":"detail","text":"1년 초과"},{"level":1,"kind":"subtotal","text":"재공품 계"},{"level":0,"kind":"group","text":"제품"},{"level":2,"kind":"detail","text":"3개월 이하"},{"level":2,"kind":"detail","text":"3개월 초과"},{"level":2,"kind":"detail","text":"6개월 초과"},{"level":2,"kind":"detail","text":"1년 초과"},{"level":1,"kind":"subtotal","text":"제품 계"},{"level":0,"kind":"total","text":"재고자산 합계"},{"level":2,"kind":"unknown","text":"항목 20"},{"level":2,"kind":"unknown","text":"항목 21"},{"level":2,"kind":"unknown","text":"항목 22"},{"level":2,"kind":"unknown","text":"항목 23"},{"level":2,"kind":"unknown","text":"항목 24"},{"level":2,"kind":"unknown","text":"항목 25"},{"level":2,"kind":"unknown","text":"항목 26"},{"level":2,"kind":"unknown","text":"항목 27"},{"level":2,"kind":"unknown","text":"항목 28"},{"level":2,"kind":"unknown","text":"항목 29"},{"level":2,"kind":"unknown","text":"항목 30"},{"level":2,"kind":"unknown","text":"항목 31"},{"level":2,"kind":"unknown","text":"항목 32"},{"level":2,"kind":"unknown","text":"항목 33"},{"level":2,"kind":"unknown","text":"항목 34"},{"level":2,"kind":"unknown","text":"항목 35"},{"level":2,"kind":"unknown","text":"항목 36"}],"m09t06#5":[{"level":0,"kind":"group","text":"원재료"},{"level":2,"kind":"detail","text":"3개월 이하"},{"level":2,"kind":"detail","text":"3개월 초과"},{"level":2,"kind":"detail","text":"6개월 초과"},{"level":2,"kind":"detail","text":"1년 초과"},{"level":1,"kind":"subtotal","text":"원재료 계"},{"level":0,"kind":"group","text":"재공품"},{"level":2,"kind":"detail","text":"3개월 이하"},{"level":2,"kind":"detail","text":"3개월 초과"},{"level":2,"kind":"detail","text":"6개월 초과"},{"level":2,"kind":"detail","text":"1년 초과"},{"level":1,"kind":"subtotal","text":"재공품 계"},{"level":0,"kind":"group","text":"제품"},{"level":2,"kind":"detail","text":"3개월 이하"},{"level":2,"kind":"detail","text":"3개월 초과"},{"level":2,"kind":"detail","text":"6개월 초과"},{"level":2,"kind":"detail","text":"1년 초과"},{"level":1,"kind":"subtotal","text":"제품 계"},{"level":0,"kind":"total","text":"재고자산 합계"},{"level":2,"kind":"unknown","text":"항목 20"},{"level":2,"kind":"unknown","text":"항목 21"},{"level":2,"kind":"unknown","text":"항목 22"},{"level":2,"kind":"unknown","text":"항목 23"},{"level":2,"kind":"unknown","text":"항목 24"},{"level":2,"kind":"unknown","text":"항목 25"},{"level":2,"kind":"unknown","text":"항목 26"},{"level":2,"kind":"unknown","text":"항목 27"},{"level":2,"kind":"unknown","text":"항목 28"},{"level":2,"kind":"unknown","text":"항목 29"},{"level":2,"kind":"unknown","text":"항목 30"},{"level":2,"kind":"unknown","text":"항목 31"},{"level":2,"kind":"unknown","text":"항목 32"},{"level":2,"kind":"unknown","text":"항목 33"},{"level":2,"kind":"unknown","text":"항목 34"},{"level":2,"kind":"unknown","text":"항목 35"},{"level":2,"kind":"unknown","text":"항목 36"}],"m09t07#0":[{"level":2,"kind":"detail","text":"원화"},{"level":2,"kind":"detail","text":"외화"},{"level":1,"kind":"subtotal","text":"외상매출금"},{"level":2,"kind":"detail","text":"자수어음"},{"level":2,"kind":"detail","text":"타수어음"},{"level":1,"kind":"subtotal","text":"받을어음"},{"level":0,"kind":"total","text":"채권 합계"},{"level":2,"kind":"unknown","text":"항목 8"},{"level":2,"kind":"unknown","text":"항목 9"},{"level":2,"kind":"unknown","text":"항목 10"},{"level":2,"kind":"unknown","text":"항목 11"},{"level":2,"kind":"unknown","text":"항목 12"},{"level":2,"kind":"unknown","text":"항목 13"}],"m09t07#1":[{"level":2,"kind":"detail","text":"원화"},{"level":2,"kind":"detail","text":"외화"},{"level":1,"kind":"subtotal","text":"외상매출금"},{"level":2,"kind":"detail","text":"자수어음"},{"level":2,"kind":"detail","text":"타수어음"},{"level":1,"kind":"subtotal","text":"받을어음"},{"level":0,"kind":"total","text":"채권 합계"},{"level":2,"kind":"unknown","text":"항목 8"},{"level":2,"kind":"unknown","text":"항목 9"},{"level":2,"kind":"unknown","text":"항목 10"},{"level":2,"kind":"unknown","text":"항목 11"},{"level":2,"kind":"unknown","text":"항목 12"},{"level":2,"kind":"unknown","text":"항목 13"}],"m09t08#0":[{"level":2,"kind":"detail","text":"사무직"},{"level":2,"kind":"detail","text":"기능직"},{"level":1,"kind":"subtotal","text":"자사"},{"level":1,"kind":"detail","text":"외주"},{"level":0,"kind":"total","text":"전체"},{"level":2,"kind":"unknown","text":"항목 6"},{"level":2,"kind":"unknown","text":"항목 7"},{"level":2,"kind":"unknown","text":"항목 8"},{"level":2,"kind":"unknown","text":"항목 9"},{"level":2,"kind":"unknown","text":"항목 10"}],"m09t08#1":[{"level":1,"kind":"detail","text":"사무직"},{"level":1,"kind":"detail","text":"기능직"},{"level":1,"kind":"detail","text":"외주"},{"level":0,"kind":"total","text":"전체"},{"level":2,"kind":"unknown","text":"항목 5"},{"level":2,"kind":"unknown","text":"항목 6"}],"m10t03#0":[{"level":0,"kind":"subtotal","text":"매출액"},{"level":1,"kind":"detail","text":"제품 매출"},{"level":2,"kind":"metric","text":"수량"},{"level":1,"kind":"detail","text":"부산물 매출"},{"level":0,"kind":"subtotal","text":"변동비"},{"level":1,"kind":"subtotal","text":"재료비"},{"level":2,"kind":"metric","text":"DM 비율"},{"level":1,"kind":"subtotal","text":"가공비"},{"level":2,"kind":"detail","text":"부재료비"},{"level":2,"kind":"detail","text":"외주용역비"},{"level":2,"kind":"detail","text":"수선비"},{"level":2,"kind":"detail","text":"기타 가공비"},{"level":1,"kind":"subtotal","text":"운반비"},{"level":2,"kind":"detail","text":"C조건 선임"},{"level":2,"kind":"detail","text":"수출개별비"},{"level":2,"kind":"detail","text":"국내 운반비"},{"level":0,"kind":"subtotal","text":"한계이익"},{"level":1,"kind":"metric","text":"한계이익률"},{"level":0,"kind":"subtotal","text":"고정비"},{"level":1,"kind":"subtotal","text":"가공비"},{"level":2,"kind":"detail","text":"감가상각비"},{"level":2,"kind":"detail","text":"제조노무비"},{"level":2,"kind":"detail","text":"기타 고정비"},{"level":1,"kind":"subtotal","text":"판관비"},{"level":2,"kind":"detail","text":"기타 판관비"},{"level":1,"kind":"detail","text":"재고자산평가·X등급"},{"level":0,"kind":"total","text":"영업이익"},{"level":1,"kind":"metric","text":"영업이익률"},{"level":1,"kind":"detail","text":"기타수익"},{"level":1,"kind":"detail","text":"기타비용"},{"level":1,"kind":"detail","text":"금융수익"},{"level":1,"kind":"detail","text":"금융비용"},{"level":0,"kind":"subtotal","text":"경상이익"},{"level":1,"kind":"metric","text":"경상이익률"},{"level":1,"kind":"detail","text":"경상이익(재경마감)"}],"m10t04#0":[{"level":0,"kind":"group","text":"내수"},{"level":1,"kind":"detail","text":"자동차"},{"level":1,"kind":"detail","text":"산업기계"},{"level":1,"kind":"detail","text":"건설"},{"level":1,"kind":"detail","text":"전자"},{"level":1,"kind":"subtotal","text":"기타 산업"},{"level":2,"kind":"detail","text":"조선"},{"level":2,"kind":"detail","text":"항공"},{"level":0,"kind":"group","text":"수출"},{"level":1,"kind":"detail","text":"자동차"},{"level":1,"kind":"detail","text":"산업기계"},{"level":1,"kind":"detail","text":"건설"},{"level":1,"kind":"detail","text":"전자"},{"level":1,"kind":"subtotal","text":"기타 산업"},{"level":2,"kind":"detail","text":"조선"},{"level":2,"kind":"detail","text":"항공"},{"level":0,"kind":"total","text":"총계"},{"level":2,"kind":"unknown","text":"항목 18"},{"level":2,"kind":"unknown","text":"항목 19"},{"level":2,"kind":"unknown","text":"항목 20"},{"level":2,"kind":"unknown","text":"항목 21"},{"level":2,"kind":"unknown","text":"항목 22"},{"level":2,"kind":"unknown","text":"항목 23"},{"level":2,"kind":"unknown","text":"항목 24"}],"m10t04#1":[{"level":1,"kind":"subtotal","text":"내수"},{"level":2,"kind":"detail","text":"자동차"},{"level":2,"kind":"detail","text":"산업기계"},{"level":2,"kind":"detail","text":"건설"},{"level":2,"kind":"detail","text":"전자"},{"level":2,"kind":"detail","text":"기타"},{"level":1,"kind":"subtotal","text":"수출"},{"level":2,"kind":"detail","text":"자동차"},{"level":0,"kind":"total","text":"총계"}],"m10t04#2":[{"level":0,"kind":"group","text":"내수"},{"level":2,"kind":"detail","text":"포스코"},{"level":2,"kind":"detail","text":"JFE STEEL(S)"},{"level":2,"kind":"detail","text":"세아창원특수강"},{"level":2,"kind":"detail","text":"현대제철"},{"level":2,"kind":"detail","text":"세아베스틸"},{"level":2,"kind":"detail","text":"사강"},{"level":2,"kind":"detail","text":"용강제철"},{"level":2,"kind":"detail","text":"진양특수강"},{"level":2,"kind":"detail","text":"삼원강재"},{"level":2,"kind":"detail","text":"중천강철"},{"level":2,"kind":"detail","text":"DAIDO"},{"level":1,"kind":"subtotal","text":"내수 계"},{"level":0,"kind":"group","text":"수출"},{"level":2,"kind":"detail","text":"포스코"},{"level":2,"kind":"detail","text":"JFE STEEL(S)"},{"level":2,"kind":"detail","text":"세아창원특수강"},{"level":2,"kind":"detail","text":"현대제철"},{"level":2,"kind":"detail","text":"세아베스틸"},{"level":2,"kind":"detail","text":"사강"},{"level":0,"kind":"total","text":"총계"}],"m10t04#3":[{"level":0,"kind":"group","text":"내수"},{"level":2,"kind":"detail","text":"포스코"},{"level":2,"kind":"detail","text":"JFE STEEL(S)"},{"level":2,"kind":"detail","text":"세아창원특수강"},{"level":2,"kind":"detail","text":"현대제철"},{"level":2,"kind":"detail","text":"세아베스틸"},{"level":0,"kind":"group","text":"수출"}],"m10t04#4":[{"level":0,"kind":"group","text":"포항공장"},{"level":2,"kind":"detail","text":"포스코"},{"level":2,"kind":"detail","text":"JFE STEEL(S)"},{"level":2,"kind":"detail","text":"세아창원특수강"},{"level":2,"kind":"detail","text":"현대제철"},{"level":2,"kind":"detail","text":"세아베스틸"},{"level":2,"kind":"detail","text":"사강"},{"level":0,"kind":"subtotal","text":"포항 합계"},{"level":0,"kind":"group","text":"충주공장"},{"level":2,"kind":"detail","text":"포스코"},{"level":2,"kind":"detail","text":"JFE STEEL(S)"},{"level":2,"kind":"detail","text":"세아창원특수강"},{"level":2,"kind":"detail","text":"현대제철"},{"level":2,"kind":"detail","text":"세아베스틸"},{"level":0,"kind":"subtotal","text":"충주 합계"},{"level":0,"kind":"group","text":"충주2공장"},{"level":2,"kind":"detail","text":"포스코"},{"level":2,"kind":"detail","text":"JFE STEEL(S)"},{"level":2,"kind":"detail","text":"세아창원특수강"},{"level":2,"kind":"detail","text":"현대제철"},{"level":2,"kind":"detail","text":"세아베스틸"},{"level":0,"kind":"total","text":"전체 합계"}],"m10t04#5":[{"level":0,"kind":"group","text":"포항공장"},{"level":2,"kind":"detail","text":"포스코"},{"level":2,"kind":"detail","text":"JFE STEEL(S)"},{"level":2,"kind":"detail","text":"세아창원특수강"},{"level":2,"kind":"detail","text":"현대제철"},{"level":2,"kind":"detail","text":"세아베스틸"},{"level":2,"kind":"detail","text":"사강"},{"level":0,"kind":"subtotal","text":"포항 합계"},{"level":0,"kind":"group","text":"충주공장"},{"level":2,"kind":"detail","text":"포스코"},{"level":2,"kind":"detail","text":"JFE STEEL(S)"},{"level":2,"kind":"detail","text":"세아창원특수강"},{"level":2,"kind":"detail","text":"현대제철"},{"level":2,"kind":"detail","text":"세아베스틸"},{"level":0,"kind":"subtotal","text":"충주 합계"},{"level":0,"kind":"group","text":"충주2공장"},{"level":2,"kind":"detail","text":"포스코"},{"level":2,"kind":"detail","text":"JFE STEEL(S)"}]}};
+
+</script>
+<script>
+/* Violet HTML layout reconstruction, v0.5.8
+ * View-only, offline. No network calls or business data writes.
+ * All numeric table body values were intentionally omitted by original capture JSON.
+ */
+(()=>{
+ 'use strict';
+ const DATA=window.VIOLET_CAPTURE;
+ const HIERARCHY=window.VIOLET_HIERARCHY||{labels:{}};
+ if(!DATA||!Array.isArray(DATA.reports))throw Error('필수 화면구조 자료(data.js)를 불러오지 못했습니다.');
+ const $=id=>document.getElementById(id);
+ const ui={menu:0,tab:0,view:'html',year:2026,month:9,side:true,hierarchy:true,twoTier:true};
+ // Only apply nested headings when the capture labels explicitly identify
+ // a total/period group and its corresponding entities or components.
+ const NESTED_HEADERS={
+  'm01t01#0':[{total:4,children:[5,6,7]}],
+  'm01t02#1':[{total:1,children:[2,3,4,5,6,7]}],
+  'm02t02#0':[{total:1,children:[2,3,4,5]}],
+  'm02t04#0':[
+   {total:4,children:[1,2,3]},
+   {total:8,children:[5,6,7]},
+   {total:12,children:[9,10,11]}
+  ],
+  'm09t05#0':[{total:5,children:[1,2,3,4]}],
+  'm09t05#1':[{total:5,children:[1,2,3,4]}]
+ };
+ const FRIENDLY_HEADINGS={
+  'm01t01#0':{1:'전전월',2:'전월',4:'당월',5:'본사',6:'남통',7:'태국',8:'전월 대비',9:'계획 대비'}
+ };
+ const SOURCE_BASE=293;
+ const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const px=n=>(Math.round(Math.max(0,Number(n)||0)*10)/10)+'px';
+ const fromLeft=r=>px((r?.documentX||340)-SOURCE_BASE);
+ const fromTop=r=>px(r?.documentY||0);
+ const current=()=>DATA.reports[ui.menu].tabs[ui.tab];
+ let noticeHandle;
+ function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(noticeHandle);noticeHandle=setTimeout(()=>el.classList.remove('show'),2700)}
+ function formatMonth(m){return String(m).padStart(2,'0')}
+ function periodLabel(){return ui.year+'년 '+ui.month+'월'}
+ function periodDifferent(){return ui.year!==2026||ui.month!==9}
+ function updateMenu(){
+  $('reportMenu').innerHTML=DATA.reports.map((r,i)=>
+   `<button class="nav-entry${ui.menu===i?' active':''}" type="button" data-menu="${i}" ${ui.menu===i?'aria-current="page"':''}><span>${i+1}. ${escape(r.name)}</span><span class="mini-icon" aria-hidden="true"></span></button>`
+  ).join('');
+ }
+ function updateControls(){
+  $('yearPicker').value=String(ui.year);$('monthPicker').value=String(ui.month);
+  $('differentPeriod').hidden=!periodDifferent();
+  const hierarchyToggle=$('hierarchyToggle');
+  if(hierarchyToggle){hierarchyToggle.classList.toggle('selected',ui.hierarchy);hierarchyToggle.setAttribute('aria-pressed',ui.hierarchy?'true':'false');hierarchyToggle.textContent=ui.hierarchy?'계층 레이블 켜짐':'계층 레이블 꺼짐';}
+  const tier=$('twoTierToggle');
+  tier.classList.toggle('selected',ui.twoTier);
+  tier.setAttribute('aria-pressed',String(ui.twoTier));
+  tier.textContent=ui.twoTier?'합계·법인 2단 켜짐':'합계·법인 2단 꺼짐';
+  $('renderView').classList.toggle('active',ui.view==='html');
+  $('imageView').classList.toggle('active',ui.view==='original');
+  $('renderView').setAttribute('aria-pressed',ui.view==='html'?'true':'false');
+  $('imageView').setAttribute('aria-pressed',ui.view==='original'?'true':'false');
+ }
+ function selectMenu(i){
+  if(!Number.isInteger(i)||i<0||i>=DATA.reports.length)return;
+  ui.menu=i;ui.tab=0;render();window.scrollTo(0,0);
+ }
+ function selectTab(i){
+  if(!Number.isInteger(i)||i<0||i>=DATA.reports[ui.menu].tabs.length)return;
+  ui.tab=i;renderSurface();window.scrollTo(0,0);
+ }
+ function render(){updateMenu();updateControls();renderSurface();}
+ function tabsMarkup(report,top){
+  return `<nav class="tabstrip" aria-label="${escape(report.name)} 내부 탭" role="tablist" style="top:${px(top)}">`+
+   report.tabs.map((t,i)=>`<button role="tab" type="button" class="tab-btn${i===ui.tab?' active':''}" data-tab="${i}" aria-selected="${i===ui.tab?'true':'false'}" tabindex="${i===ui.tab?'0':'-1'}">${escape(t.name)}</button>`).join('')+'</nav>';
+ }
+ function place(r){return `left:${fromLeft(r)};top:${fromTop(r)};`;}
+ const LAYOUT={tableLeft:47,tableRight:1018,noteLeft:1042,noteWidth:235,
+  headerToTable:24,tableToHeader:54,bottomPadding:80};
+ function verticalOverlap(a,b){return Math.min(a.documentY+a.height,b.documentY+b.height)-Math.max(a.documentY,b.documentY)>18;}
+ function rightLimitFor(rect,tab){
+  const visibleLeft=Math.max(SOURCE_BASE,rect.documentX);
+  const tableRight=SOURCE_BASE+LAYOUT.tableRight;
+  // Keep genuinely independent side-by-side tables in their original order.
+  // Tables nested in the same scrollbar are not necessarily separate columns.
+  const adjacent=(tab.tables||[])
+   .filter(t=>t.rect!==rect&&t.rect.documentX>rect.documentX+45&&
+    verticalOverlap(rect,t.rect)&&t.rect.documentX<tableRight)
+   .map(t=>t.rect.documentX-16);
+  return Math.max(visibleLeft+160,Math.min(tableRight,...adjacent));
+ }
+ function expandedWidth(rect,tab){
+  const left=Math.max(SOURCE_BASE,rect.documentX);
+  return Math.max(160,Math.min(SOURCE_BASE+LAYOUT.tableRight,rightLimitFor(rect,tab))-left);
+ }
+ function noteRect(r){
+  return {documentX:SOURCE_BASE+LAYOUT.noteLeft,documentY:r.documentY,
+   width:LAYOUT.noteWidth,height:r.height};
+ }
+ function rectContains(parent,table){
+  const p=parent.rect,t=table.rect;
+  return t.documentX>=p.documentX-8&&t.documentX<=p.documentX+p.width+10&&
+   t.documentY>=p.documentY-4&&t.documentY<=p.documentY+p.height-45;
+ }
+ function headerRows(table,tab){
+  const key=tab.id+'#'+table.i;
+  const grouped=ui.twoTier&&table.headRows.length===1?NESTED_HEADERS[key]:null;
+  if(grouped&&grouped.length){
+   const headers=table.headRows[0];
+   // Defensive validation: no overlapping groups and only adjacent child runs.
+   const children=new Map(),starts=new Map(),totals=new Set();
+   for(const group of grouped){
+    const arr=group.children;
+    if(!arr.length||arr.some((x,i)=>x<0||x>=headers.length||(i>0&&x!==arr[i-1]+1)))continue;
+    if(arr.includes(group.total)||totals.has(group.total)||arr.some(x=>children.has(x)))continue;
+    for(const x of arr)children.set(x,group);
+    starts.set(arr[0],group);totals.add(group.total);
+   }
+   if(children.size>0){
+    const fmt=(h,i)=>escape(FRIENDLY_HEADINGS[key]?.[i]||h.text||' ');
+    const upper=[];
+    for(let i=0;i<headers.length;i++){
+     if(children.has(i)){
+      const first=starts.get(i);
+      if(first)upper.push(`<th class="nested-cap" colspan="${first.children.length}" aria-label="합계 열과 같은 기간에 속하는 세부 항목">&nbsp;</th>`);
+      continue;
+     }
+     const primary=i===0;
+     const total=totals.has(i);
+     const label=fmt(headers[i],i)+(primary&&ui.hierarchy?'<span class="header-depth-mark" title="합계·소계·세부 레이블">계층</span>':'');
+     upper.push(`<th rowspan="2" scope="col" class="${primary&&ui.hierarchy?'hier-header ':''}${total?'nested-sum ':''}nested-tall" title="${escape(headers[i].text)}">${label}</th>`);
+    }
+    // Colspan and rowspan combine to exactly the source table's column count.
+    const lower=headers.map((h,i)=>children.has(i)?`<th scope="col" class="nested-detail" title="${escape(h.text)}">${fmt(h,i)}</th>`:'').join('');
+    return '<tr class="nested-upper">'+upper.join('')+'</tr><tr class="nested-lower">'+lower+'</tr>';
+   }
+  }
+  return table.headRows.map((row,ri)=>'<tr>'+row.map((h,ci)=>{
+   const colspan=Math.min(36,Math.max(1,Number(h.colspan)||1));const rowspan=Math.min(12,Math.max(1,Number(h.rowspan)||1));
+   const primary=ri===0&&ci===0;
+   const label=primary&&ui.hierarchy?`${escape(h.text||'구분')}<span class="header-depth-mark" title="총계·소계·세부 단계가 표현됩니다">계층</span>`:escape(h.text||' ');
+   return `<th scope="col" colspan="${colspan}" rowspan="${rowspan}" class="${primary&&ui.hierarchy?'hier-header':''}" title="${escape(h.text)}${primary&&ui.hierarchy?' · 총계/소계/세부 레이블':''}">${label}</th>`;
+  }).join('')+'</tr>').join('');
+ }
+ function bodyRows(table,tab){
+  const hrows=Math.max(1,table.headRows.length)+(ui.twoTier&&NESTED_HEADERS[tab.id+'#'+table.i]?1:0),total=table.rows;
+  const count=Math.min(85,Math.max(1,total-table.headRows.length));
+  const height=Math.max(30,Math.min(76,Math.round((table.rect.height-hrows*44)/count)));
+  const cols=Math.min(40,Math.max(1,table.columns));
+  const labels=HIERARCHY.labels[tab.id+'#'+table.i]||[];
+  let result='';
+  for(let i=0;i<count;i++){
+   const item=labels[i]||{level:2,kind:'unknown',text:'항목 '+(i+1)};
+   const kind=ui.hierarchy?item.kind:'placeholder';
+   const safeKind=/^(total|subtotal|group|detail|metric|item|unknown)$/.test(kind)?kind:'placeholder';
+   const level=ui.hierarchy?Math.max(0,Math.min(3,Number(item.level)||0)):2;
+   result+=`<tr class="hier-row row-${safeKind} level-${level}" style="height:${height}px">`;
+   for(let c=0;c<cols;c++){
+    const width=c===0?(i%4===1?'62%':'79%'):((i+c)%4===0?'40%':(c%3===1?'63%':'55%'));
+    if(c===0&&ui.hierarchy){
+     const described=item.kind==='unknown'?'PDF와 9월 화면에서 정확한 레이블 추가 확인 필요':`${item.text} · ${item.kind==='total'?'총계':item.kind==='subtotal'?'소계':item.kind==='group'?'구분 그룹':item.kind==='metric'?'지표':'세부'} (2026년 4월 보고서 양식 참고)`;
+      result+=`<th scope="row" class="level-label level-label-${safeKind}" title="${escape(described)}"><span class="level-label-inner"><span class="row-label-text">${escape(item.text)}</span></span></th>`;
+    }else{
+     result+=`<td title="표 본문의 실제 값은 원본 캡처에만 있습니다"><span class="cell-skeleton${c===0?' label-skeleton':''}" style="width:${width}" aria-label="실제 값 미제공"></span></td>`;
+    }
+   }
+   result+='</tr>';
+  }
+  return result;
+ }
+ function tableHtml(table,index,tab){
+  const n=table.columns;
+  const widths=table.colWidths.length===n?table.colWidths.map(v=>Number(v)||37):[];
+  const tWidth=Math.max(320,expandedWidth(table.rect,tab));
+  // Reserve enough room for the actual hierarchy label without changing the
+  // overall table footprint or pushing the neighboring notes off-screen.
+  if(ui.hierarchy&&widths.length>1){
+   const target=Math.min(155,Math.max(120,Math.round(tWidth/Math.max(4,n)*1.5)));
+   const gain=Math.max(0,target-widths[0]);
+   if(gain>0){
+    const others=widths.slice(1),available=others.reduce((a,b)=>a+b,0);
+    const reserve=others.length*36;
+    const reduction=Math.min(gain,Math.max(0,available-reserve));
+    widths[0]+=reduction;
+    for(let i=1;i<widths.length;i++) widths[i]=Math.max(36,widths[i]*(1-reduction/Math.max(1,available)));
+   }
+  }
+  const totalCols=widths.reduce((a,b)=>a+b,0)||1;
+  const cols=widths.length?'<colgroup>'+widths.map(w=>`<col style="width:${(100*w/totalCols).toFixed(3)}%">`).join('')+'</colgroup>':'';
+  const density=n>=15?'dense-columns':n>=10?'medium-columns':'';
+  return `<div class="table-block" style="width:${px(tWidth)}" data-table-index="${index}">
+    <table class="table-el ${density}" aria-label="원본 캡처의 표 구조 ${index+1}; 본문 값 미연결" style="width:${px(tWidth)};max-width:100%">${cols}<thead>${headerRows(table,tab)}</thead><tbody>${bodyRows(table,tab)}</tbody></table>
+  </div>`;
+ }
+ function getSiblings(tab){
+  let sections=[];
+  for(let i=0;i<tab.sections.length;i++){
+   const h=tab.sections[i];
+   const next=tab.sections[i+1]?.rect.documentY||Number.POSITIVE_INFINITY;
+   const localTables=tab.tables.filter(t=>t.rect.documentY>h.rect.documentY-5&&t.rect.documentY<next);
+   sections.push({...h,localTables});
+  }
+  return sections;
+ }
+ function sectionHtml(tab){
+  return getSiblings(tab).map((s,i)=>{
+   const local=s.localTables||[];
+   const leftRect=local[0]?.rect||{documentX:340,width:896.8};
+   const visualX=r=>Math.max(SOURCE_BASE,r.documentX);
+   const right=Math.max(visualX(leftRect)+expandedWidth(leftRect,tab),...local.map(t=>visualX(t.rect)+expandedWidth(t.rect,tab)));
+   const width=Math.max(260,Math.min(LAYOUT.tableRight-(visualX(leftRect)-SOURCE_BASE),right-visualX(leftRect)));
+   const unit=(tab.id.startsWith('m01')&&i===0)?'[단위: 톤, 백만원]':null;
+   return `<section class="section-head" data-layout-y="${s.rect.documentY}" style="left:${fromLeft(leftRect)};top:${px(s.rect.documentY)};width:${px(width)}" aria-label="${escape(s.text)}">
+     <span class="section-caption">${escape(s.text)}</span>
+     <span class="section-link" title="표 우측 끝 기준으로 단위를 맞췄습니다">${unit||' '}</span>
+   </section>`;
+  }).join('');
+ }
+ function notesHtml(tab){
+  return tab.notes.map((n,i)=>{
+   const r=noteRect(n.rect);
+   const height=Math.min(92,Math.max(14,r.height*0.9));
+   const lineCount=Math.min(4,Math.max(1,Math.floor(height/18)));
+   const blocks=Array.from({length:lineCount},(_,j)=>{
+    const available=Math.max(14,Math.min(100,82-10*j+(i%3)*3));
+    return `<span class="note-bar ${j%2===0?'b':''}" style="width:${available}%"></span>`;
+   }).join('');
+   return `<div class="note-place" data-layout-y="${n.rect.documentY}" title="원본 설명문은 캡처 모드에서 확인할 수 있습니다" style="${place(r)}width:${px(LAYOUT.noteWidth)};height:${px(Math.max(70,height))}">${blocks}</div>`;
+  }).join('');
+ }
+ function chartHtml(tab){
+  return tab.charts.map((c,i)=>`<img class="chart-image" data-layout-y="${c.rect.documentY}" src="${escape(c.src)}" loading="lazy" alt="원본에서 캡처한 시각자료 ${i+1}" draggable="false" style="${place(c.rect)}width:${px(c.rect.width)};height:${px(c.rect.height)}">`).join('');
+ }
+ function tablesHtml(tab){
+  const grouped=new Map();const ungrouped=[];
+  for(const table of tab.tables){
+   const possible=tab.scrollers.find(x=>rectContains(x,table));
+   if(!possible){ungrouped.push(table);continue;}
+   if(!grouped.has(possible))grouped.set(possible,[]);
+   grouped.get(possible).push(table);
+  }
+  const free=ungrouped.map(table=>{
+   const r=table.rect,w=expandedWidth(r,tab);return `<div class="table-wrap" data-layout-y="${r.documentY}" style="position:absolute;${place(r)}width:${px(w)};height:${px(Math.min(r.height,6000))}">${tableHtml(table,table.i,tab)}</div>`;
+  }).join('');
+  const scroll=[...grouped.entries()].map(([sc,tables],index)=>{
+   const r=sc.rect;
+   const visualWidth=expandedWidth(r,tab);
+   const content=tables.map(t=>`<div style="position:absolute;top:${px(t.rect.documentY-r.documentY)};left:${px(t.rect.documentX-r.documentX)}">${tableHtml(t,t.i,tab)}</div>`).join('');
+   const frameWidth=visualWidth;
+   const contentWidth=Math.max(frameWidth,...tables.map(t=>
+     Math.max(0,t.rect.documentX-r.documentX)+expandedWidth(t.rect,tab)));
+   const contentHeight=Math.max(sc.scrollH,r.height,...tables.map(t=>t.rect.documentY-r.documentY+t.rect.height+16));
+   const horizontal=sc.scrollW>sc.clientW+24;
+   return `<div class="scroll-region" data-layout-y="${r.documentY}" tabindex="0" aria-label="표의 숨겨진 행과 열을 스크롤하여 보세요" style="${place(r)}width:${px(frameWidth)};height:${px(r.height)}">
+    <div style="position:relative;min-width:${px(contentWidth)};min-height:${px(contentHeight)}">${content}</div>
+   </div>`;
+  }).join('');
+  return free+scroll;
+ }
+ function normalizeSectionSpacing(){
+  const surface=$('surface');
+  const heads=[...surface.querySelectorAll('.section-head')];
+  if(!heads.length)return;
+  const items=[...surface.querySelectorAll('.table-wrap[data-layout-y],.scroll-region[data-layout-y],.chart-image[data-layout-y],.note-place[data-layout-y]')];
+  const sections=heads.map((head,i)=>({head,index:i,
+   originalY:Number(head.dataset.layoutY),items:[]}));
+  // Source notes are tied to the same section as their nearby table/chart.
+  for(const element of items){
+   const sourceY=Number(element.dataset.layoutY);
+   let index=0;
+   for(let j=1;j<sections.length;j++){
+    if(sourceY>=sections[j].originalY-6)index=j;else break;
+   }
+   sections[index].items.push({element,sourceY});
+  }
+  let lastBottom=0;
+  for(let i=0;i<sections.length;i++){
+   const section=sections[i];
+   const targetTitleY=i===0?Math.max(section.originalY,244):lastBottom+LAYOUT.tableToHeader;
+   const titleEl=section.head;
+   titleEl.style.top=px(targetTitleY);
+   const titleHeight=Math.max(30,titleEl.getBoundingClientRect().height);
+   const regular=section.items.filter(x=>!x.element.classList.contains('note-place'));
+   const firstY=regular.length?Math.min(...regular.map(x=>x.sourceY)):section.originalY+titleHeight+LAYOUT.headerToTable;
+   const minContentTop=targetTitleY+titleHeight+LAYOUT.headerToTable;
+   // Preserve relative spacing between elements in a section, but ensure the
+   // first table starts at a consistent distance from its heading.
+   const offset=targetTitleY-section.originalY+
+    Math.max(0,section.originalY+titleHeight+LAYOUT.headerToTable-firstY);
+   let bottom=targetTitleY+titleHeight;
+   for(const {element,sourceY} of section.items){
+    const isNote=element.classList.contains('note-place');
+    const newTop=Math.max(isNote?minContentTop:minContentTop,sourceY+offset);
+    element.style.top=px(newTop);
+    // Keep notes at a shared right-hand rail for all tables.
+    if(isNote){element.style.left=px(LAYOUT.noteLeft);element.style.width=px(LAYOUT.noteWidth);}
+    const bounds=element.getBoundingClientRect();
+    let height=bounds.height;
+    if(element.classList.contains('table-wrap')){
+      const table=element.querySelector('table.table-el');
+      if(table)height=Math.max(height,table.getBoundingClientRect().height);
+    }
+    bottom=Math.max(bottom,newTop+height);
+   }
+   lastBottom=bottom;
+  }
+  // Absolute-positioned surface must grow with the new section positions.
+  surface.style.height=px(Math.max(900,lastBottom+LAYOUT.bottomPadding));
+ }
+
+ function renderHtml(tab,report){
+  const titleTop=report.index===10?100:84;const navTop=report.index===10?178:162;
+  const sections=sectionHtml(tab);
+  const contentHeight=Math.max(tab.pageHeight,910,...tab.sections.map(x=>x.rect.documentY+50),...tab.tables.map(x=>x.rect.documentY+Math.min(x.rect.height,900)),...tab.charts.map(x=>x.rect.documentY+x.rect.height),...tab.notes.map(x=>x.rect.documentY+x.rect.height))+70;
+  $('surface').style.height=px(contentHeight);
+  $('surface').innerHTML=`<h1 class="report-title" style="top:${px(titleTop)}">${escape(periodLabel())} ${escape(report.name)}</h1>
+   ${tabsMarkup(report,navTop)}
+   <div class="view-notice" style="top:${px(navTop+66)}">PDF 4월 양식을 참고한 계층 레이블 시안 · 9월의 실제 항목명/수치는 원본 캡처에서 확인</div>
+   ${sections}${chartHtml(tab)}${notesHtml(tab)}${tablesHtml(tab)}`;
+  normalizeSectionSpacing();
+ }
+ function renderOriginal(tab,report){
+  $('surface').style.height=px(tab.screenshotHeight);
+  $('surface').innerHTML=`<img class="source-image" src="${escape(tab.source)}" alt="${escape(report.name+' - '+tab.name)} 원본 캡처" width="1301" height="${tab.screenshotHeight}" draggable="false"><span class="source-watermark">수집 원본 이미지 · 2026.09</span>`;
+ }
+ function renderSurface(){
+  const report=DATA.reports[ui.menu],tab=current();
+  updateControls();
+  if(ui.view==='html')renderHtml(tab,report);
+  else renderOriginal(tab,report);
+  $('renderStatus').textContent=`${report.name} > ${tab.name} (${ui.view==='html'?'HTML 재현':'원본 캡처'})`;
+ }
+ function openModal(title,subtitle,body){
+  $('modalTitle').textContent=title;$('modalDesc').textContent=subtitle;
+  $('modalBody').innerHTML=body;$('overlay').hidden=false;$('closeOverlay').focus();
+ }
+ function closeModal(){$('overlay').hidden=true;$('modalBody').innerHTML='';}
+ function showSegments(){
+  const report=DATA.reports[ui.menu],tab=current();
+  const segments=tab.segments;
+  if(!segments?.length){toast('웹 미리보기에서는 보조 캡처 대신 원본 캡처 보기를 이용해 주세요.');return;}
+  const body=`<div class="segment-grid">`+segments.map((img,i)=>{
+   const human=img.name.startsWith('scroll')?'내부 스크롤 영역':img.name.startsWith('page')?'페이지 세로 스크롤':'보조 캡처';
+   return `<div class="segment-card"><h3>${escape(human)} ${i+1} · ${escape(img.name)}</h3><a href="${escape(img.src)}" target="_blank" rel="noopener"><img src="${escape(img.src)}" loading="lazy" alt="${escape(img.name)} 보조 캡처"></a><a href="${escape(img.src)}" target="_blank" rel="noopener">원본 크기로 열기 ↗</a></div>`;
+  }).join('')+'</div>';
+  openModal(report.name+' · '+tab.name,'원본 화면을 스크롤하면서 수집한 '+segments.length+'개 보조 이미지입니다.',body);
+ }
+ function openHelp(){
+  openModal('HTML 화면 재현 안내','웹 미리보기 v0.5.8 · 2026년 9월 캡처 구조 기준',`<div class="detail-copy">
+   <p><strong>계층 레이블:</strong> 첨부 「①26.4월 경영실적_선재.pdf」의 손익요약·현금흐름·제조가공비·생산실적·재고 및 채권표를 참고하여 첫 열을 합계·소계·상세 단계로 표현했습니다. 9월 원본 화면의 행 데이터 자체를 추출한 것은 아니며, 정확히 일치하지 않는 항목은 검토가 필요합니다. 상단 '계층 레이블'로 표시/미표시를 비교할 수 있습니다.</p><p><strong>법인·소계 2단 헤더:</strong> '당월' 합계 칸은 위아래 두 줄을 차지하고, 오른쪽 법인별 칸은 한 단계 내려오는 PDF형 구조를 적용했습니다. 일반 월별 시계열 표는 영향을 받지 않습니다. 상단 버튼으로 전후 비교할 수 있습니다.</p><p><strong>현재 구현:</strong> 10개 메뉴·36개 탭, 조회 연월 선택, 메뉴/탭 이동, 표 헤더·합쳐진 헤더 구조, 다중 스크롤 컨테이너, 차트 그림, 하단 설명문 배치, 원본 캡처/보조 캡처 조회.</p>
+   <p><strong>데이터 범위:</strong> 캡처된 JSON에는 표의 본문 수치와 메모/설명문 원문이 저장되어 있지 않습니다. 따라서 HTML의 회색 막대는 실제 값이 아니라 자리표시자입니다. 단, 「원본 캡처」에서 원래 값과 문구를 이미지로 확인할 수 있습니다. 차트는 원본 캡처의 해당 영역 이미지를 사용했습니다.</p>
+   <p><strong>연월 선택:</strong> 현재 정확한 구조 기준은 2026년 9월입니다. 다른 월을 선택하면 제목만 변경되며 새 월 실적을 가져오지 않습니다.</p>
+   <p><strong>실행:</strong> 고정 URL에 접속하여 새로고침하면 최신 미리보기로 반영됩니다. HTML/CSS/JS와 메타데이터는 편집할 수 있습니다.</p>
+   <p><strong>보안:</strong> 원본 캡처에 실제 회사 재무 수치가 포함되어 있습니다. 회사 Google 로그인 권한이 필요한 이 미리보기 외부로 공유하지 마세요.</p>
+   <p><strong>추가 개발 단계:</strong> 원본 데이터 또는 안전한 조회 API를 연결하면 실제 수치·메모와 차트를 HTML 컴포넌트로 교체할 수 있습니다.</p>
+   </div>`);
+ }
+ function downloadReference(){
+  const t=current();const link=document.createElement('a');link.href=t.source;
+  link.download='Violet_'+t.id+'_'+t.name.replace(/[\\/:*?"<>|]/g,'_')+'.png';
+  document.body.appendChild(link);link.click();link.remove();toast('현재 탭의 원본 캡처 파일을 요청했습니다.');
+ }
+ function init(){
+  $('monthPicker').innerHTML=Array.from({length:12},(_,i)=>`<option value="${i+1}" ${i===8?'selected':''}>${i+1}</option>`).join('');
+  $('reportMenu').addEventListener('click',e=>{const t=e.target.closest('[data-menu]');if(t)selectMenu(Number(t.dataset.menu))});
+  $('surface').addEventListener('click',e=>{
+   const tab=e.target.closest('[data-tab]');if(tab)selectTab(Number(tab.dataset.tab));
+   if(e.target.closest('[data-show-original]')){ui.view='original';renderSurface();}
+  });
+  $('surface').addEventListener('keydown',e=>{
+   const tab=e.target.closest('[data-tab]');if(!tab)return;
+   if(e.key==='ArrowRight'||e.key==='ArrowLeft'){
+    e.preventDefault();let next=(Number(tab.dataset.tab)+(e.key==='ArrowRight'?1:-1)+DATA.reports[ui.menu].tabs.length)%DATA.reports[ui.menu].tabs.length;
+    selectTab(next);$('surface').querySelector('[data-tab="'+next+'"]').focus();
+   }
+  });
+  $('yearPicker').addEventListener('change',e=>{ui.year=Number(e.target.value);renderSurface();});
+  $('monthPicker').addEventListener('change',e=>{ui.month=Number(e.target.value);renderSurface();});
+  $('hierarchyToggle').addEventListener('click',()=>{ui.hierarchy=!ui.hierarchy;renderSurface();});
+  $('twoTierToggle').addEventListener('click',()=>{ui.twoTier=!ui.twoTier;updateControls();renderSurface();});
+  $('renderView').addEventListener('click',()=>{ui.view='html';renderSurface();});
+  $('imageView').addEventListener('click',()=>{ui.view='original';renderSurface();});
+  $('toggleSidebar').addEventListener('click',()=>{
+   ui.side=!ui.side;document.body.classList.toggle('side-hidden',!ui.side);
+   $('toggleSidebar').textContent=ui.side?'☷':'☰';$('toggleSidebar').setAttribute('aria-label',ui.side?'메뉴 접기':'메뉴 펼치기');
+  });
+  $('showSegments').addEventListener('click',showSegments);
+  $('openHelp').addEventListener('click',openHelp);
+  $('downloadReference').addEventListener('click',downloadReference);
+  $('closeOverlay').addEventListener('click',closeModal);
+  $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal()});
+  window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('overlay').hidden)closeModal()});
+  render();
+ }
+ document.addEventListener('DOMContentLoaded',init,{once:true});
+})();
+
+</script>
+</body>
+</html>
