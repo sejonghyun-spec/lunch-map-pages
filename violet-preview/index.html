@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,nosnippet,noarchive">
-<title>Violet 경영실적보고 · 공개 프리뷰 v0.5.14</title>
+<title>Violet 경영실적보고 · 공개 프리뷰 v0.5.15</title>
 <style>
 body{margin:0;background:#f7f8fb;color:#24314b;font:15px -apple-system,BlinkMacSystemFont,"Malgun Gothic",sans-serif}
 .loading{margin:15vh auto;padding:28px;max-width:480px;text-align:center}
@@ -15,10 +15,10 @@ small{display:block;margin-top:12px;color:#687991}
 </style>
 </head>
 <body>
-<main class="loading"><h2>Violet 경영실적보고</h2><div class="spinner"></div><p id="status">프리뷰 v0.5.14 자료를 불러오는 중입니다.</p><small>공개 열람용 · 로그인 불필요</small></main>
+<main class="loading"><h2>Violet 경영실적보고</h2><div class="spinner"></div><p id="status">프리뷰 v0.5.15 · 수치 포함 화면을 불러오는 중입니다.</p><small>공개 열람용 · 로그인 불필요 · 2026년 9월 캡처 기준</small></main>
 <script>
 (async function(){
- const total=18,version='20261021-3';
+ const total=18,version='20261021-4';
  const parts=await Promise.all(Array.from({length:total},async(_,i)=>{
    const name='part-'+String(i).padStart(2,'0')+'.txt';
    const response=await fetch(name+'?revision='+version,{cache:'no-store'});
@@ -27,14 +27,39 @@ small{display:block;margin-top:12px;color:#687991}
  }));
  const source=parts.join('');
  if(!/^<!doctype html>/i.test(source)||!source.includes('v0.5.14')||!source.trimEnd().endsWith('</html>'))throw new Error('HTML 자료가 완전하지 않습니다.');
- document.open();
- document.write(source);
- document.close();
+
+ // The capture JSON contains headings/geometry and raster screenshots, not
+ // numeric cells. Show the REAL captured table pixels instead of misleading
+ // skeleton cells. No guessed/created financial numbers.
+ function capturedTable(table,index,tab){
+   const r=table.rect;
+   const width=expandedWidth(r,tab);
+   const scale=width/Math.max(1,r.width);
+   if(!tab.source)return '<div class="table-block" role="status">원본 표 캡처가 없습니다.</div>';
+   const imageWidth=1301*scale;
+   const imageHeight=Number(tab.screenshotHeight)||Number(tab.pageHeight)||1000;
+   const left=(Number(r.documentX)-SOURCE_BASE)*scale;
+   const top=Number(r.documentY);
+   return '<div class="table-block captured-table" data-table-index="'+index+'" style="position:relative;overflow:hidden;width:'+px(width)+';height:'+px(r.height)+';background:white">'
+     +'<img src="'+escape(tab.source)+'" alt="2026년 9월 원본 표 - 판매량, 단가, 매출액 등 원본 수치 포함" draggable="false" style="pointer-events:none;position:absolute;max-width:none;width:'+px(imageWidth)+';height:'+px(imageHeight)+';left:-'+px(Math.max(0,left))+';top:-'+px(Math.max(0,top))+'">'
+     +'</div>';
+ }
+ const startMarker=' function tableHtml(table,index,tab){';
+ const endMarker=' function getSiblings(tab){';
+ const begin=source.indexOf(startMarker),end=source.indexOf(endMarker,begin+startMarker.length);
+ if(begin<0||end<0)throw new Error('표 렌더링 함수가 예상과 달라 안전하게 변경할 수 없습니다.');
+ const replacement=' '+capturedTable.toString().replace('function capturedTable','function tableHtml')+'\n';
+ let patched=source.slice(0,begin)+replacement+source.slice(end);
+ patched=patched.replaceAll('v0.5.14','v0.5.15')
+  .replace('회사 계정 전용 웹 미리보기','공개 열람 · 2026.9 캡처')
+  .replace('PDF 4월 양식을 참고한 계층 레이블 시안 · 9월의 실제 항목명/수치는 원본 캡처에서 확인','2026년 9월 원본 표 수치 표시 · 이미지 기반이며 실시간 DB 연결은 아닙니다')
+  .replace('Violet HTML 구조 재현 · 실제 수치 및 서술문은 원본 캡처에서 확인','Violet HTML 구조 재현 · 표 내부 수치는 2026년 9월 원본 캡처 이미지 기준')
+  .replace('회색 막대는 실제 값이 아니라 자리표시자입니다. 단, 「원본 캡처」에서 원래 값과 문구를 이미지로 확인할 수 있습니다.','표의 본문은 2026년 9월 원본 캡처 이미지로 표시합니다. 실시간 자료 연동이나 HTML 수치 텍스트화는 아직 적용되지 않았습니다.');
+ document.open();document.write(patched);document.close();
 })().catch(function(error){
  const area=document.querySelector('.loading');
  if(area)area.innerHTML='<h2>프리뷰를 표시할 수 없습니다.</h2><p id="error"></p><small>새로고침 후에도 계속되면 관리자에게 확인하세요.</small>';
- const target=document.querySelector('#error');
- if(target)target.textContent=String(error.message||error);
+ const target=document.querySelector('#error');if(target)target.textContent=String(error.message||error);
 });
 </script>
 </body>
