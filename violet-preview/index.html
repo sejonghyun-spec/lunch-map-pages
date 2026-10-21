@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,nosnippet,noarchive">
+<title>Violet 경영실적보고 · 공개 프리뷰 v0.5.14</title>
+<style>
+body{margin:0;background:#f7f8fb;color:#24314b;font:15px -apple-system,BlinkMacSystemFont,"Malgun Gothic",sans-serif}
+.loading{margin:15vh auto;padding:28px;max-width:480px;text-align:center}
+.spinner{width:30px;height:30px;margin:18px auto;border:3px solid #dfe5ed;border-top-color:#375bbd;border-radius:50%;animation:spin .75s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+small{display:block;margin-top:12px;color:#687991}
+#error{color:#b42318;line-height:1.6}
+</style>
+</head>
+<body>
+<main class="loading"><h2>Violet 경영실적보고</h2><div class="spinner"></div><p id="status">프리뷰 v0.5.14 자료를 불러오는 중입니다.</p><small>공개 열람용 · 로그인 불필요</small></main>
+<script>
+(async function(){
+ const total=18,version='20261021-3';
+ const parts=await Promise.all(Array.from({length:total},async(_,i)=>{
+   const name='part-'+String(i).padStart(2,'0')+'.txt';
+   const response=await fetch(name+'?revision='+version,{cache:'no-store'});
+   if(!response.ok)throw new Error(name+' 요청 오류 '+response.status);
+   return response.text();
+ }));
+ const source=parts.join('');
+ if(!/^<!doctype html>/i.test(source)||!source.includes('v0.5.14')||!source.trimEnd().endsWith('</html>'))throw new Error('HTML 자료가 완전하지 않습니다.');
+ document.open();
+ document.write(source);
+ document.close();
+})().catch(function(error){
+ const area=document.querySelector('.loading');
+ if(area)area.innerHTML='<h2>프리뷰를 표시할 수 없습니다.</h2><p id="error"></p><small>새로고침 후에도 계속되면 관리자에게 확인하세요.</small>';
+ const target=document.querySelector('#error');
+ if(target)target.textContent=String(error.message||error);
+});
+</script>
+</body>
+</html>
